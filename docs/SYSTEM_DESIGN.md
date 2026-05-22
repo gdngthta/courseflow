@@ -80,7 +80,7 @@ Output: `'safe' | 'warning' | 'critical' | 'completed'`
 
 The same function is used everywhere: Dashboard, My Tasks, Project Detail.
 
-## Authentication Flow (Phase 1+)
+## Authentication Flow (Phase 3+)
 
 ```
 User visits /dashboard

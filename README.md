@@ -21,13 +21,17 @@ CourseFlow combines both into one place. When a group project task is assigned t
 | Feature | Status |
 |---|---|
 | App shell (sidebar + topbar) | ✅ Phase 0 |
-| Auth (Supabase email/password) | 🔜 Phase 1 |
-| Course management | 🔜 Phase 2 |
-| Personal task CRUD | 🔜 Phase 2 |
-| Projects + project tasks | 🔜 Phase 3 |
-| Dashboard with risk overview | 🔜 Phase 4 |
-| Calendar view | 🔜 Phase 5 |
-| Settings + theme toggle | 🔜 Phase 5 |
+| Mock data + risk algorithm | ✅ Phase 0 |
+| UI components + owl mascot | ✅ Phase 0 |
+| Dashboard UI (mock data) | 🔜 Phase 1 |
+| My Tasks UI (mock data) | 🔜 Phase 1 |
+| Projects + Project Detail UI (mock data) | 🔜 Phase 1 |
+| Task Detail + Create/Edit forms (mock data) | 🔜 Phase 1 |
+| Courses + Settings UI (mock data) | 🔜 Phase 1 |
+| Supabase DB schema + RLS | 🔜 Phase 2 |
+| Auth (login, signup, session, middleware) | 🔜 Phase 3 |
+| Connect real data (replace mock) | 🔜 Phase 4 |
+| Calendar view + final polish | 🔜 Phase 5 |
 
 ---
 
@@ -111,6 +115,10 @@ screenshots/              App screenshots
 
 ---
 
-## Current Phase: Phase 0 — Setup
+## Current Phase: Phase 0 Complete — Next: Phase 1 Figma UI
 
-Phase 0 establishes the project scaffold. No real data or auth yet. All pages show placeholder content. Mock data is available at `src/data/mock.ts`.
+Phase 0 established the project scaffold. All pages are currently placeholders.
+
+**Phase 1** will convert every Figma screen into a real working UI using the existing mock data — Dashboard, My Tasks, Projects, Project Detail, Task Detail, Create/Edit forms, Courses, and Settings. No Supabase or auth yet.
+
+Supabase and Auth are planned for Phase 2–3 after all UI screens are complete.
