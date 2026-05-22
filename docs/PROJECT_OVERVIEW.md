@@ -36,6 +36,21 @@ When a project leader/admin assigns a group task to a member, that task appears 
 | Calendar | Monthly view with tasks plotted by due date |
 | Settings | Profile, theme preference, account |
 
+## Brand & Mascot
+
+CourseFlow uses a **nerdy owl** as its mascot — a friendly, slightly academic character with round glasses that reinforces the student productivity theme.
+
+The owl is used sparingly as a brand element, not a UI feature:
+- Empty states (no tasks, no projects, no critical tasks, no courses)
+- Dashboard assistant/tip card
+- Welcome/onboarding moments
+
+The owl is **not** used on task cards, project data tables, or anywhere that would reduce readability or feel childish.
+
+The current owl is an SVG placeholder at `src/components/brand/OwlMascot.tsx`. It supports three variants: `default`, `reading` (holds a book), and `thinking` (thought dots). It is designed to be easy to replace with a custom illustration later.
+
+---
+
 ## MVP Scope
 
 This is a one-week MVP. The goal is a working, demonstrable product — not a full-featured Trello or Notion clone.
