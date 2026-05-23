@@ -51,7 +51,7 @@ export function TaskFormModal({ open, onClose, onSubmit, courses, editingTask }:
   const isEditing = !!editingTask
 
   const [form, setForm] = useState<TaskFormData>(EMPTY_FORM)
-  const [errors, setErrors] = useState<Partial<Record<'title' | 'due_date', string>>>({})
+  const [errors, setErrors] = useState<Partial<Record<'title' | 'due_date' | 'links', string>>>({})
 
   useEffect(() => {
     if (editingTask) {
@@ -93,6 +93,10 @@ export function TaskFormModal({ open, onClose, onSubmit, courses, editingTask }:
     const e: typeof errors = {}
     if (!form.title.trim()) e.title = 'Task title is required'
     if (!form.due_date) e.due_date = 'Due date is required'
+    const badLink = form.links.find(
+      (l) => l.url.trim() && !l.url.trim().match(/^https?:\/\/.+/)
+    )
+    if (badLink) e.links = `Invalid URL "${badLink.url}" — must start with http:// or https://`
     setErrors(e)
     return Object.keys(e).length === 0
   }
@@ -195,14 +199,14 @@ export function TaskFormModal({ open, onClose, onSubmit, courses, editingTask }:
                     type="text"
                     placeholder="Label"
                     value={link.label}
-                    onChange={(e) => updateLink(i, 'label', e.target.value)}
+                    onChange={(e) => { updateLink(i, 'label', e.target.value); setErrors((prev) => ({ ...prev, links: undefined })) }}
                     className="w-2/5 px-2.5 py-1.5 bg-slate-800 border border-slate-700 rounded-lg text-xs text-slate-200 placeholder:text-slate-500 focus:outline-none focus:border-indigo-500 transition"
                   />
                   <input
                     type="url"
                     placeholder="https://..."
                     value={link.url}
-                    onChange={(e) => updateLink(i, 'url', e.target.value)}
+                    onChange={(e) => { updateLink(i, 'url', e.target.value); setErrors((prev) => ({ ...prev, links: undefined })) }}
                     className="flex-1 px-2.5 py-1.5 bg-slate-800 border border-slate-700 rounded-lg text-xs text-slate-200 placeholder:text-slate-500 focus:outline-none focus:border-indigo-500 transition"
                   />
                   <button
@@ -214,6 +218,9 @@ export function TaskFormModal({ open, onClose, onSubmit, courses, editingTask }:
                   </button>
                 </div>
               ))}
+              {errors.links && (
+                <p className="text-xs text-red-400">{errors.links}</p>
+              )}
             </div>
           ) : (
             <p className="text-xs text-slate-600 italic">No resources added.</p>

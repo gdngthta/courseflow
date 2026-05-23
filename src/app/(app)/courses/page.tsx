@@ -6,7 +6,7 @@ import { Topbar } from '@/components/layout/Topbar'
 import { CourseCard } from '@/components/courses/CourseCard'
 import { CourseFormModal, type CourseFormData } from '@/components/courses/CourseFormModal'
 import { ConfirmModal } from '@/components/ui/ConfirmModal'
-import { NoCoursesEmpty } from '@/components/ui/EmptyState'
+import { NoCoursesEmpty, NoArchivedCoursesEmpty } from '@/components/ui/EmptyState'
 import { useMockStore } from '@/store/mockStore'
 import type { Course } from '@/types'
 
@@ -145,6 +145,8 @@ export default function CoursesPage() {
               />
             ))}
           </div>
+        ) : activeTab === 'archived' ? (
+          <NoArchivedCoursesEmpty />
         ) : (
           <NoCoursesEmpty onAdd={() => setShowAddModal(true)} />
         )}

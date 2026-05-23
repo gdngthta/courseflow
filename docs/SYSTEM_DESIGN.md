@@ -132,11 +132,18 @@ MockStoreProvider  (app)/layout.tsx
 
 Every page calls `useMockStore()` to get `{ state, dispatch }`. Derived views (TaskCardData[], ProjectCardData[], project detail) are produced by pure helper functions (`deriveTaskCards`, `deriveProjectCards`, `deriveProjectDetail`) called inside `useMemo()`.
 
+**MockAction union (all supported mutations):**
+- Course: ADD_COURSE, UPDATE_COURSE, SET_COURSE_ARCHIVED
+- Personal tasks: ADD_PERSONAL_TASK, UPDATE_PERSONAL_TASK, DELETE_PERSONAL_TASK, UPDATE_PERSONAL_TASK_CHECKLIST
+- Project tasks: ADD_PROJECT_TASK, UPDATE_PROJECT_TASK, DELETE_PROJECT_TASK, UPDATE_PROJECT_TASK_NOTES, UPDATE_PROJECT_TASK_CHECKLIST
+- Projects: ADD_PROJECT (+ auto userMember), COMPLETE_PROJECT
+
 This ensures:
 - Mutations on any page are immediately visible on every other page.
 - Newly assigned project tasks appear in My Tasks without page reload.
 - Calendar reflects newly created tasks and projects.
 - Checklist toggles in the Task Detail drawer persist back to the store.
+- Archived courses are excluded from task/project course dropdowns.
 
 State resets on hard-refresh. Full server-side persistence is planned for Phase 2 (Supabase).
 

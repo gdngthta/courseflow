@@ -10,9 +10,11 @@
 - Live updates when a project member updates a task
 - Supabase Realtime subscriptions for project_tasks and project_members
 
-### Notifications
+### Notifications & Reminders
 - In-app notification bell for: task assigned to you, deadline approaching, task updated
 - Email reminders for critical tasks and upcoming deadlines
+- **Telegram bot integration** — deadline reminders and task assignment alerts via Telegram (planned after Supabase + Auth are live)
+- Smart deadline reminders based on task difficulty and days remaining (post-auth feature)
 
 ### Mobile Responsive Layout
 - The MVP targets desktop (1280px+)

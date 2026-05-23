@@ -6,7 +6,7 @@ import { Search } from 'lucide-react'
 import { Topbar } from '@/components/layout/Topbar'
 import { ProjectCard } from '@/components/projects/ProjectCard'
 import { CreateProjectModal, type CreateProjectData } from '@/components/projects/CreateProjectModal'
-import { NoProjectsEmpty } from '@/components/ui/EmptyState'
+import { NoProjectsEmpty, NoCompletedProjectsEmpty } from '@/components/ui/EmptyState'
 import { useMockStore, deriveProjectCards } from '@/store/mockStore'
 import type { Project, ProjectMember } from '@/types'
 
@@ -149,6 +149,8 @@ export default function ProjectsPage() {
               />
             ))}
           </div>
+        ) : activeTab === 'completed' ? (
+          <NoCompletedProjectsEmpty />
         ) : (
           <NoProjectsEmpty onAdd={() => setShowCreateModal(true)} />
         )}

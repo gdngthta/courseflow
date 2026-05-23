@@ -29,6 +29,7 @@ export default function SettingsPage() {
   const [email] = useState(MOCK_USER.email)
   const [theme, setTheme] = useState('system')
   const [saved, setSaved] = useState(false)
+  const [signOutNotice, setSignOutNotice] = useState(false)
 
   const handleSave = () => {
     setSaved(true)
@@ -78,8 +79,12 @@ export default function SettingsPage() {
                         {firstName.charAt(0)}{lastName.charAt(0)}
                       </span>
                     </div>
-                    <button className="absolute -bottom-1 -right-1 w-6 h-6 bg-slate-700 hover:bg-slate-600 border border-slate-600 rounded-full flex items-center justify-center transition-colors">
-                      <Camera size={11} className="text-slate-300" />
+                    <button
+                      title="Photo upload coming in a later phase"
+                      disabled
+                      className="absolute -bottom-1 -right-1 w-6 h-6 bg-slate-700 border border-slate-600 rounded-full flex items-center justify-center cursor-not-allowed opacity-60"
+                    >
+                      <Camera size={11} className="text-slate-400" />
                     </button>
                   </div>
                   <div>
@@ -140,14 +145,22 @@ export default function SettingsPage() {
                 <p className="text-sm text-slate-400 mb-6">Signed in as {email}</p>
                 <Button
                   variant="destructive"
-                  onClick={() => alert('Sign out — auth not connected yet (Phase 1).')}
+                  onClick={() => { setSignOutNotice(true); setTimeout(() => setSignOutNotice(false), 4000) }}
                 >
                   <LogOut size={14} />
                   Sign Out
                 </Button>
-                <p className="text-xs text-slate-500 mt-3">
-                  Auth is not connected yet. Sign out will be functional in Phase 3.
-                </p>
+                {signOutNotice && (
+                  <div className="mt-3 px-4 py-2.5 bg-amber-900/20 border border-amber-700/40 rounded-lg">
+                    <p className="text-xs text-amber-400 font-medium">Auth not connected yet</p>
+                    <p className="text-xs text-slate-400 mt-0.5">Sign out will work once authentication is set up in Phase 3.</p>
+                  </div>
+                )}
+                {!signOutNotice && (
+                  <p className="text-xs text-slate-500 mt-3">
+                    Auth is not connected yet. Sign out will be functional in Phase 3.
+                  </p>
+                )}
               </div>
             )}
           </div>

@@ -97,3 +97,35 @@
 - Task with due_date in the past shows Critical (unless Done)
 - Creating a personal task without a course — should be allowed
 - Archiving a course does not delete its tasks or projects
+
+---
+
+## Phase 1 UX Polish — Manual Checks
+
+### Form Validation
+- [ ] Creating a task with an empty title shows "Task title is required" error
+- [ ] Creating a task without a due date shows "Due date is required" error
+- [ ] Adding a resource link with a URL not starting with http:// or https:// shows inline error
+- [ ] Fixing the URL clears the error immediately
+
+### Non-Functional UI
+- [ ] Topbar search input is disabled and shows "Search coming in a future update" tooltip on hover
+- [ ] Topbar theme toggle and notifications buttons are disabled (grayed out, tooltip on hover)
+- [ ] Settings avatar camera button is disabled with tooltip
+- [ ] Settings > Account > Sign Out shows an amber informational banner instead of a browser alert
+
+### Empty States
+- [ ] Courses page → Archived tab with no archived courses shows "No archived courses" (no "+ Add Course" button)
+- [ ] Projects page → Completed tab with no completed projects shows "No completed projects yet" (no "+ Create Project" button)
+- [ ] Projects page → Active tab with no active projects shows "No projects yet" with "+ Create Project" action
+
+### Invite Member Modal
+- [ ] Submitting invite shows a green success screen with the invited email
+- [ ] Modal auto-closes after 2 seconds
+- [ ] Closing modal manually before 2 seconds works correctly
+- [ ] Opening the modal again resets to the form (not the success screen)
+
+### Cross-Page State
+- [ ] Creating a personal task on My Tasks → appears on Dashboard and Calendar without refresh
+- [ ] Archiving a course → that course disappears from task/project course dropdowns immediately
+- [ ] Marking a task done → task disappears from calendar and critical risk section on dashboard
