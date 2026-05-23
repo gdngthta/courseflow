@@ -26,13 +26,15 @@
 
 ## Medium-Term (Month 2)
 
-### Calendar Integration
-- Sync due dates to Google Calendar or Apple Calendar
-- iCal export
+### Calendar Enhancements
+- Sync due dates to Google Calendar or Apple Calendar (iCal export)
+- Week view and agenda/list view in addition to monthly grid
+- Drag-and-drop task rescheduling directly on the calendar
+- Color-coded course overlay (show per-course color rather than task type)
 
-### Subtasks / Checklist
-- Personal tasks can have a checklist of subtasks
-- Project tasks can have subtasks assigned to different members
+### Checklist Enhancements
+- Checklist items on project tasks assignable to specific sub-members
+- Due dates per checklist item
 
 ### File Attachments
 - Attach files to tasks or project notes via Supabase Storage

@@ -71,6 +71,29 @@ by the same TaskCard component.
 NO data is copied between tables.
 ```
 
+## Data Flow — Calendar
+
+```
+Calendar page
+  ├─ getMockTaskCards()     → all TaskCardData[] (personal + assigned group tasks)
+  │    └─ filter: status !== 'done'  → activeTasks
+  └─ getMockProjectCards()  → all ProjectCardData[]
+       └─ filter: status === 'active' → activeProjects
+
+Filter applied (All / Personal / Group / Critical) → filteredTasks
+
+itemsByDate: Record<YYYY-MM-DD, CalendarItem[]>
+  ├─ filteredTasks grouped by due_date
+  └─ activeProjects grouped by deadline (All filter only)
+
+CalendarItem union type:
+  | { kind: 'task';    data: TaskCardData }
+  | { kind: 'project'; id, name, courseCode, deadline }
+
+getCalendarDays(year, month) → 42 Date cells (6 rows × 7 cols, starting Sunday)
+toDateKey(date) → YYYY-MM-DD string (local time, avoids UTC offset issues)
+```
+
 ## Data Flow — Risk Calculation
 
 Risk is calculated entirely on the client side using `src/lib/risk.ts`.

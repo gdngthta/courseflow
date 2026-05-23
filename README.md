@@ -29,10 +29,10 @@ CourseFlow combines both into one place. When a group project task is assigned t
 | Project Detail — tasks, members, links, progress | ✅ Phase 1 |
 | Courses management — add/edit/archive | ✅ Phase 1 |
 | Settings — profile, preferences, account | ✅ Phase 1 |
+| Calendar — monthly view, task/deadline plotting, filters | ✅ Phase 1 |
 | Supabase DB schema + RLS | 🔜 Phase 2 |
 | Auth (login, signup, session, middleware) | 🔜 Phase 3 |
 | Connect real data (replace mock) | 🔜 Phase 4 |
-| Calendar view + final polish | 🔜 Phase 5 |
 
 > **Phase 1:** All screens use mock data. No Supabase, no auth, no database connected yet.
 > Create/edit/delete update local React state only — changes reset on page refresh.
@@ -121,7 +121,7 @@ screenshots/              App screenshots
 
 ## Current Phase: Phase 1 Complete — Next: Phase 2 Supabase Schema
 
-Phase 1 converted every Figma screen into a fully working static UI with mock data.
+Phase 1 delivered every screen as a fully working static UI with mock data, including the full Calendar page with monthly view, task/deadline plotting, filters, selected-date detail panel, and upcoming deadlines sidebar.
 
 **Phase 2** will set up the Supabase project: create all tables (profiles, courses, personal_tasks, projects, project_members, project_tasks, project_links), write Row Level Security policies, and prepare SQL migration scripts.
 
