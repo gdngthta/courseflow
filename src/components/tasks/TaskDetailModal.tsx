@@ -97,11 +97,9 @@ export function TaskDetailModal({
   }
 
   const toggleChecklistItem = (id: string) => {
-    setChecklist((prev) => {
-      const updated = prev.map((item) => item.id === id ? { ...item, done: !item.done } : item)
-      if (task) onChecklistUpdate?.(task.id, updated)
-      return updated
-    })
+    const updated = checklist.map((item) => item.id === id ? { ...item, done: !item.done } : item)
+    setChecklist(updated)
+    if (task) onChecklistUpdate?.(task.id, updated)
   }
 
   const handleSaveNotes = () => {
