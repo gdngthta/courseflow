@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { ExternalLink, Plus, UserPlus, CheckCircle2, Lock } from 'lucide-react'
@@ -12,25 +12,24 @@ import { InviteMemberModal } from '@/components/projects/InviteMemberModal'
 import { CompleteProjectModal } from '@/components/projects/CompleteProjectModal'
 import { RiskBadge, RoleBadge } from '@/components/ui/Badge'
 import { ProgressBar } from '@/components/ui/ProgressBar'
-import { getMockProjectDetail, MOCK_MEMBERS } from '@/data/mock'
+import { useMockStore, deriveProjectDetail } from '@/store/mockStore'
+import { MOCK_MEMBERS } from '@/data/mock'
 import { calculateRisk } from '@/lib/risk'
 import { formatFullDate } from '@/lib/utils'
-import type { ProjectStatus, TaskCardData } from '@/types'
+import type { TaskCardData, ProjectTask, TaskChecklistItem } from '@/types'
 
 export default function ProjectDetailPage() {
   const params = useParams()
   const projectId = params?.id as string
+  const { state, dispatch } = useMockStore()
 
-  const detail = getMockProjectDetail(projectId)
-
-  const [tasks, setTasks] = useState<TaskCardData[]>(detail?.tasks ?? [])
-  const [members, setMembers] = useState(detail?.members ?? [])
-  const [projectStatus, setProjectStatus] = useState<ProjectStatus>(detail?.project.status ?? 'active')
-  const [completedAt, setCompletedAt] = useState<string | undefined>(detail?.project.completed_at)
   const [selectedTask, setSelectedTask] = useState<TaskCardData | null>(null)
   const [showAddTask, setShowAddTask] = useState(false)
   const [showInvite, setShowInvite] = useState(false)
   const [showCompleteModal, setShowCompleteModal] = useState(false)
+
+  // Derive project detail from shared state — reactively updates on every store change
+  const detail = useMemo(() => deriveProjectDetail(state, projectId), [state, projectId])
 
   if (!detail) {
     return (
@@ -48,59 +47,63 @@ export default function ProjectDetailPage() {
     )
   }
 
-  const { project, course, links, userRole } = detail
-  const isCompleted = projectStatus === 'completed'
+  const { project, course, links, userRole, tasks, members } = detail
+  const isCompleted = project.status === 'completed'
+  const completedAt = project.completed_at
   const completedCount = tasks.filter((t) => t.status === 'done').length
   const progress = tasks.length > 0 ? Math.round((completedCount / tasks.length) * 100) : 0
   const canManage = userRole === 'leader' || userRole === 'admin'
   const unfinishedTasks = tasks.filter((t) => t.status !== 'done')
 
+  const memberOptions = members.map((m) => ({ id: m.user_id, name: m.name }))
+
+  // ── Handlers ──
+
   const handleAddTask = (data: AddProjectTaskData) => {
-    const newTask: TaskCardData = {
+    const newTask: ProjectTask = {
       id: `pjt-${Date.now()}`,
+      project_id: project.id,
       title: data.title,
       type: 'group',
       status: 'not_started',
-      risk: calculateRisk({ status: 'not_started', due_date: data.due_date, progress: 0, difficulty: data.difficulty }),
       difficulty: data.difficulty,
       progress: 0,
       due_date: data.due_date,
-      source_label: project.name,
-      project_id: project.id,
+      assigned_to: data.assigned_to || undefined,
       notes: data.notes || undefined,
       links: data.links.length > 0 ? data.links : undefined,
       checklist: data.checklist.filter((i) => i.text.trim()).length > 0
         ? data.checklist.filter((i) => i.text.trim())
         : undefined,
-      assigned_to: data.assigned_to || undefined,
+      created_at: new Date().toISOString(),
     }
-    setTasks((prev) => [...prev, newTask])
+    dispatch({ type: 'ADD_PROJECT_TASK', task: newTask })
   }
 
   const handleUpdateNotes = (task: TaskCardData, notes: string) => {
-    setTasks((prev) =>
-      prev.map((t) => t.id === task.id ? { ...t, notes } : t)
-    )
+    dispatch({ type: 'UPDATE_PROJECT_TASK_NOTES', id: task.id, notes })
   }
 
   const handleDeleteTask = (task: TaskCardData) => {
-    setTasks((prev) => prev.filter((t) => t.id !== task.id))
+    dispatch({ type: 'DELETE_PROJECT_TASK', id: task.id })
   }
 
   const handleMarkDone = (task: TaskCardData) => {
-    setTasks((prev) =>
-      prev.map((t) => t.id === task.id ? { ...t, status: 'done', progress: 100, risk: 'completed' } : t)
-    )
+    const existing = state.projectTasks.find((t) => t.id === task.id)
+    if (existing) {
+      dispatch({ type: 'UPDATE_PROJECT_TASK', task: { ...existing, status: 'done', progress: 100 } })
+    }
   }
 
   const handleCompleteProject = () => {
     const today = new Date().toISOString().split('T')[0]
-    setProjectStatus('completed')
-    setCompletedAt(today)
+    dispatch({ type: 'COMPLETE_PROJECT', id: project.id, completedAt: today })
     setShowCompleteModal(false)
   }
 
-  const memberOptions = members.map((m) => ({ id: m.user_id, name: m.name }))
+  const handleChecklistUpdate = (taskId: string, checklist: TaskChecklistItem[]) => {
+    dispatch({ type: 'UPDATE_PROJECT_TASK_CHECKLIST', id: taskId, checklist })
+  }
 
   return (
     <>
@@ -154,7 +157,7 @@ export default function ProjectDetailPage() {
             </div>
           </div>
 
-          {/* Mark as Completed button — leader only, active project only */}
+          {/* Mark as Completed — leader only, active project only */}
           {!isCompleted && userRole === 'leader' && (
             <button
               onClick={() => setShowCompleteModal(true)}
@@ -289,6 +292,7 @@ export default function ProjectDetailPage() {
         onDelete={isCompleted ? undefined : handleDeleteTask}
         onMarkDone={isCompleted ? undefined : handleMarkDone}
         onUpdateNotes={isCompleted ? undefined : handleUpdateNotes}
+        onChecklistUpdate={isCompleted ? undefined : handleChecklistUpdate}
         userRole={userRole}
         assigneeName={selectedTask?.assigned_to ? MOCK_MEMBERS[selectedTask.assigned_to]?.name : undefined}
       />

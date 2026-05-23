@@ -5,6 +5,21 @@ export type ProjectRole = 'leader' | 'admin' | 'member'
 export type ProjectStatus = 'active' | 'completed'
 export type Difficulty = 1 | 2 | 3 | 4 | 5
 
+// ── Reusable sub-types (defined early so task entities can reference them) ──
+
+export interface TaskLink {
+  label: string
+  url: string
+}
+
+export interface TaskChecklistItem {
+  id: string
+  text: string
+  done: boolean
+}
+
+// ── Core entities ──
+
 export interface Course {
   id: string
   user_id: string
@@ -28,6 +43,8 @@ export interface PersonalTask {
   progress: number
   due_date: string
   notes?: string
+  links?: TaskLink[]
+  checklist?: TaskChecklistItem[]
   created_at: string
 }
 
@@ -42,6 +59,8 @@ export interface ProjectTask {
   due_date: string
   assigned_to?: string
   notes?: string
+  links?: TaskLink[]
+  checklist?: TaskChecklistItem[]
   created_at: string
 }
 
@@ -80,18 +99,7 @@ export interface User {
   avatar_url?: string
 }
 
-// Normalised view types used by UI components
-
-export interface TaskLink {
-  label: string
-  url: string
-}
-
-export interface TaskChecklistItem {
-  id: string
-  text: string
-  done: boolean
-}
+// ── Normalised view types used by UI components ──
 
 export interface TaskCardData {
   id: string

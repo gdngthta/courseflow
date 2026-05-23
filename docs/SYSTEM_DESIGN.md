@@ -114,7 +114,35 @@ User visits /dashboard
 
 ## State Management
 
-For MVP scope, state is managed with React's built-in hooks (`useState`, `useEffect`). No global state library is needed at this scale.
+### Phase 1 — Shared Mock State (`src/store/mockStore.tsx`)
+
+All entity state lives in a single React Context + useReducer store that is mounted at the `(app)` layout level.
+
+```
+MockStoreProvider  (app)/layout.tsx
+  └─ MockState
+       ├─ currentUser
+       ├─ courses
+       ├─ personalTasks  (links & checklist inlined)
+       ├─ projects
+       ├─ projectMembers
+       ├─ projectTasks   (links & checklist inlined)
+       └─ projectLinks
+```
+
+Every page calls `useMockStore()` to get `{ state, dispatch }`. Derived views (TaskCardData[], ProjectCardData[], project detail) are produced by pure helper functions (`deriveTaskCards`, `deriveProjectCards`, `deriveProjectDetail`) called inside `useMemo()`.
+
+This ensures:
+- Mutations on any page are immediately visible on every other page.
+- Newly assigned project tasks appear in My Tasks without page reload.
+- Calendar reflects newly created tasks and projects.
+- Checklist toggles in the Task Detail drawer persist back to the store.
+
+State resets on hard-refresh. Full server-side persistence is planned for Phase 2 (Supabase).
+
+### Phase 2+ — Supabase
+
+State management will be replaced with direct Supabase queries (server components + client mutations). The shared mock store will be removed.
 
 ## Security
 

@@ -34,8 +34,9 @@ CourseFlow combines both into one place. When a group project task is assigned t
 | Auth (login, signup, session, middleware) | 🔜 Phase 3 |
 | Connect real data (replace mock) | 🔜 Phase 4 |
 
-> **Phase 1:** All screens use mock data. No Supabase, no auth, no database connected yet.
-> Create/edit/delete update local React state only — changes reset on page refresh.
+> **Phase 1:** All screens use shared mock/local state (React Context + useReducer). No Supabase, no auth, no database connected yet.
+> Mutations (create/edit/delete/mark-done/checklist) update a single shared store so all pages stay consistent.
+> State resets on hard-refresh — full persistence is planned for Phase 2 (Supabase).
 
 ---
 
@@ -121,7 +122,7 @@ screenshots/              App screenshots
 
 ## Current Phase: Phase 1 Complete — Next: Phase 2 Supabase Schema
 
-Phase 1 delivered every screen as a fully working static UI with mock data, including the full Calendar page with monthly view, task/deadline plotting, filters, selected-date detail panel, and upcoming deadlines sidebar.
+Phase 1 delivered every screen as a fully working UI driven by shared mock/local state. All pages (Dashboard, Tasks, Projects, Calendar, Courses) read from and write to a single React Context store, so mutations made on one page are immediately reflected everywhere else. Checklist toggles, task creation, project task assignment, and project completion all propagate correctly across the app. Full persistence and auth remain planned for Phase 2 (Supabase).
 
 **Phase 2** will set up the Supabase project: create all tables (profiles, courses, personal_tasks, projects, project_members, project_tasks, project_links), write Row Level Security policies, and prepare SQL migration scripts.
 

@@ -5,9 +5,10 @@ import { useRouter } from 'next/navigation'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { Topbar } from '@/components/layout/Topbar'
 import { TaskDetailModal } from '@/components/tasks/TaskDetailModal'
-import { getMockTaskCards, getMockProjectCards, MOCK_MEMBERS } from '@/data/mock'
+import { useMockStore, deriveTaskCards, deriveProjectCards } from '@/store/mockStore'
+import { MOCK_MEMBERS } from '@/data/mock'
 import { formatFullDate } from '@/lib/utils'
-import type { TaskCardData } from '@/types'
+import type { TaskCardData, TaskChecklistItem } from '@/types'
 
 type FilterType = 'all' | 'personal' | 'group' | 'critical'
 
@@ -56,6 +57,7 @@ function itemPillClass(item: CalendarItem): string {
 
 export default function CalendarPage() {
   const router = useRouter()
+  const { state, dispatch } = useMockStore()
 
   const now = new Date()
   const todayKey = toDateKey(now)
@@ -66,8 +68,8 @@ export default function CalendarPage() {
   const [filter, setFilter] = useState<FilterType>('all')
   const [selectedTask, setSelectedTask] = useState<TaskCardData | null>(null)
 
-  const allTasks = useMemo(() => getMockTaskCards(), [])
-  const allProjects = useMemo(() => getMockProjectCards(), [])
+  const allTasks = useMemo(() => deriveTaskCards(state), [state])
+  const allProjects = useMemo(() => deriveProjectCards(state), [state])
 
   const activeTasks = useMemo(() => allTasks.filter((t) => t.status !== 'done'), [allTasks])
   const activeProjects = useMemo(() => allProjects.filter((p) => p.status === 'active'), [allProjects])
@@ -147,6 +149,15 @@ export default function CalendarPage() {
       .slice(0, 8)
       .map(([dateKey, items]) => ({ dateKey, items }))
   }, [filteredTasks, activeProjects, filter, todayKey])
+
+  const handleChecklistUpdate = (taskId: string, checklist: TaskChecklistItem[]) => {
+    const isPersonal = state.personalTasks.some((t) => t.id === taskId)
+    if (isPersonal) {
+      dispatch({ type: 'UPDATE_PERSONAL_TASK_CHECKLIST', id: taskId, checklist })
+    } else {
+      dispatch({ type: 'UPDATE_PROJECT_TASK_CHECKLIST', id: taskId, checklist })
+    }
+  }
 
   const getDateLabel = (dateKey: string) => {
     if (dateKey === todayKey) return 'Today'
@@ -445,6 +456,7 @@ export default function CalendarPage() {
         task={selectedTask}
         open={!!selectedTask}
         onClose={() => setSelectedTask(null)}
+        onChecklistUpdate={handleChecklistUpdate}
         assigneeName={
           selectedTask?.assigned_to ? MOCK_MEMBERS[selectedTask.assigned_to]?.name : undefined
         }

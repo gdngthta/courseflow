@@ -18,6 +18,7 @@ interface TaskDetailModalProps {
   onDelete?: (task: TaskCardData) => void
   onMarkDone?: (task: TaskCardData) => void
   onUpdateNotes?: (task: TaskCardData, notes: string) => void
+  onChecklistUpdate?: (taskId: string, checklist: TaskChecklistItem[]) => void
   userRole?: ProjectRole
   assigneeName?: string
 }
@@ -30,6 +31,7 @@ export function TaskDetailModal({
   onDelete,
   onMarkDone,
   onUpdateNotes,
+  onChecklistUpdate,
   userRole,
   assigneeName,
 }: TaskDetailModalProps) {
@@ -95,9 +97,11 @@ export function TaskDetailModal({
   }
 
   const toggleChecklistItem = (id: string) => {
-    setChecklist((prev) =>
-      prev.map((item) => item.id === id ? { ...item, done: !item.done } : item)
-    )
+    setChecklist((prev) => {
+      const updated = prev.map((item) => item.id === id ? { ...item, done: !item.done } : item)
+      if (task) onChecklistUpdate?.(task.id, updated)
+      return updated
+    })
   }
 
   const handleSaveNotes = () => {

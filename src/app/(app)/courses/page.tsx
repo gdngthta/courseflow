@@ -7,11 +7,12 @@ import { CourseCard } from '@/components/courses/CourseCard'
 import { CourseFormModal, type CourseFormData } from '@/components/courses/CourseFormModal'
 import { ConfirmModal } from '@/components/ui/ConfirmModal'
 import { NoCoursesEmpty } from '@/components/ui/EmptyState'
-import { MOCK_COURSES, MOCK_PERSONAL_TASKS, MOCK_PROJECT_TASKS, MOCK_PROJECTS } from '@/data/mock'
+import { useMockStore } from '@/store/mockStore'
 import type { Course } from '@/types'
 
 export default function CoursesPage() {
-  const [courses, setCourses] = useState<Course[]>(MOCK_COURSES)
+  const { state, dispatch } = useMockStore()
+
   const [activeTab, setActiveTab] = useState<'active' | 'archived'>('active')
   const [searchQuery, setSearchQuery] = useState('')
   const [showAddModal, setShowAddModal] = useState(false)
@@ -19,36 +20,35 @@ export default function CoursesPage() {
   const [archivingCourse, setArchivingCourse] = useState<Course | null>(null)
 
   const filtered = useMemo(() => {
-    let result = courses.filter((c) => c.is_archived === (activeTab === 'archived'))
+    let result = state.courses.filter((c) => c.is_archived === (activeTab === 'archived'))
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase()
       result = result.filter((c) => c.code.toLowerCase().includes(q) || c.name.toLowerCase().includes(q))
     }
     return result
-  }, [courses, activeTab, searchQuery])
+  }, [state.courses, activeTab, searchQuery])
 
   const getTaskCount = (courseId: string) =>
-    MOCK_PERSONAL_TASKS.filter((t) => t.course_id === courseId && t.status !== 'done').length
+    state.personalTasks.filter((t) => t.course_id === courseId && t.status !== 'done').length
 
   const getProjectCount = (courseId: string) =>
-    MOCK_PROJECTS.filter((p) => p.course_id === courseId).length
+    state.projects.filter((p) => p.course_id === courseId).length
 
   const getNextDeadline = (courseId: string): string | undefined => {
     const today = new Date().toISOString().split('T')[0]
-    const taskDates = MOCK_PERSONAL_TASKS
+    const taskDates = state.personalTasks
       .filter((t) => t.course_id === courseId && t.due_date >= today && t.status !== 'done')
       .map((t) => t.due_date)
-    const projectDates = MOCK_PROJECTS
+    const projectDates = state.projects
       .filter((p) => p.course_id === courseId && p.deadline >= today)
       .map((p) => p.deadline)
-    const all = [...taskDates, ...projectDates].sort()
-    return all[0]
+    return [...taskDates, ...projectDates].sort()[0]
   }
 
   const handleAdd = (data: CourseFormData) => {
     const newCourse: Course = {
       id: `c-${Date.now()}`,
-      user_id: 'user-1',
+      user_id: state.currentUser.id,
       code: data.code,
       name: data.name,
       lecturer: data.lecturer || undefined,
@@ -57,32 +57,33 @@ export default function CoursesPage() {
       is_archived: false,
       created_at: new Date().toISOString(),
     }
-    setCourses((prev) => [...prev, newCourse])
+    dispatch({ type: 'ADD_COURSE', course: newCourse })
   }
 
   const handleEdit = (data: CourseFormData) => {
-    setCourses((prev) =>
-      prev.map((c) =>
-        c.id === editingCourse?.id
-          ? { ...c, code: data.code, name: data.name, lecturer: data.lecturer, semester: data.semester, color: data.color }
-          : c
-      )
-    )
+    if (!editingCourse) return
+    dispatch({
+      type: 'UPDATE_COURSE',
+      course: {
+        ...editingCourse,
+        code: data.code,
+        name: data.name,
+        lecturer: data.lecturer || undefined,
+        semester: data.semester || undefined,
+        color: data.color,
+      },
+    })
     setEditingCourse(null)
   }
 
   const handleArchive = () => {
     if (!archivingCourse) return
-    setCourses((prev) =>
-      prev.map((c) => c.id === archivingCourse.id ? { ...c, is_archived: true } : c)
-    )
+    dispatch({ type: 'SET_COURSE_ARCHIVED', id: archivingCourse.id, archived: true })
     setArchivingCourse(null)
   }
 
   const handleUnarchive = (course: Course) => {
-    setCourses((prev) =>
-      prev.map((c) => c.id === course.id ? { ...c, is_archived: false } : c)
-    )
+    dispatch({ type: 'SET_COURSE_ARCHIVED', id: course.id, archived: false })
   }
 
   return (

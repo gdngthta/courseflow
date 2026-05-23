@@ -1,41 +1,40 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import Link from 'next/link'
 import { Calendar, ArrowRight } from 'lucide-react'
 import { Topbar } from '@/components/layout/Topbar'
 import { TaskCard } from '@/components/tasks/TaskCard'
 import { TaskDetailModal } from '@/components/tasks/TaskDetailModal'
 import { RiskBadge } from '@/components/ui/Badge'
-import { ProgressBar } from '@/components/ui/ProgressBar'
 import { NoCriticalEmpty } from '@/components/ui/EmptyState'
 import { OwlMascot } from '@/components/brand/OwlMascot'
-import { getMockTaskCards, getMockProjectCards, MOCK_COURSES, MOCK_USER, MOCK_MEMBERS } from '@/data/mock'
-import { formatDueDate, formatFullDate } from '@/lib/utils'
-import type { TaskCardData } from '@/types'
+import { useMockStore, deriveTaskCards, deriveProjectCards } from '@/store/mockStore'
+import { MOCK_MEMBERS } from '@/data/mock'
+import { formatDueDate } from '@/lib/utils'
+import type { TaskCardData, TaskChecklistItem } from '@/types'
 
 export default function DashboardPage() {
+  const { state, dispatch } = useMockStore()
   const [selectedTask, setSelectedTask] = useState<TaskCardData | null>(null)
 
-  const allTasks = getMockTaskCards()
-  const allProjects = getMockProjectCards()
-  const activeProjects = allProjects.filter((p) => p.status === 'active')
+  const allTasks = useMemo(() => deriveTaskCards(state), [state])
+  const allProjects = useMemo(() => deriveProjectCards(state), [state])
+  const activeCourses = useMemo(() => state.courses.filter((c) => !c.is_archived), [state.courses])
+  const activeProjects = useMemo(() => allProjects.filter((p) => p.status === 'active'), [allProjects])
 
   const today = new Date().toISOString().split('T')[0]
-  const todayTasks = allTasks.filter(
-    (t) => t.status !== 'done' && t.due_date <= today
-  )
+  const todayTasks = allTasks.filter((t) => t.status !== 'done' && t.due_date <= today)
   const criticalTasks = allTasks.filter((t) => t.risk === 'critical')
   const upcomingTasks = allTasks
     .filter((t) => t.status !== 'done' && t.due_date > today)
     .sort((a, b) => a.due_date.localeCompare(b.due_date))
     .slice(0, 6)
-  const activeCourses = MOCK_COURSES.filter((c) => !c.is_archived)
 
   const summaryCards = [
-    { label: "Today's Tasks", value: todayTasks.length, sub: `${todayTasks.filter(t => t.risk === 'critical').length} critical` },
+    { label: "Today's Tasks", value: todayTasks.length, sub: `${todayTasks.filter((t) => t.risk === 'critical').length} critical` },
     { label: 'Critical Tasks', value: criticalTasks.length, sub: 'Need attention', accent: true },
-    { label: 'Active Projects', value: activeProjects.length, sub: `${activeProjects.filter(p => p.risk !== 'safe').length} need attention` },
+    { label: 'Active Projects', value: activeProjects.length, sub: `${activeProjects.filter((p) => p.risk !== 'safe').length} need attention` },
     { label: 'Active Courses', value: activeCourses.length, sub: 'This semester' },
   ]
 
@@ -49,6 +48,15 @@ export default function DashboardPage() {
     upcomingByDate[t.due_date].push(t)
   })
 
+  const handleChecklistUpdate = (taskId: string, checklist: TaskChecklistItem[]) => {
+    const isPersonal = state.personalTasks.some((t) => t.id === taskId)
+    if (isPersonal) {
+      dispatch({ type: 'UPDATE_PERSONAL_TASK_CHECKLIST', id: taskId, checklist })
+    } else {
+      dispatch({ type: 'UPDATE_PROJECT_TASK_CHECKLIST', id: taskId, checklist })
+    }
+  }
+
   return (
     <>
       <Topbar title="Dashboard" />
@@ -56,7 +64,7 @@ export default function DashboardPage() {
         {/* Greeting */}
         <div className="mb-6">
           <h2 className="text-xl font-semibold text-white">
-            Good morning, {MOCK_USER.first_name} 👋
+            Good morning, {state.currentUser.first_name} 👋
           </h2>
           <p className="text-sm text-slate-400 mt-0.5">
             Here&apos;s what&apos;s happening with your coursework today.
@@ -84,7 +92,7 @@ export default function DashboardPage() {
 
         {/* Main content grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left col: Today's Priority */}
+          {/* Left col: Today's Priority + Critical Risk */}
           <div className="lg:col-span-2 flex flex-col gap-6">
             <section>
               <div className="flex items-center justify-between mb-4">
@@ -106,7 +114,6 @@ export default function DashboardPage() {
               )}
             </section>
 
-            {/* Critical Risk */}
             <section>
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-sm font-semibold text-white">Critical Risk</h3>
@@ -126,7 +133,7 @@ export default function DashboardPage() {
             </section>
           </div>
 
-          {/* Right col: Upcoming + Course overview */}
+          {/* Right col */}
           <div className="flex flex-col gap-6">
             {/* Upcoming Deadlines */}
             <section className="bg-slate-900 border border-slate-800 rounded-xl p-5">
@@ -149,11 +156,7 @@ export default function DashboardPage() {
                       </div>
                       <div className="space-y-1.5 pl-4 border-l border-slate-800">
                         {tasks.map((t) => (
-                          <button
-                            key={t.id}
-                            onClick={() => setSelectedTask(t)}
-                            className="w-full text-left"
-                          >
+                          <button key={t.id} onClick={() => setSelectedTask(t)} className="w-full text-left">
                             <p className="text-xs text-slate-300 hover:text-white transition-colors truncate">{t.title}</p>
                             <p className="text-xs text-slate-500 truncate">{t.source_label}</p>
                           </button>
@@ -175,15 +178,13 @@ export default function DashboardPage() {
                   {criticalTasks.length > 0
                     ? `${criticalTasks.length} critical task${criticalTasks.length !== 1 ? 's' : ''} need${criticalTasks.length === 1 ? 's' : ''} attention.`
                     : todayTasks.length > 0
-                    ? 'Clear today\'s tasks before they pile up.'
-                    : 'No urgent tasks right now. Keep up the pace.'
-                  }
+                    ? "Clear today's tasks before they pile up."
+                    : 'No urgent tasks right now. Keep up the pace.'}
                 </p>
                 <p className="text-xs text-slate-500 mt-0.5">
                   {criticalTasks.length > 0
                     ? 'Focus on these before new work comes in.'
-                    : 'Your schedule is looking healthy.'
-                  }
+                    : 'Your schedule is looking healthy.'}
                 </p>
               </div>
             </div>
@@ -198,8 +199,7 @@ export default function DashboardPage() {
               </div>
               <div className="space-y-3">
                 {activeCourses.map((course) => {
-                  const courseTasks = getMockTaskCards().filter((t) => t.course_id === course.id && t.status !== 'done')
-                  const courseProjects = activeProjects.filter((p) => p.course_code === course.code)
+                  const courseTasks = allTasks.filter((t) => t.course_id === course.id && t.status !== 'done')
                   const hasRisk = courseTasks.some((t) => t.risk === 'critical')
                   return (
                     <div key={course.id} className="bg-slate-900 border border-slate-800 rounded-xl p-4 flex items-center gap-3">
@@ -223,6 +223,7 @@ export default function DashboardPage() {
         task={selectedTask}
         open={!!selectedTask}
         onClose={() => setSelectedTask(null)}
+        onChecklistUpdate={handleChecklistUpdate}
         assigneeName={selectedTask ? getAssigneeName(selectedTask) : undefined}
       />
     </>

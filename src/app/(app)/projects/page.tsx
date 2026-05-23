@@ -7,19 +7,26 @@ import { Topbar } from '@/components/layout/Topbar'
 import { ProjectCard } from '@/components/projects/ProjectCard'
 import { CreateProjectModal, type CreateProjectData } from '@/components/projects/CreateProjectModal'
 import { NoProjectsEmpty } from '@/components/ui/EmptyState'
-import { getMockProjectCards, MOCK_COURSES } from '@/data/mock'
-import type { ProjectCardData } from '@/types'
+import { useMockStore, deriveProjectCards } from '@/store/mockStore'
+import type { Project, ProjectMember } from '@/types'
 
 export default function ProjectsPage() {
   const router = useRouter()
-  const [projects, setProjects] = useState<ProjectCardData[]>(getMockProjectCards())
+  const { state, dispatch } = useMockStore()
+
   const [activeTab, setActiveTab] = useState<'active' | 'completed'>('active')
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCourse, setSelectedCourse] = useState('all')
 
+  const projects = useMemo(() => deriveProjectCards(state), [state])
+
   // Only non-archived courses in filter dropdown
-  const activeCourses = MOCK_COURSES.filter((c) => !c.is_archived)
+  const activeCourses = useMemo(
+    () => state.courses.filter((c) => !c.is_archived),
+    [state.courses]
+  )
+
   const courseFilterOptions = [
     { value: 'all', label: 'All Courses' },
     ...activeCourses.map((c) => ({ value: c.id, label: `${c.code} — ${c.name}` })),
@@ -28,7 +35,7 @@ export default function ProjectsPage() {
   const filtered = useMemo(() => {
     let result = projects.filter((p) => p.status === activeTab)
     if (selectedCourse !== 'all') {
-      const course = MOCK_COURSES.find((c) => c.id === selectedCourse)
+      const course = state.courses.find((c) => c.id === selectedCourse)
       if (course) result = result.filter((p) => p.course_code === course.code)
     }
     if (searchQuery.trim()) {
@@ -36,26 +43,30 @@ export default function ProjectsPage() {
       result = result.filter((p) => p.name.toLowerCase().includes(q) || p.course_name.toLowerCase().includes(q))
     }
     return result
-  }, [projects, activeTab, searchQuery, selectedCourse])
+  }, [projects, activeTab, searchQuery, selectedCourse, state.courses])
 
   const activeCount = projects.filter((p) => p.status === 'active').length
   const completedCount = projects.filter((p) => p.status === 'completed').length
 
   const handleCreate = (data: CreateProjectData) => {
-    const course = MOCK_COURSES.find((c) => c.id === data.course_id)
-    const newProject: ProjectCardData = {
-      id: `proj-${Date.now()}`,
+    const id = `proj-${Date.now()}`
+    const newProject: Project = {
+      id,
       name: data.name,
-      course_code: course?.code ?? '',
-      course_name: course?.name ?? '',
+      course_id: data.course_id,
       deadline: data.deadline,
-      member_count: 1,
-      user_role: 'leader',
-      progress: 0,
-      risk: 'safe',
       status: 'active',
+      created_by: state.currentUser.id,
+      created_at: new Date().toISOString(),
     }
-    setProjects((prev) => [newProject, ...prev])
+    const userMember: ProjectMember = {
+      id: `pm-${Date.now()}`,
+      project_id: id,
+      user_id: state.currentUser.id,
+      role: 'leader',
+      joined_at: new Date().toISOString(),
+    }
+    dispatch({ type: 'ADD_PROJECT', project: newProject, userMember })
   }
 
   return (

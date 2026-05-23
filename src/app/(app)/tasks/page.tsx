@@ -7,9 +7,10 @@ import { TaskCard } from '@/components/tasks/TaskCard'
 import { TaskDetailModal } from '@/components/tasks/TaskDetailModal'
 import { TaskFormModal, type TaskFormData } from '@/components/tasks/TaskFormModal'
 import { NoTasksEmpty } from '@/components/ui/EmptyState'
-import { getMockTaskCards, MOCK_COURSES, MOCK_MEMBERS } from '@/data/mock'
+import { useMockStore, deriveTaskCards } from '@/store/mockStore'
+import { MOCK_MEMBERS } from '@/data/mock'
 import { calculateRisk } from '@/lib/risk'
-import type { TaskCardData } from '@/types'
+import type { TaskCardData, PersonalTask, TaskChecklistItem } from '@/types'
 
 type Tab = 'all' | 'personal' | 'assigned' | 'critical' | 'completed'
 
@@ -22,7 +23,8 @@ const TABS: { id: Tab; label: string }[] = [
 ]
 
 export default function TasksPage() {
-  const [tasks, setTasks] = useState<TaskCardData[]>(getMockTaskCards())
+  const { state, dispatch } = useMockStore()
+
   const [activeTab, setActiveTab] = useState<Tab>('all')
   const [selectedCourse, setSelectedCourse] = useState('all')
   const [searchQuery, setSearchQuery] = useState('')
@@ -30,8 +32,11 @@ export default function TasksPage() {
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [editingTask, setEditingTask] = useState<TaskCardData | null>(null)
 
+  // Derive all task cards from shared state
+  const allTasks = useMemo(() => deriveTaskCards(state), [state])
+
   const filteredTasks = useMemo(() => {
-    let result = tasks
+    let result = allTasks
 
     if (activeTab === 'personal') result = result.filter((t) => t.type === 'personal')
     else if (activeTab === 'assigned') result = result.filter((t) => t.type === 'group')
@@ -46,20 +51,55 @@ export default function TasksPage() {
     }
 
     return result
-  }, [tasks, activeTab, selectedCourse, searchQuery])
+  }, [allTasks, activeTab, selectedCourse, searchQuery])
+
+  // Only non-archived courses for dropdowns
+  const activeCourses = useMemo(
+    () => state.courses.filter((c) => !c.is_archived),
+    [state.courses]
+  )
+
+  const courseFilterOptions = [
+    { value: 'all', label: 'All Courses' },
+    ...activeCourses.map((c) => ({ value: c.id, label: `${c.code} — ${c.name}` })),
+  ]
+
+  // ── Handlers ──
 
   const handleCreate = (data: TaskFormData) => {
-    const course = MOCK_COURSES.find((c) => c.id === data.course_id)
-    const newTask: TaskCardData = {
+    const newTask: PersonalTask = {
       id: `pt-${Date.now()}`,
+      user_id: state.currentUser.id,
+      course_id: data.course_id || undefined,
       title: data.title,
       type: 'personal',
       status: data.status,
-      risk: calculateRisk({ status: data.status, due_date: data.due_date, progress: data.progress, difficulty: data.difficulty }),
       difficulty: data.difficulty,
       progress: data.progress,
       due_date: data.due_date,
-      source_label: course ? `${course.code} — ${course.name}` : 'No course',
+      notes: data.notes || undefined,
+      links: data.links.length > 0 ? data.links : undefined,
+      checklist: data.checklist.filter((i) => i.text.trim()).length > 0
+        ? data.checklist.filter((i) => i.text.trim())
+        : undefined,
+      created_at: new Date().toISOString(),
+    }
+    dispatch({ type: 'ADD_PERSONAL_TASK', task: newTask })
+  }
+
+  const handleEdit = (task: TaskCardData) => setEditingTask(task)
+
+  const handleEditSubmit = (data: TaskFormData) => {
+    if (!editingTask) return
+    const existing = state.personalTasks.find((t) => t.id === editingTask.id)
+    if (!existing) return
+    const updated: PersonalTask = {
+      ...existing,
+      title: data.title,
+      status: data.status,
+      difficulty: data.difficulty,
+      progress: data.progress,
+      due_date: data.due_date,
       course_id: data.course_id || undefined,
       notes: data.notes || undefined,
       links: data.links.length > 0 ? data.links : undefined,
@@ -67,56 +107,37 @@ export default function TasksPage() {
         ? data.checklist.filter((i) => i.text.trim())
         : undefined,
     }
-    setTasks((prev) => [newTask, ...prev])
-  }
-
-  const handleEdit = (task: TaskCardData) => setEditingTask(task)
-
-  const handleEditSubmit = (data: TaskFormData) => {
-    const course = MOCK_COURSES.find((c) => c.id === data.course_id)
-    setTasks((prev) =>
-      prev.map((t) =>
-        t.id === editingTask?.id
-          ? {
-              ...t,
-              title: data.title,
-              status: data.status,
-              difficulty: data.difficulty,
-              progress: data.progress,
-              due_date: data.due_date,
-              notes: data.notes || undefined,
-              links: data.links.length > 0 ? data.links : undefined,
-              checklist: data.checklist.filter((i) => i.text.trim()).length > 0
-                ? data.checklist.filter((i) => i.text.trim())
-                : undefined,
-              course_id: data.course_id || undefined,
-              source_label: course ? `${course.code} — ${course.name}` : 'No course',
-              risk: calculateRisk({ status: data.status, due_date: data.due_date, progress: data.progress, difficulty: data.difficulty }),
-            }
-          : t
-      )
-    )
+    dispatch({ type: 'UPDATE_PERSONAL_TASK', task: updated })
     setEditingTask(null)
   }
 
   const handleDelete = (task: TaskCardData) => {
-    setTasks((prev) => prev.filter((t) => t.id !== task.id))
+    // Only personal tasks have Delete from My Tasks (group tasks hide the button)
+    dispatch({ type: 'DELETE_PERSONAL_TASK', id: task.id })
   }
 
   const handleMarkDone = (task: TaskCardData) => {
-    setTasks((prev) =>
-      prev.map((t) =>
-        t.id === task.id ? { ...t, status: 'done', progress: 100, risk: 'completed' } : t
-      )
-    )
+    if (task.type === 'personal') {
+      const existing = state.personalTasks.find((t) => t.id === task.id)
+      if (existing) {
+        dispatch({ type: 'UPDATE_PERSONAL_TASK', task: { ...existing, status: 'done', progress: 100 } })
+      }
+    } else {
+      const existing = state.projectTasks.find((t) => t.id === task.id)
+      if (existing) {
+        dispatch({ type: 'UPDATE_PROJECT_TASK', task: { ...existing, status: 'done', progress: 100 } })
+      }
+    }
   }
 
-  const activeCourses = MOCK_COURSES.filter((c) => !c.is_archived)
-
-  const courseFilterOptions = [
-    { value: 'all', label: 'All Courses' },
-    ...activeCourses.map((c) => ({ value: c.id, label: `${c.code} — ${c.name}` })),
-  ]
+  const handleChecklistUpdate = (taskId: string, checklist: TaskChecklistItem[]) => {
+    const isPersonal = state.personalTasks.some((t) => t.id === taskId)
+    if (isPersonal) {
+      dispatch({ type: 'UPDATE_PERSONAL_TASK_CHECKLIST', id: taskId, checklist })
+    } else {
+      dispatch({ type: 'UPDATE_PROJECT_TASK_CHECKLIST', id: taskId, checklist })
+    }
+  }
 
   return (
     <>
@@ -200,6 +221,7 @@ export default function TasksPage() {
         onEdit={handleEdit}
         onDelete={handleDelete}
         onMarkDone={handleMarkDone}
+        onChecklistUpdate={handleChecklistUpdate}
         assigneeName={selectedTask?.assigned_to ? MOCK_MEMBERS[selectedTask.assigned_to]?.name : undefined}
       />
 
