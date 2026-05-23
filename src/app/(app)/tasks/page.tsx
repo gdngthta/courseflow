@@ -61,7 +61,11 @@ export default function TasksPage() {
       due_date: data.due_date,
       source_label: course ? `${course.code} — ${course.name}` : 'No course',
       course_id: data.course_id || undefined,
-      notes: data.notes,
+      notes: data.notes || undefined,
+      links: data.links.length > 0 ? data.links : undefined,
+      checklist: data.checklist.filter((i) => i.text.trim()).length > 0
+        ? data.checklist.filter((i) => i.text.trim())
+        : undefined,
     }
     setTasks((prev) => [newTask, ...prev])
   }
@@ -80,7 +84,11 @@ export default function TasksPage() {
               difficulty: data.difficulty,
               progress: data.progress,
               due_date: data.due_date,
-              notes: data.notes,
+              notes: data.notes || undefined,
+              links: data.links.length > 0 ? data.links : undefined,
+              checklist: data.checklist.filter((i) => i.text.trim()).length > 0
+                ? data.checklist.filter((i) => i.text.trim())
+                : undefined,
               course_id: data.course_id || undefined,
               source_label: course ? `${course.code} — ${course.name}` : 'No course',
               risk: calculateRisk({ status: data.status, due_date: data.due_date, progress: data.progress, difficulty: data.difficulty }),

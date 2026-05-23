@@ -68,6 +68,10 @@ export default function ProjectDetailPage() {
       source_label: project.name,
       project_id: project.id,
       notes: data.notes || undefined,
+      links: data.links.length > 0 ? data.links : undefined,
+      checklist: data.checklist.filter((i) => i.text.trim()).length > 0
+        ? data.checklist.filter((i) => i.text.trim())
+        : undefined,
       assigned_to: data.assigned_to || undefined,
     }
     setTasks((prev) => [...prev, newTask])
