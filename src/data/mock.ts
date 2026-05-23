@@ -1,5 +1,6 @@
-// Mock data — used throughout the app until Supabase is connected (Phase 1+)
+// Mock data — used throughout the app until Supabase is connected (Phase 2+)
 // All dates are relative to 2026-05-23 (current date during development)
+// Phase 1: Static UI only — no real backend, no auth, no database.
 
 import type { Course, PersonalTask, ProjectTask, Project, ProjectMember, ProjectLink, User, TaskCardData, ProjectCardData } from '@/types'
 import { calculateRisk, calculateProjectRisk } from '@/lib/risk'
@@ -9,6 +10,14 @@ export const MOCK_USER: User = {
   email: 'gadingtahta09@gmail.com',
   first_name: 'Gading',
   last_name: 'Student',
+}
+
+// Other project members (display names for UI)
+export const MOCK_MEMBERS: Record<string, { name: string; email: string }> = {
+  'user-1': { name: 'Gading (You)', email: 'gadingtahta09@gmail.com' },
+  'user-2': { name: 'Sarah Chen', email: 'sarah@university.edu' },
+  'user-3': { name: 'Ahmad Razif', email: 'ahmad@university.edu' },
+  'user-4': { name: 'Lim Wei', email: 'limwei@university.edu' },
 }
 
 export const MOCK_COURSES: Course[] = [
@@ -170,4 +179,51 @@ export function getMockProjectCards(): ProjectCardData[] {
       risk: calculateProjectRisk(tasks),
     }
   })
+}
+
+// Full detail for a single project page
+export function getMockProjectDetail(projectId: string) {
+  const project = MOCK_PROJECTS.find((p) => p.id === projectId)
+  if (!project) return null
+
+  const course = MOCK_COURSES.find((c) => c.id === project.course_id)
+  const members = MOCK_PROJECT_MEMBERS.filter((m) => m.project_id === projectId)
+  const tasks = MOCK_PROJECT_TASKS.filter((t) => t.project_id === projectId)
+  const links = MOCK_PROJECT_LINKS.filter((l) => l.project_id === projectId)
+  const userMember = members.find((m) => m.user_id === MOCK_USER.id)
+  const completedTasks = tasks.filter((t) => t.status === 'done').length
+  const progress = tasks.length > 0 ? Math.round((completedTasks / tasks.length) * 100) : 0
+
+  const enrichedMembers = members.map((m) => ({
+    ...m,
+    name: MOCK_MEMBERS[m.user_id]?.name ?? m.user_id,
+    email: MOCK_MEMBERS[m.user_id]?.email ?? '',
+  }))
+
+  const enrichedTasks: TaskCardData[] = tasks.map((t) => ({
+    id: t.id,
+    title: t.title,
+    type: 'group',
+    status: t.status,
+    risk: calculateRisk({ status: t.status, due_date: t.due_date, progress: t.progress, difficulty: t.difficulty }),
+    difficulty: t.difficulty,
+    progress: t.progress,
+    due_date: t.due_date,
+    source_label: project.name,
+    project_id: project.id,
+    notes: t.notes,
+    assigned_to: t.assigned_to,
+  }))
+
+  return {
+    project,
+    course,
+    members: enrichedMembers,
+    tasks: enrichedTasks,
+    rawTasks: tasks,
+    links,
+    userRole: userMember?.role ?? 'member',
+    progress,
+    risk: calculateProjectRisk(tasks),
+  }
 }
