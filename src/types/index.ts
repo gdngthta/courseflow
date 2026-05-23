@@ -82,6 +82,17 @@ export interface User {
 
 // Normalised view types used by UI components
 
+export interface TaskLink {
+  label: string
+  url: string
+}
+
+export interface TaskChecklistItem {
+  id: string
+  text: string
+  done: boolean
+}
+
 export interface TaskCardData {
   id: string
   title: string
@@ -95,6 +106,8 @@ export interface TaskCardData {
   project_id?: string
   course_id?: string
   notes?: string
+  links?: TaskLink[]
+  checklist?: TaskChecklistItem[]
   assigned_to?: string
 }
 

@@ -21,6 +21,7 @@ export interface AddProjectTaskData {
   assigned_to: string
   due_date: string
   difficulty: Difficulty
+  notes: string
 }
 
 const DIFFICULTY_OPTIONS = [
@@ -33,7 +34,7 @@ const DIFFICULTY_OPTIONS = [
 
 export function AddProjectTaskModal({ open, onClose, onSubmit, members }: AddProjectTaskModalProps) {
   const [form, setForm] = useState<AddProjectTaskData>({
-    title: '', assigned_to: '', due_date: '', difficulty: 3,
+    title: '', assigned_to: '', due_date: '', difficulty: 3, notes: '',
   })
   const [errors, setErrors] = useState<Partial<Record<keyof AddProjectTaskData, string>>>({})
 
@@ -50,7 +51,7 @@ export function AddProjectTaskModal({ open, onClose, onSubmit, members }: AddPro
   const handleSubmit = () => {
     if (!validate()) return
     onSubmit(form)
-    setForm({ title: '', assigned_to: '', due_date: '', difficulty: 3 })
+    setForm({ title: '', assigned_to: '', due_date: '', difficulty: 3, notes: '' })
     onClose()
   }
 
@@ -86,6 +87,17 @@ export function AddProjectTaskModal({ open, onClose, onSubmit, members }: AddPro
             onChange={(e) => setForm({ ...form, difficulty: Number(e.target.value) as Difficulty })}
           />
         </div>
+        <div className="flex flex-col gap-1.5">
+          <label className="text-xs font-medium text-slate-300">Instructions / Notes (Optional)</label>
+          <textarea
+            rows={3}
+            placeholder="Add instructions or context for the assigned member..."
+            value={form.notes}
+            onChange={(e) => setForm({ ...form, notes: e.target.value })}
+            className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-sm text-slate-200 placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:border-indigo-500 focus:ring-indigo-500 transition resize-none"
+          />
+        </div>
+
         <div className="flex justify-end gap-3 pt-2">
           <Button variant="secondary" onClick={onClose}>Cancel</Button>
           <Button variant="primary" onClick={handleSubmit}>Add Task</Button>

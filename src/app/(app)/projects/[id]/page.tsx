@@ -67,9 +67,16 @@ export default function ProjectDetailPage() {
       due_date: data.due_date,
       source_label: project.name,
       project_id: project.id,
+      notes: data.notes || undefined,
       assigned_to: data.assigned_to || undefined,
     }
     setTasks((prev) => [...prev, newTask])
+  }
+
+  const handleUpdateNotes = (task: TaskCardData, notes: string) => {
+    setTasks((prev) =>
+      prev.map((t) => t.id === task.id ? { ...t, notes } : t)
+    )
   }
 
   const handleDeleteTask = (task: TaskCardData) => {
@@ -277,6 +284,7 @@ export default function ProjectDetailPage() {
         onClose={() => setSelectedTask(null)}
         onDelete={isCompleted ? undefined : handleDeleteTask}
         onMarkDone={isCompleted ? undefined : handleMarkDone}
+        onUpdateNotes={isCompleted ? undefined : handleUpdateNotes}
         userRole={userRole}
         assigneeName={selectedTask?.assigned_to ? MOCK_MEMBERS[selectedTask.assigned_to]?.name : undefined}
       />
