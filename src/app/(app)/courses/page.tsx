@@ -79,6 +79,12 @@ export default function CoursesPage() {
     setArchivingCourse(null)
   }
 
+  const handleUnarchive = (course: Course) => {
+    setCourses((prev) =>
+      prev.map((c) => c.id === course.id ? { ...c, is_archived: false } : c)
+    )
+  }
+
   return (
     <>
       <Topbar title="Courses" />
@@ -134,6 +140,7 @@ export default function CoursesPage() {
                 nextDeadline={getNextDeadline(course.id)}
                 onEdit={(c) => setEditingCourse(c)}
                 onArchive={(c) => setArchivingCourse(c)}
+                onUnarchive={handleUnarchive}
               />
             ))}
           </div>
@@ -160,7 +167,7 @@ export default function CoursesPage() {
         onClose={() => setArchivingCourse(null)}
         onConfirm={handleArchive}
         title="Archive Course"
-        description={`Archive "${archivingCourse?.name}"? It will move to the Archived tab. Tasks and projects linked to this course are not deleted.`}
+        description={`Archive "${archivingCourse?.name}"? Existing tasks and projects will remain saved, but the course will be hidden from active planning views.`}
         confirmLabel="Archive"
       />
     </>

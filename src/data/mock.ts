@@ -25,6 +25,8 @@ export const MOCK_COURSES: Course[] = [
   { id: 'c2', user_id: 'user-1', code: 'WIA2001', name: 'Software Engineering', color: '#22c55e', is_archived: false, created_at: '2026-01-01' },
   { id: 'c3', user_id: 'user-1', code: 'WIA1005', name: 'Network Technology', color: '#f59e0b', is_archived: false, created_at: '2026-01-01' },
   { id: 'c4', user_id: 'user-1', code: 'HCI', name: 'Human Computer Interaction', color: '#ec4899', is_archived: false, created_at: '2026-01-01' },
+  // Archived course — kept for history, hidden from active planning views
+  { id: 'c5', user_id: 'user-1', code: 'WIA1001', name: 'Introduction to Computing', color: '#64748b', is_archived: true, created_at: '2025-07-01' },
 ]
 
 export const MOCK_PERSONAL_TASKS: PersonalTask[] = [
@@ -55,9 +57,10 @@ export const MOCK_PERSONAL_TASKS: PersonalTask[] = [
 ]
 
 export const MOCK_PROJECTS: Project[] = [
-  { id: 'proj1', name: 'WIA2005 Group Project', course_id: 'c1', deadline: '2026-05-30', created_by: 'user-1', created_at: '2026-04-01' },
-  { id: 'proj2', name: 'Research Paper', course_id: 'c2', deadline: '2026-06-15', created_by: 'user-2', created_at: '2026-04-10' },
-  { id: 'proj3', name: 'Final Presentation', course_id: 'c1', deadline: '2026-05-25', created_by: 'user-3', created_at: '2026-04-15' },
+  { id: 'proj1', name: 'WIA2005 Group Project', course_id: 'c1', deadline: '2026-05-30', status: 'active', created_by: 'user-1', created_at: '2026-04-01' },
+  { id: 'proj2', name: 'Research Paper', course_id: 'c2', deadline: '2026-06-15', status: 'active', created_by: 'user-2', created_at: '2026-04-10' },
+  // Completed project — shown in Completed / History tab, read-only
+  { id: 'proj3', name: 'Final Presentation', course_id: 'c1', deadline: '2026-05-25', status: 'completed', completed_at: '2026-05-22', created_by: 'user-3', created_at: '2026-04-15' },
 ]
 
 export const MOCK_PROJECT_MEMBERS: ProjectMember[] = [
@@ -177,6 +180,8 @@ export function getMockProjectCards(): ProjectCardData[] {
       user_role: userMember?.role ?? 'member',
       progress,
       risk: calculateProjectRisk(tasks),
+      status: p.status,
+      completed_at: p.completed_at,
     }
   })
 }

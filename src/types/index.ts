@@ -2,6 +2,7 @@ export type TaskType = 'personal' | 'group'
 export type TaskStatus = 'not_started' | 'in_progress' | 'done'
 export type RiskStatus = 'safe' | 'warning' | 'critical' | 'completed'
 export type ProjectRole = 'leader' | 'admin' | 'member'
+export type ProjectStatus = 'active' | 'completed'
 export type Difficulty = 1 | 2 | 3 | 4 | 5
 
 export interface Course {
@@ -50,6 +51,8 @@ export interface Project {
   course_id: string
   description?: string
   deadline: string
+  status: ProjectStatus
+  completed_at?: string
   created_by: string
   created_at: string
 }
@@ -105,4 +108,6 @@ export interface ProjectCardData {
   user_role: ProjectRole
   progress: number
   risk: RiskStatus
+  status: ProjectStatus
+  completed_at?: string
 }

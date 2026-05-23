@@ -103,9 +103,11 @@ export default function TasksPage() {
     )
   }
 
+  const activeCourses = MOCK_COURSES.filter((c) => !c.is_archived)
+
   const courseFilterOptions = [
     { value: 'all', label: 'All Courses' },
-    ...MOCK_COURSES.map((c) => ({ value: c.id, label: `${c.code} — ${c.name}` })),
+    ...activeCourses.map((c) => ({ value: c.id, label: `${c.code} — ${c.name}` })),
   ]
 
   return (
@@ -197,14 +199,14 @@ export default function TasksPage() {
         open={showCreateModal}
         onClose={() => setShowCreateModal(false)}
         onSubmit={handleCreate}
-        courses={MOCK_COURSES}
+        courses={activeCourses}
       />
 
       <TaskFormModal
         open={!!editingTask}
         onClose={() => setEditingTask(null)}
         onSubmit={handleEditSubmit}
-        courses={MOCK_COURSES}
+        courses={activeCourses}
         editingTask={editingTask}
       />
     </>

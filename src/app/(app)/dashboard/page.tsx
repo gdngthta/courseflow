@@ -17,7 +17,8 @@ export default function DashboardPage() {
   const [selectedTask, setSelectedTask] = useState<TaskCardData | null>(null)
 
   const allTasks = getMockTaskCards()
-  const projects = getMockProjectCards()
+  const allProjects = getMockProjectCards()
+  const activeProjects = allProjects.filter((p) => p.status === 'active')
 
   const today = new Date().toISOString().split('T')[0]
   const todayTasks = allTasks.filter(
@@ -33,7 +34,7 @@ export default function DashboardPage() {
   const summaryCards = [
     { label: "Today's Tasks", value: todayTasks.length, sub: `${todayTasks.filter(t => t.risk === 'critical').length} critical` },
     { label: 'Critical Tasks', value: criticalTasks.length, sub: 'Need attention', accent: true },
-    { label: 'Active Projects', value: projects.length, sub: `${projects.filter(p => p.risk !== 'completed').length} in progress` },
+    { label: 'Active Projects', value: activeProjects.length, sub: `${activeProjects.filter(p => p.risk !== 'safe').length} need attention` },
     { label: 'Active Courses', value: activeCourses.length, sub: 'This semester' },
   ]
 
@@ -176,7 +177,7 @@ export default function DashboardPage() {
               <div className="space-y-3">
                 {activeCourses.map((course) => {
                   const courseTasks = getMockTaskCards().filter((t) => t.course_id === course.id && t.status !== 'done')
-                  const courseProjects = getMockProjectCards().filter((p) => p.course_code === course.code)
+                  const courseProjects = activeProjects.filter((p) => p.course_code === course.code)
                   const hasRisk = courseTasks.some((t) => t.risk === 'critical')
                   return (
                     <div key={course.id} className="bg-slate-900 border border-slate-800 rounded-xl p-4 flex items-center gap-3">
