@@ -11,6 +11,7 @@ import {
   Settings,
   LogOut,
 } from 'lucide-react'
+import { OwlMascot } from '@/components/brand/OwlMascot'
 import { MOCK_USER } from '@/data/mock'
 
 const NAV_ITEMS = [
@@ -31,9 +32,7 @@ export function Sidebar() {
     <aside className="fixed inset-y-0 left-0 w-60 flex flex-col bg-slate-900 border-r border-slate-800 z-30">
       {/* Logo */}
       <div className="flex items-center gap-2.5 px-5 h-16 border-b border-slate-800">
-        <div className="w-7 h-7 rounded-lg bg-indigo-600 flex items-center justify-center">
-          <span className="text-white text-xs font-bold">CF</span>
-        </div>
+        <OwlMascot size={32} className="flex-shrink-0 opacity-90" />
         <span className="text-white font-semibold text-sm tracking-tight">CourseFlow</span>
       </div>
 

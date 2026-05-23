@@ -9,6 +9,7 @@ import { TaskDetailModal } from '@/components/tasks/TaskDetailModal'
 import { RiskBadge } from '@/components/ui/Badge'
 import { ProgressBar } from '@/components/ui/ProgressBar'
 import { NoCriticalEmpty } from '@/components/ui/EmptyState'
+import { OwlMascot } from '@/components/brand/OwlMascot'
 import { getMockTaskCards, getMockProjectCards, MOCK_COURSES, MOCK_USER, MOCK_MEMBERS } from '@/data/mock'
 import { formatDueDate, formatFullDate } from '@/lib/utils'
 import type { TaskCardData } from '@/types'
@@ -165,6 +166,27 @@ export default function DashboardPage() {
                 <p className="text-xs text-slate-500 text-center py-4">No upcoming deadlines.</p>
               )}
             </section>
+
+            {/* Owl tip card */}
+            <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 flex items-center gap-4">
+              <OwlMascot size={36} variant={criticalTasks.length > 0 ? 'thinking' : 'default'} className="flex-shrink-0 opacity-85" />
+              <div>
+                <p className="text-xs font-semibold text-slate-300">
+                  {criticalTasks.length > 0
+                    ? `${criticalTasks.length} critical task${criticalTasks.length !== 1 ? 's' : ''} need${criticalTasks.length === 1 ? 's' : ''} attention.`
+                    : todayTasks.length > 0
+                    ? 'Clear today\'s tasks before they pile up.'
+                    : 'No urgent tasks right now. Keep up the pace.'
+                  }
+                </p>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  {criticalTasks.length > 0
+                    ? 'Focus on these before new work comes in.'
+                    : 'Your schedule is looking healthy.'
+                  }
+                </p>
+              </div>
+            </div>
 
             {/* Course Overview */}
             <section>
