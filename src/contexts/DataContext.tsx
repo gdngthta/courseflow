@@ -1,15 +1,13 @@
 'use client'
 
 /**
- * Phase 3B — Supabase-backed data store for courses + personal tasks.
+ * Phase 3B/3C — Supabase-backed data store.
  *
- * This context progressively replaces the mock store for the entities that
- * have been migrated to Supabase. It loads the signed-in user's courses and
- * personal tasks, and exposes mutation helpers that write to Supabase and
- * keep local state in sync (optimistic where it matters for snappy UX).
+ * Loads the signed-in user's courses, personal tasks, and projects (with
+ * members / tasks / links) and exposes mutation helpers that write to Supabase
+ * and keep local state in sync.
  *
- * Projects / project members / project tasks still live in the mock store
- * until Phase 3C. Dashboard + Calendar are wired up in Phase 3D.
+ * Dashboard + Calendar are wired up in Phase 3D.
  */
 
 import {
@@ -23,13 +21,22 @@ import type { Course, PersonalTask, TaskChecklistItem } from '@/types'
 import { useAuthUser } from '@/contexts/AuthContext'
 import * as coursesApi from '@/lib/api/courses'
 import * as tasksApi from '@/lib/api/personalTasks'
+import * as projectsApi from '@/lib/api/projects'
+import * as projectTasksApi from '@/lib/api/projectTasks'
+import * as projectMembersApi from '@/lib/api/projectMembers'
+import type { ProjectWithRelations } from '@/lib/api/projects'
+import type { InviteResult } from '@/lib/api/projectMembers'
 
 interface DataContextValue {
+  userId: string
   courses: Course[]
   personalTasks: PersonalTask[]
+  projects: ProjectWithRelations[]
   loading: boolean
+  projectsLoading: boolean
   error: string | null
   refetch: () => Promise<void>
+  refetchProjects: () => Promise<void>
 
   // Course mutations
   addCourse: (input: coursesApi.CourseInput) => Promise<void>
@@ -42,44 +49,81 @@ interface DataContextValue {
   deletePersonalTask: (id: string) => Promise<void>
   markPersonalTaskDone: (id: string) => Promise<void>
   updatePersonalTaskChecklist: (id: string, checklist: TaskChecklistItem[]) => Promise<void>
+
+  // Project mutations
+  createProject: (input: projectsApi.CreateProjectInput) => Promise<string>
+  completeProject: (id: string) => Promise<void>
+  addProjectTask: (input: projectTasksApi.ProjectTaskInput) => Promise<void>
+  updateProjectTask: (id: string, update: projectTasksApi.ProjectTaskUpdate) => Promise<void>
+  deleteProjectTask: (id: string) => Promise<void>
+  markProjectTaskDone: (id: string) => Promise<void>
+  updateProjectTaskNotes: (id: string, notes: string) => Promise<void>
+  updateProjectTaskChecklist: (id: string, checklist: TaskChecklistItem[]) => Promise<void>
+  inviteMember: (projectId: string, email: string, role: 'member' | 'admin') => Promise<InviteResult>
 }
 
 const DataContext = createContext<DataContextValue | null>(null)
 
 export function DataProvider({ children }: { children: React.ReactNode }) {
   const { user, loading: authLoading } = useAuthUser()
+  const userId = user?.id ?? ''
 
   const [courses, setCourses] = useState<Course[]>([])
   const [personalTasks, setPersonalTasks] = useState<PersonalTask[]>([])
+  const [projects, setProjects] = useState<ProjectWithRelations[]>([])
   const [loading, setLoading] = useState(true)
+  const [projectsLoading, setProjectsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+
+  const refetchProjects = useCallback(async () => {
+    if (!user) {
+      setProjects([])
+      setProjectsLoading(false)
+      return
+    }
+    try {
+      const p = await projectsApi.getProjectsWithRelations()
+      setProjects(p)
+    } catch (e) {
+      const message = e instanceof Error ? e.message : 'Failed to load projects'
+      setError(message)
+      console.error('[DataProvider]', message)
+    } finally {
+      setProjectsLoading(false)
+    }
+  }, [user])
 
   const refetch = useCallback(async () => {
     if (!user) {
       setCourses([])
       setPersonalTasks([])
+      setProjects([])
       setLoading(false)
+      setProjectsLoading(false)
       return
     }
     setLoading(true)
+    setProjectsLoading(true)
     setError(null)
     try {
-      const [c, t] = await Promise.all([
+      const [c, t, p] = await Promise.all([
         coursesApi.getCourses(),
         tasksApi.getPersonalTasks(),
+        projectsApi.getProjectsWithRelations(),
       ])
       setCourses(c)
       setPersonalTasks(t)
+      setProjects(p)
     } catch (e) {
       const message = e instanceof Error ? e.message : 'Failed to load data'
       setError(message)
       console.error('[DataProvider]', message)
     } finally {
       setLoading(false)
+      setProjectsLoading(false)
     }
   }, [user])
 
-  // Load (or clear) data whenever the auth user changes
   useEffect(() => {
     if (authLoading) return
     refetch()
@@ -124,10 +168,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
 
   const updatePersonalTaskChecklist = useCallback(
     async (id: string, checklist: TaskChecklistItem[]) => {
-      // Optimistic update for snappy checklist toggling
-      setPersonalTasks((prev) =>
-        prev.map((t) => (t.id === id ? { ...t, checklist } : t))
-      )
+      setPersonalTasks((prev) => prev.map((t) => (t.id === id ? { ...t, checklist } : t)))
       try {
         await tasksApi.updatePersonalTaskChecklist(id, checklist)
       } catch (e) {
@@ -138,14 +179,84 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     [refetch]
   )
 
+  // ── Project mutations ──
+  const createProject = useCallback(async (input: projectsApi.CreateProjectInput) => {
+    const id = await projectsApi.createProject(input)
+    await refetchProjects()
+    return id
+  }, [refetchProjects])
+
+  const completeProject = useCallback(async (id: string) => {
+    const today = new Date().toISOString().split('T')[0]
+    await projectsApi.completeProject(id, today)
+    await refetchProjects()
+  }, [refetchProjects])
+
+  const addProjectTask = useCallback(async (input: projectTasksApi.ProjectTaskInput) => {
+    await projectTasksApi.createProjectTask(input)
+    await refetchProjects()
+  }, [refetchProjects])
+
+  const updateProjectTask = useCallback(async (id: string, update: projectTasksApi.ProjectTaskUpdate) => {
+    await projectTasksApi.updateProjectTask(id, update)
+    await refetchProjects()
+  }, [refetchProjects])
+
+  const deleteProjectTask = useCallback(async (id: string) => {
+    await projectTasksApi.deleteProjectTask(id)
+    await refetchProjects()
+  }, [refetchProjects])
+
+  const markProjectTaskDone = useCallback(async (id: string) => {
+    await projectTasksApi.updateProjectTask(id, { status: 'done', progress: 100 })
+    await refetchProjects()
+  }, [refetchProjects])
+
+  const updateProjectTaskNotes = useCallback(async (id: string, notes: string) => {
+    await projectTasksApi.updateProjectTaskNotes(id, notes)
+    await refetchProjects()
+  }, [refetchProjects])
+
+  // Optimistic patch of a single task's checklist within the nested structure
+  const updateProjectTaskChecklist = useCallback(
+    async (id: string, checklist: TaskChecklistItem[]) => {
+      setProjects((prev) =>
+        prev.map((pd) => ({
+          ...pd,
+          tasks: pd.tasks.map((t) => (t.id === id ? { ...t, checklist } : t)),
+        }))
+      )
+      try {
+        await projectTasksApi.updateProjectTaskChecklist(id, checklist)
+      } catch (e) {
+        console.error('[DataProvider] project checklist update failed, refetching', e)
+        refetchProjects()
+      }
+    },
+    [refetchProjects]
+  )
+
+  const inviteMember = useCallback(
+    async (projectId: string, email: string, role: 'member' | 'admin') => {
+      const result = await projectMembersApi.inviteMember(projectId, email, role)
+      if (result.ok) await refetchProjects()
+      return result
+    },
+    [refetchProjects]
+  )
+
   return (
     <DataContext.Provider
       value={{
+        userId,
         courses,
         personalTasks,
+        projects,
         loading,
+        projectsLoading,
         error,
         refetch,
+        refetchProjects,
         addCourse,
         updateCourse,
         setCourseArchived,
@@ -154,6 +265,15 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
         deletePersonalTask,
         markPersonalTaskDone,
         updatePersonalTaskChecklist,
+        createProject,
+        completeProject,
+        addProjectTask,
+        updateProjectTask,
+        deleteProjectTask,
+        markProjectTaskDone,
+        updateProjectTaskNotes,
+        updateProjectTaskChecklist,
+        inviteMember,
       }}
     >
       {children}

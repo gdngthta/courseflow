@@ -8,13 +8,10 @@ import { CourseFormModal, type CourseFormData } from '@/components/courses/Cours
 import { ConfirmModal } from '@/components/ui/ConfirmModal'
 import { NoCoursesEmpty, NoArchivedCoursesEmpty } from '@/components/ui/EmptyState'
 import { useData } from '@/contexts/DataContext'
-import { useMockStore } from '@/store/mockStore'
 import type { Course } from '@/types'
 
 export default function CoursesPage() {
-  const { courses, personalTasks, loading, error, addCourse, updateCourse, setCourseArchived } = useData()
-  // Projects still come from the mock store until Phase 3C
-  const { state } = useMockStore()
+  const { courses, personalTasks, projects, loading, error, addCourse, updateCourse, setCourseArchived } = useData()
 
   const [activeTab, setActiveTab] = useState<'active' | 'archived'>('active')
   const [searchQuery, setSearchQuery] = useState('')
@@ -34,18 +31,17 @@ export default function CoursesPage() {
   const getTaskCount = (courseId: string) =>
     personalTasks.filter((t) => t.course_id === courseId && t.status !== 'done').length
 
-  // Project counts still derive from mock data (migrates in Phase 3C)
   const getProjectCount = (courseId: string) =>
-    state.projects.filter((p) => p.course_id === courseId).length
+    projects.filter((pd) => pd.project.course_id === courseId).length
 
   const getNextDeadline = (courseId: string): string | undefined => {
     const today = new Date().toISOString().split('T')[0]
     const taskDates = personalTasks
       .filter((t) => t.course_id === courseId && t.due_date >= today && t.status !== 'done')
       .map((t) => t.due_date)
-    const projectDates = state.projects
-      .filter((p) => p.course_id === courseId && p.deadline >= today)
-      .map((p) => p.deadline)
+    const projectDates = projects
+      .filter((pd) => pd.project.course_id === courseId && pd.project.deadline >= today)
+      .map((pd) => pd.project.deadline)
     return [...taskDates, ...projectDates].sort()[0]
   }
 

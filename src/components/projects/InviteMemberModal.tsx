@@ -8,10 +8,15 @@ import { Input } from '@/components/ui/Input'
 import { SelectInput } from '@/components/ui/SelectInput'
 import type { ProjectRole } from '@/types'
 
+interface InviteResult {
+  ok: boolean
+  error?: string
+}
+
 interface InviteMemberModalProps {
   open: boolean
   onClose: () => void
-  onSubmit: (data: { email: string; role: ProjectRole }) => void
+  onSubmit: (data: { email: string; role: ProjectRole }) => Promise<InviteResult>
 }
 
 const ROLE_OPTIONS = [
@@ -23,6 +28,7 @@ export function InviteMemberModal({ open, onClose, onSubmit }: InviteMemberModal
   const [email, setEmail] = useState('')
   const [role, setRole] = useState<ProjectRole>('member')
   const [error, setError] = useState('')
+  const [submitting, setSubmitting] = useState(false)
   const [sent, setSent] = useState(false)
 
   // Reset state when modal opens/closes
@@ -31,14 +37,24 @@ export function InviteMemberModal({ open, onClose, onSubmit }: InviteMemberModal
       setEmail('')
       setRole('member')
       setError('')
+      setSubmitting(false)
       setSent(false)
     }
   }, [open])
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!email.trim()) { setError('Email is required'); return }
     if (!email.includes('@')) { setError('Please enter a valid email address'); return }
-    onSubmit({ email, role })
+
+    setSubmitting(true)
+    setError('')
+    const result = await onSubmit({ email, role })
+    setSubmitting(false)
+
+    if (!result.ok) {
+      setError(result.error ?? 'Failed to send invite')
+      return
+    }
     setSent(true)
     setTimeout(() => onClose(), 2000)
   }
@@ -51,11 +67,11 @@ export function InviteMemberModal({ open, onClose, onSubmit }: InviteMemberModal
             <CheckCircle2 size={24} className="text-emerald-400" />
           </div>
           <div>
-            <p className="text-sm font-medium text-white">Invite sent!</p>
+            <p className="text-sm font-medium text-white">Member added!</p>
             <p className="text-xs text-slate-400 mt-1">{email}</p>
           </div>
           <p className="text-xs text-slate-500">
-            (Mock — no actual email sent in Phase 1.)
+            They now have access to this project.
           </p>
         </div>
       ) : (
@@ -76,11 +92,13 @@ export function InviteMemberModal({ open, onClose, onSubmit }: InviteMemberModal
             onChange={(e) => setRole(e.target.value as ProjectRole)}
           />
           <p className="text-xs text-slate-500">
-            An invite will be sent to the email address. (Mock — no email sent until auth is connected in Phase 3.)
+            The person must already have a CourseFlow account. They&apos;ll be added to the project immediately.
           </p>
           <div className="flex justify-end gap-3 pt-2">
             <Button variant="secondary" onClick={onClose}>Cancel</Button>
-            <Button variant="primary" onClick={handleSubmit}>Send Invite</Button>
+            <Button variant="primary" onClick={handleSubmit} disabled={submitting}>
+              {submitting ? 'Adding…' : 'Add Member'}
+            </Button>
           </div>
         </div>
       )}

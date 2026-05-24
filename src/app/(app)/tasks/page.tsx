@@ -8,6 +8,7 @@ import { TaskDetailModal } from '@/components/tasks/TaskDetailModal'
 import { TaskFormModal, type TaskFormData } from '@/components/tasks/TaskFormModal'
 import { NoTasksEmpty } from '@/components/ui/EmptyState'
 import { useData } from '@/contexts/DataContext'
+import { toAssignedTaskCards } from '@/lib/projectDerive'
 import { calculateRisk } from '@/lib/risk'
 import type { Course, PersonalTask, TaskCardData, TaskChecklistItem } from '@/types'
 
@@ -48,8 +49,10 @@ function personalTaskToCard(task: PersonalTask, courses: Course[]): TaskCardData
 
 export default function TasksPage() {
   const {
+    userId,
     courses,
     personalTasks,
+    projects,
     loading,
     error,
     addPersonalTask,
@@ -57,6 +60,8 @@ export default function TasksPage() {
     deletePersonalTask,
     markPersonalTaskDone,
     updatePersonalTaskChecklist,
+    markProjectTaskDone,
+    updateProjectTaskChecklist,
   } = useData()
 
   const [activeTab, setActiveTab] = useState<Tab>('all')
@@ -66,12 +71,14 @@ export default function TasksPage() {
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [editingTask, setEditingTask] = useState<TaskCardData | null>(null)
 
-  // In Phase 3B, My Tasks shows personal tasks from Supabase.
-  // Assigned group tasks return in Phase 3C when projects are migrated.
-  const allTasks = useMemo(
-    () => personalTasks.map((t) => personalTaskToCard(t, courses)),
-    [personalTasks, courses]
-  )
+  // Combine personal tasks + assigned group tasks (both from Supabase).
+  // Project tasks are NOT duplicated into personal_tasks — they're derived
+  // from the projects the user belongs to, filtered by assigned_to.
+  const allTasks = useMemo(() => {
+    const personal = personalTasks.map((t) => personalTaskToCard(t, courses))
+    const assigned = toAssignedTaskCards(projects, userId)
+    return [...personal, ...assigned]
+  }, [personalTasks, courses, projects, userId])
 
   const filteredTasks = useMemo(() => {
     let result = allTasks
@@ -115,7 +122,11 @@ export default function TasksPage() {
     })
   }
 
-  const handleEdit = (task: TaskCardData) => setEditingTask(task)
+  // Edit/Delete only apply to personal tasks. For assigned group tasks the
+  // TaskDetailModal hides those actions (no userRole passed → not leader/admin).
+  const handleEdit = (task: TaskCardData) => {
+    if (task.type === 'personal') setEditingTask(task)
+  }
 
   const handleEditSubmit = async (data: TaskFormData) => {
     if (!editingTask) return
@@ -134,15 +145,18 @@ export default function TasksPage() {
   }
 
   const handleDelete = async (task: TaskCardData) => {
-    await deletePersonalTask(task.id)
+    if (task.type === 'personal') await deletePersonalTask(task.id)
   }
 
   const handleMarkDone = async (task: TaskCardData) => {
-    await markPersonalTaskDone(task.id)
+    if (task.type === 'personal') await markPersonalTaskDone(task.id)
+    else await markProjectTaskDone(task.id)
   }
 
   const handleChecklistUpdate = (taskId: string, checklist: TaskChecklistItem[]) => {
-    updatePersonalTaskChecklist(taskId, checklist)
+    const isPersonal = personalTasks.some((t) => t.id === taskId)
+    if (isPersonal) updatePersonalTaskChecklist(taskId, checklist)
+    else updateProjectTaskChecklist(taskId, checklist)
   }
 
   return (
