@@ -7,10 +7,9 @@ import { TaskCard } from '@/components/tasks/TaskCard'
 import { TaskDetailModal } from '@/components/tasks/TaskDetailModal'
 import { TaskFormModal, type TaskFormData } from '@/components/tasks/TaskFormModal'
 import { NoTasksEmpty } from '@/components/ui/EmptyState'
-import { useMockStore, deriveTaskCards } from '@/store/mockStore'
-import { MOCK_MEMBERS } from '@/data/mock'
+import { useData } from '@/contexts/DataContext'
 import { calculateRisk } from '@/lib/risk'
-import type { TaskCardData, PersonalTask, TaskChecklistItem } from '@/types'
+import type { Course, PersonalTask, TaskCardData, TaskChecklistItem } from '@/types'
 
 type Tab = 'all' | 'personal' | 'assigned' | 'critical' | 'completed'
 
@@ -22,8 +21,43 @@ const TABS: { id: Tab; label: string }[] = [
   { id: 'completed', label: 'Completed' },
 ]
 
+/** Map a Supabase personal task → TaskCardData for the shared TaskCard UI. */
+function personalTaskToCard(task: PersonalTask, courses: Course[]): TaskCardData {
+  const course = task.course_id ? courses.find((c) => c.id === task.course_id) : undefined
+  return {
+    id: task.id,
+    title: task.title,
+    type: 'personal',
+    status: task.status,
+    risk: calculateRisk({
+      status: task.status,
+      due_date: task.due_date,
+      progress: task.progress,
+      difficulty: task.difficulty,
+    }),
+    difficulty: task.difficulty,
+    progress: task.progress,
+    due_date: task.due_date,
+    source_label: course ? `${course.code} — ${course.name}` : 'No course',
+    course_id: task.course_id,
+    notes: task.notes,
+    links: task.links,
+    checklist: task.checklist,
+  }
+}
+
 export default function TasksPage() {
-  const { state, dispatch } = useMockStore()
+  const {
+    courses,
+    personalTasks,
+    loading,
+    error,
+    addPersonalTask,
+    updatePersonalTask,
+    deletePersonalTask,
+    markPersonalTaskDone,
+    updatePersonalTaskChecklist,
+  } = useData()
 
   const [activeTab, setActiveTab] = useState<Tab>('all')
   const [selectedCourse, setSelectedCourse] = useState('all')
@@ -32,8 +66,12 @@ export default function TasksPage() {
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [editingTask, setEditingTask] = useState<TaskCardData | null>(null)
 
-  // Derive all task cards from shared state
-  const allTasks = useMemo(() => deriveTaskCards(state), [state])
+  // In Phase 3B, My Tasks shows personal tasks from Supabase.
+  // Assigned group tasks return in Phase 3C when projects are migrated.
+  const allTasks = useMemo(
+    () => personalTasks.map((t) => personalTaskToCard(t, courses)),
+    [personalTasks, courses]
+  )
 
   const filteredTasks = useMemo(() => {
     let result = allTasks
@@ -54,10 +92,7 @@ export default function TasksPage() {
   }, [allTasks, activeTab, selectedCourse, searchQuery])
 
   // Only non-archived courses for dropdowns
-  const activeCourses = useMemo(
-    () => state.courses.filter((c) => !c.is_archived),
-    [state.courses]
-  )
+  const activeCourses = useMemo(() => courses.filter((c) => !c.is_archived), [courses])
 
   const courseFilterOptions = [
     { value: 'all', label: 'All Courses' },
@@ -66,77 +101,48 @@ export default function TasksPage() {
 
   // ── Handlers ──
 
-  const handleCreate = (data: TaskFormData) => {
-    const newTask: PersonalTask = {
-      id: `pt-${Date.now()}`,
-      user_id: state.currentUser.id,
-      course_id: data.course_id || undefined,
+  const handleCreate = async (data: TaskFormData) => {
+    await addPersonalTask({
       title: data.title,
-      type: 'personal',
-      status: data.status,
-      difficulty: data.difficulty,
-      progress: data.progress,
+      course_id: data.course_id || undefined,
       due_date: data.due_date,
+      status: data.status,
+      progress: data.progress,
+      difficulty: data.difficulty,
       notes: data.notes || undefined,
-      links: data.links.length > 0 ? data.links : undefined,
-      checklist: data.checklist.filter((i) => i.text.trim()).length > 0
-        ? data.checklist.filter((i) => i.text.trim())
-        : undefined,
-      created_at: new Date().toISOString(),
-    }
-    dispatch({ type: 'ADD_PERSONAL_TASK', task: newTask })
+      links: data.links,
+      checklist: data.checklist.filter((i) => i.text.trim()),
+    })
   }
 
   const handleEdit = (task: TaskCardData) => setEditingTask(task)
 
-  const handleEditSubmit = (data: TaskFormData) => {
+  const handleEditSubmit = async (data: TaskFormData) => {
     if (!editingTask) return
-    const existing = state.personalTasks.find((t) => t.id === editingTask.id)
-    if (!existing) return
-    const updated: PersonalTask = {
-      ...existing,
+    await updatePersonalTask(editingTask.id, {
       title: data.title,
-      status: data.status,
-      difficulty: data.difficulty,
-      progress: data.progress,
-      due_date: data.due_date,
       course_id: data.course_id || undefined,
+      due_date: data.due_date,
+      status: data.status,
+      progress: data.progress,
+      difficulty: data.difficulty,
       notes: data.notes || undefined,
-      links: data.links.length > 0 ? data.links : undefined,
-      checklist: data.checklist.filter((i) => i.text.trim()).length > 0
-        ? data.checklist.filter((i) => i.text.trim())
-        : undefined,
-    }
-    dispatch({ type: 'UPDATE_PERSONAL_TASK', task: updated })
+      links: data.links,
+      checklist: data.checklist.filter((i) => i.text.trim()),
+    })
     setEditingTask(null)
   }
 
-  const handleDelete = (task: TaskCardData) => {
-    // Only personal tasks have Delete from My Tasks (group tasks hide the button)
-    dispatch({ type: 'DELETE_PERSONAL_TASK', id: task.id })
+  const handleDelete = async (task: TaskCardData) => {
+    await deletePersonalTask(task.id)
   }
 
-  const handleMarkDone = (task: TaskCardData) => {
-    if (task.type === 'personal') {
-      const existing = state.personalTasks.find((t) => t.id === task.id)
-      if (existing) {
-        dispatch({ type: 'UPDATE_PERSONAL_TASK', task: { ...existing, status: 'done', progress: 100 } })
-      }
-    } else {
-      const existing = state.projectTasks.find((t) => t.id === task.id)
-      if (existing) {
-        dispatch({ type: 'UPDATE_PROJECT_TASK', task: { ...existing, status: 'done', progress: 100 } })
-      }
-    }
+  const handleMarkDone = async (task: TaskCardData) => {
+    await markPersonalTaskDone(task.id)
   }
 
   const handleChecklistUpdate = (taskId: string, checklist: TaskChecklistItem[]) => {
-    const isPersonal = state.personalTasks.some((t) => t.id === taskId)
-    if (isPersonal) {
-      dispatch({ type: 'UPDATE_PERSONAL_TASK_CHECKLIST', id: taskId, checklist })
-    } else {
-      dispatch({ type: 'UPDATE_PROJECT_TASK_CHECKLIST', id: taskId, checklist })
-    }
+    updatePersonalTaskChecklist(taskId, checklist)
   }
 
   return (
@@ -202,8 +208,16 @@ export default function TasksPage() {
           </div>
         </div>
 
+        {error && (
+          <div className="mb-4 px-4 py-3 bg-red-900/20 border border-red-800/40 rounded-lg text-sm text-red-400">
+            {error}
+          </div>
+        )}
+
         {/* Task grid */}
-        {filteredTasks.length > 0 ? (
+        {loading ? (
+          <div className="flex items-center justify-center py-20 text-sm text-slate-500">Loading tasks…</div>
+        ) : filteredTasks.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
             {filteredTasks.map((task) => (
               <TaskCard key={task.id} task={task} onClick={setSelectedTask} />
@@ -222,7 +236,6 @@ export default function TasksPage() {
         onDelete={handleDelete}
         onMarkDone={handleMarkDone}
         onChecklistUpdate={handleChecklistUpdate}
-        assigneeName={selectedTask?.assigned_to ? MOCK_MEMBERS[selectedTask.assigned_to]?.name : undefined}
       />
 
       <TaskFormModal

@@ -7,11 +7,14 @@ import { CourseCard } from '@/components/courses/CourseCard'
 import { CourseFormModal, type CourseFormData } from '@/components/courses/CourseFormModal'
 import { ConfirmModal } from '@/components/ui/ConfirmModal'
 import { NoCoursesEmpty, NoArchivedCoursesEmpty } from '@/components/ui/EmptyState'
+import { useData } from '@/contexts/DataContext'
 import { useMockStore } from '@/store/mockStore'
 import type { Course } from '@/types'
 
 export default function CoursesPage() {
-  const { state, dispatch } = useMockStore()
+  const { courses, personalTasks, loading, error, addCourse, updateCourse, setCourseArchived } = useData()
+  // Projects still come from the mock store until Phase 3C
+  const { state } = useMockStore()
 
   const [activeTab, setActiveTab] = useState<'active' | 'archived'>('active')
   const [searchQuery, setSearchQuery] = useState('')
@@ -20,23 +23,24 @@ export default function CoursesPage() {
   const [archivingCourse, setArchivingCourse] = useState<Course | null>(null)
 
   const filtered = useMemo(() => {
-    let result = state.courses.filter((c) => c.is_archived === (activeTab === 'archived'))
+    let result = courses.filter((c) => c.is_archived === (activeTab === 'archived'))
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase()
       result = result.filter((c) => c.code.toLowerCase().includes(q) || c.name.toLowerCase().includes(q))
     }
     return result
-  }, [state.courses, activeTab, searchQuery])
+  }, [courses, activeTab, searchQuery])
 
   const getTaskCount = (courseId: string) =>
-    state.personalTasks.filter((t) => t.course_id === courseId && t.status !== 'done').length
+    personalTasks.filter((t) => t.course_id === courseId && t.status !== 'done').length
 
+  // Project counts still derive from mock data (migrates in Phase 3C)
   const getProjectCount = (courseId: string) =>
     state.projects.filter((p) => p.course_id === courseId).length
 
   const getNextDeadline = (courseId: string): string | undefined => {
     const today = new Date().toISOString().split('T')[0]
-    const taskDates = state.personalTasks
+    const taskDates = personalTasks
       .filter((t) => t.course_id === courseId && t.due_date >= today && t.status !== 'done')
       .map((t) => t.due_date)
     const projectDates = state.projects
@@ -45,45 +49,36 @@ export default function CoursesPage() {
     return [...taskDates, ...projectDates].sort()[0]
   }
 
-  const handleAdd = (data: CourseFormData) => {
-    const newCourse: Course = {
-      id: `c-${Date.now()}`,
-      user_id: state.currentUser.id,
+  const handleAdd = async (data: CourseFormData) => {
+    await addCourse({
       code: data.code,
       name: data.name,
       lecturer: data.lecturer || undefined,
       semester: data.semester || undefined,
       color: data.color,
-      is_archived: false,
-      created_at: new Date().toISOString(),
-    }
-    dispatch({ type: 'ADD_COURSE', course: newCourse })
+    })
   }
 
-  const handleEdit = (data: CourseFormData) => {
+  const handleEdit = async (data: CourseFormData) => {
     if (!editingCourse) return
-    dispatch({
-      type: 'UPDATE_COURSE',
-      course: {
-        ...editingCourse,
-        code: data.code,
-        name: data.name,
-        lecturer: data.lecturer || undefined,
-        semester: data.semester || undefined,
-        color: data.color,
-      },
+    await updateCourse(editingCourse.id, {
+      code: data.code,
+      name: data.name,
+      lecturer: data.lecturer || undefined,
+      semester: data.semester || undefined,
+      color: data.color,
     })
     setEditingCourse(null)
   }
 
-  const handleArchive = () => {
+  const handleArchive = async () => {
     if (!archivingCourse) return
-    dispatch({ type: 'SET_COURSE_ARCHIVED', id: archivingCourse.id, archived: true })
+    await setCourseArchived(archivingCourse.id, true)
     setArchivingCourse(null)
   }
 
-  const handleUnarchive = (course: Course) => {
-    dispatch({ type: 'SET_COURSE_ARCHIVED', id: course.id, archived: false })
+  const handleUnarchive = async (course: Course) => {
+    await setCourseArchived(course.id, false)
   }
 
   return (
@@ -130,7 +125,15 @@ export default function CoursesPage() {
           </div>
         </div>
 
-        {filtered.length > 0 ? (
+        {error && (
+          <div className="mb-4 px-4 py-3 bg-red-900/20 border border-red-800/40 rounded-lg text-sm text-red-400">
+            {error}
+          </div>
+        )}
+
+        {loading ? (
+          <div className="flex items-center justify-center py-20 text-sm text-slate-500">Loading courses…</div>
+        ) : filtered.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4">
             {filtered.map((course) => (
               <CourseCard
