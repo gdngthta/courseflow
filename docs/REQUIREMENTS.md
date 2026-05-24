@@ -15,9 +15,10 @@
 
 ### Personal Tasks
 - FR-TASK-1: Users can create personal tasks linked to a course
-- FR-TASK-2: Personal task fields: title, course, due date, difficulty (1–5), progress (0–100%), status, notes
+- FR-TASK-2: Personal task fields: title, course, due date, difficulty (1–5), progress (0–100%), status, notes/instructions
 - FR-TASK-3: Users can edit and delete their own personal tasks
 - FR-TASK-4: Risk status is calculated automatically
+- FR-TASK-5: Task detail view shows notes/instructions, optional resource links, and an interactive checklist
 
 ### Group Projects
 - FR-PROJ-1: Users can create a project (becomes leader automatically)
@@ -26,10 +27,12 @@
 - FR-PROJ-4: Roles: Leader, Admin, Member
 
 ### Project Tasks
-- FR-PTASK-1: Leaders/Admins can add project tasks with: title, assigned member, due date, difficulty
+- FR-PTASK-1: Leaders/Admins can add project tasks with: title, assigned member, due date, difficulty, notes/instructions
 - FR-PTASK-2: Assigned members can update progress and status on their tasks
 - FR-PTASK-3: Leaders/Admins can edit and delete project tasks
 - FR-PTASK-4: Project progress = completed tasks / total tasks × 100%
+- FR-PTASK-5: Task detail view shows notes/instructions (editable by leader/admin), optional resource links, and an interactive checklist
+- FR-PTASK-6: Task detail notes remain visible in read-only mode for completed projects
 
 ### My Tasks (Combined View)
 - FR-MYTASK-1: My Tasks shows personal tasks created by the user
@@ -51,7 +54,14 @@
 - FR-RISK-2: Risk status shows on all task cards consistently
 
 ### Calendar
-- FR-CAL-1: Monthly calendar view showing tasks and deadlines by due date
+- FR-CAL-1: Monthly calendar view showing personal tasks, assigned group tasks, and active project deadlines plotted by due date
+- FR-CAL-2: Day cells show colored indicator pills (indigo=personal, violet=group, emerald=project deadline, red=critical); overflow shown as "+N more"
+- FR-CAL-3: Today's date is highlighted with an indigo circle on the day number
+- FR-CAL-4: Clicking a date selects it and shows a detail panel with Personal Tasks, Group Tasks, and Project Deadlines groups for that day
+- FR-CAL-5: Sidebar shows an Upcoming Deadlines panel grouped by date (Today, Tomorrow, then by date) for all items from today onwards
+- FR-CAL-6: Filters (All / Personal / Group / Critical) apply to both the calendar grid and the upcoming deadlines panel
+- FR-CAL-7: Previous/Next month navigation and a "Today" shortcut button
+- FR-CAL-8: Clicking a task item opens the Task Detail drawer; clicking a project deadline navigates to the Project Detail page
 
 ### Settings
 - FR-SET-1: User can update profile (name, avatar)

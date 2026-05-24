@@ -54,6 +54,24 @@
 - [ ] Member cannot delete task
 - [ ] Project progress = completed / total × 100
 
+### Calendar
+- [ ] Monthly grid renders 42 cells (6 rows × 7 columns) starting on Sunday
+- [ ] Today's date shows indigo circle on the day number
+- [ ] Tasks and project deadlines appear as colored pills on their due dates
+- [ ] Clicking a date selects it and updates the right-side detail panel
+- [ ] Detail panel groups items into Personal Tasks / Group Tasks / Project Deadlines
+- [ ] Upcoming Deadlines panel shows Today / Tomorrow / dated groups correctly
+- [ ] "Personal" filter hides group tasks and project deadlines from the grid
+- [ ] "Group" filter shows only group tasks
+- [ ] "Critical" filter shows only critical-risk tasks
+- [ ] Previous/Next month navigation updates the grid; day numbers are correct
+- [ ] "Today" button jumps back to current month and re-selects today
+- [ ] Clicking a task pill or sidebar item opens the Task Detail drawer
+- [ ] Clicking a project deadline pill or sidebar item navigates to /projects/[id]
+- [ ] Days from previous/next month appear dimmed (opacity reduced)
+- [ ] "+N more" overflow label appears when a day has more than 3 items
+- [ ] Done tasks do not appear on the calendar
+
 ### Dashboard
 - [ ] Summary cards show correct counts
 - [ ] Today's Priority shows tasks due today

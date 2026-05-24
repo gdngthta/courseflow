@@ -2,7 +2,23 @@ export type TaskType = 'personal' | 'group'
 export type TaskStatus = 'not_started' | 'in_progress' | 'done'
 export type RiskStatus = 'safe' | 'warning' | 'critical' | 'completed'
 export type ProjectRole = 'leader' | 'admin' | 'member'
+export type ProjectStatus = 'active' | 'completed'
 export type Difficulty = 1 | 2 | 3 | 4 | 5
+
+// ── Reusable sub-types (defined early so task entities can reference them) ──
+
+export interface TaskLink {
+  label: string
+  url: string
+}
+
+export interface TaskChecklistItem {
+  id: string
+  text: string
+  done: boolean
+}
+
+// ── Core entities ──
 
 export interface Course {
   id: string
@@ -27,6 +43,8 @@ export interface PersonalTask {
   progress: number
   due_date: string
   notes?: string
+  links?: TaskLink[]
+  checklist?: TaskChecklistItem[]
   created_at: string
 }
 
@@ -41,6 +59,8 @@ export interface ProjectTask {
   due_date: string
   assigned_to?: string
   notes?: string
+  links?: TaskLink[]
+  checklist?: TaskChecklistItem[]
   created_at: string
 }
 
@@ -50,6 +70,8 @@ export interface Project {
   course_id: string
   description?: string
   deadline: string
+  status: ProjectStatus
+  completed_at?: string
   created_by: string
   created_at: string
 }
@@ -77,7 +99,7 @@ export interface User {
   avatar_url?: string
 }
 
-// Normalised view types used by UI components
+// ── Normalised view types used by UI components ──
 
 export interface TaskCardData {
   id: string
@@ -92,6 +114,8 @@ export interface TaskCardData {
   project_id?: string
   course_id?: string
   notes?: string
+  links?: TaskLink[]
+  checklist?: TaskChecklistItem[]
   assigned_to?: string
 }
 
@@ -105,4 +129,6 @@ export interface ProjectCardData {
   user_role: ProjectRole
   progress: number
   risk: RiskStatus
+  status: ProjectStatus
+  completed_at?: string
 }

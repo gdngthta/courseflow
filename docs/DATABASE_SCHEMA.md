@@ -67,6 +67,8 @@ RLS: Users can only CRUD their own personal_tasks.
 | course_id | uuid | FK → courses.id, nullable |
 | description | text | nullable |
 | deadline | date | |
+| status | text | 'active' \| 'completed', default 'active' |
+| completed_at | date | nullable, set when status → completed |
 | created_by | uuid | FK → profiles.id |
 | created_at | timestamptz | default now() |
 
@@ -123,6 +125,45 @@ RLS:
 | created_at | timestamptz | default now() |
 
 RLS: Readable by project members. Leader/Admin can CRUD.
+
+---
+
+### `task_links` _(planned — Phase 4+)_
+
+Resource links attached to individual personal or project tasks.
+
+| Column | Type | Notes |
+|---|---|---|
+| id | uuid | PK |
+| task_type | text | 'personal' \| 'group' |
+| task_id | uuid | FK → personal_tasks.id or project_tasks.id |
+| label | text | Display label |
+| url | text | URL |
+| created_at | timestamptz | default now() |
+
+RLS: Readable by task owner or project members. Writable by task creator or leader/admin.
+
+> **Phase 1:** Mocked in-memory as `links?: TaskLink[]` on `TaskCardData`.
+
+---
+
+### `task_checklist_items` _(planned — Phase 4+)_
+
+Sub-task checklist items for personal or project tasks.
+
+| Column | Type | Notes |
+|---|---|---|
+| id | uuid | PK |
+| task_type | text | 'personal' \| 'group' |
+| task_id | uuid | FK → personal_tasks.id or project_tasks.id |
+| text | text | Checklist item label |
+| done | boolean | default false |
+| position | int2 | Display order |
+| created_at | timestamptz | default now() |
+
+RLS: Same as parent task.
+
+> **Phase 1:** Mocked in-memory as `checklist?: TaskChecklistItem[]` on `TaskCardData`. Checkbox state is local to the modal session and resets on close.
 
 ---
 
