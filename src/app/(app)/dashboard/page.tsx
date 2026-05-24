@@ -9,19 +9,28 @@ import { TaskDetailModal } from '@/components/tasks/TaskDetailModal'
 import { RiskBadge } from '@/components/ui/Badge'
 import { NoCriticalEmpty } from '@/components/ui/EmptyState'
 import { OwlMascot } from '@/components/brand/OwlMascot'
-import { useMockStore, deriveTaskCards, deriveProjectCards } from '@/store/mockStore'
-import { MOCK_MEMBERS } from '@/data/mock'
+import { useData } from '@/contexts/DataContext'
+import { useAuthUser } from '@/contexts/AuthContext'
+import { toAllTaskCards, buildMemberNameMap } from '@/lib/taskDerive'
+import { toProjectCards } from '@/lib/projectDerive'
 import { formatDueDate } from '@/lib/utils'
 import type { TaskCardData, TaskChecklistItem } from '@/types'
 
 export default function DashboardPage() {
-  const { state, dispatch } = useMockStore()
+  const { userId, courses, personalTasks, projects, updatePersonalTaskChecklist, updateProjectTaskChecklist } = useData()
+  const { user } = useAuthUser()
   const [selectedTask, setSelectedTask] = useState<TaskCardData | null>(null)
 
-  const allTasks = useMemo(() => deriveTaskCards(state), [state])
-  const allProjects = useMemo(() => deriveProjectCards(state), [state])
-  const activeCourses = useMemo(() => state.courses.filter((c) => !c.is_archived), [state.courses])
+  const allTasks = useMemo(
+    () => toAllTaskCards(personalTasks, courses, projects, userId),
+    [personalTasks, courses, projects, userId]
+  )
+  const allProjects = useMemo(() => toProjectCards(projects, userId), [projects, userId])
+  const memberNames = useMemo(() => buildMemberNameMap(projects), [projects])
+  const activeCourses = useMemo(() => courses.filter((c) => !c.is_archived), [courses])
   const activeProjects = useMemo(() => allProjects.filter((p) => p.status === 'active'), [allProjects])
+
+  const firstName = (user?.user_metadata?.full_name as string | undefined)?.split(' ')[0] || 'there'
 
   const today = new Date().toISOString().split('T')[0]
   const todayTasks = allTasks.filter((t) => t.status !== 'done' && t.due_date <= today)
@@ -39,7 +48,7 @@ export default function DashboardPage() {
   ]
 
   const getAssigneeName = (task: TaskCardData) =>
-    task.assigned_to ? (MOCK_MEMBERS[task.assigned_to]?.name ?? undefined) : undefined
+    task.assigned_to ? (memberNames[task.assigned_to] ?? undefined) : undefined
 
   // Group upcoming by date
   const upcomingByDate: Record<string, TaskCardData[]> = {}
@@ -49,12 +58,9 @@ export default function DashboardPage() {
   })
 
   const handleChecklistUpdate = (taskId: string, checklist: TaskChecklistItem[]) => {
-    const isPersonal = state.personalTasks.some((t) => t.id === taskId)
-    if (isPersonal) {
-      dispatch({ type: 'UPDATE_PERSONAL_TASK_CHECKLIST', id: taskId, checklist })
-    } else {
-      dispatch({ type: 'UPDATE_PROJECT_TASK_CHECKLIST', id: taskId, checklist })
-    }
+    const isPersonal = personalTasks.some((t) => t.id === taskId)
+    if (isPersonal) updatePersonalTaskChecklist(taskId, checklist)
+    else updateProjectTaskChecklist(taskId, checklist)
   }
 
   return (
@@ -64,7 +70,7 @@ export default function DashboardPage() {
         {/* Greeting */}
         <div className="mb-6">
           <h2 className="text-xl font-semibold text-white">
-            Good morning, {state.currentUser.first_name} 👋
+            Good morning, {firstName} 👋
           </h2>
           <p className="text-sm text-slate-400 mt-0.5">
             Here&apos;s what&apos;s happening with your coursework today.

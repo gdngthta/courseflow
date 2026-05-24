@@ -8,9 +8,8 @@ import { TaskDetailModal } from '@/components/tasks/TaskDetailModal'
 import { TaskFormModal, type TaskFormData } from '@/components/tasks/TaskFormModal'
 import { NoTasksEmpty } from '@/components/ui/EmptyState'
 import { useData } from '@/contexts/DataContext'
-import { toAssignedTaskCards } from '@/lib/projectDerive'
-import { calculateRisk } from '@/lib/risk'
-import type { Course, PersonalTask, TaskCardData, TaskChecklistItem } from '@/types'
+import { toAllTaskCards } from '@/lib/taskDerive'
+import type { TaskCardData, TaskChecklistItem } from '@/types'
 
 type Tab = 'all' | 'personal' | 'assigned' | 'critical' | 'completed'
 
@@ -21,31 +20,6 @@ const TABS: { id: Tab; label: string }[] = [
   { id: 'critical', label: 'Critical' },
   { id: 'completed', label: 'Completed' },
 ]
-
-/** Map a Supabase personal task → TaskCardData for the shared TaskCard UI. */
-function personalTaskToCard(task: PersonalTask, courses: Course[]): TaskCardData {
-  const course = task.course_id ? courses.find((c) => c.id === task.course_id) : undefined
-  return {
-    id: task.id,
-    title: task.title,
-    type: 'personal',
-    status: task.status,
-    risk: calculateRisk({
-      status: task.status,
-      due_date: task.due_date,
-      progress: task.progress,
-      difficulty: task.difficulty,
-    }),
-    difficulty: task.difficulty,
-    progress: task.progress,
-    due_date: task.due_date,
-    source_label: course ? `${course.code} — ${course.name}` : 'No course',
-    course_id: task.course_id,
-    notes: task.notes,
-    links: task.links,
-    checklist: task.checklist,
-  }
-}
 
 export default function TasksPage() {
   const {
@@ -72,13 +46,10 @@ export default function TasksPage() {
   const [editingTask, setEditingTask] = useState<TaskCardData | null>(null)
 
   // Combine personal tasks + assigned group tasks (both from Supabase).
-  // Project tasks are NOT duplicated into personal_tasks — they're derived
-  // from the projects the user belongs to, filtered by assigned_to.
-  const allTasks = useMemo(() => {
-    const personal = personalTasks.map((t) => personalTaskToCard(t, courses))
-    const assigned = toAssignedTaskCards(projects, userId)
-    return [...personal, ...assigned]
-  }, [personalTasks, courses, projects, userId])
+  const allTasks = useMemo(
+    () => toAllTaskCards(personalTasks, courses, projects, userId),
+    [personalTasks, courses, projects, userId]
+  )
 
   const filteredTasks = useMemo(() => {
     let result = allTasks
