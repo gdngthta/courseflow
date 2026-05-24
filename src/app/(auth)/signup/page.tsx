@@ -1,43 +1,65 @@
 'use client'
 
-import { useState, Suspense } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { OwlMascot } from '@/components/brand/OwlMascot'
 
-function LoginForm() {
+export default function SignupPage() {
   const router = useRouter()
-  const searchParams = useSearchParams()
-  const next = searchParams.get('next') ?? '/dashboard'
 
+  const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [confirmSent, setConfirmSent] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!email.trim() || !password.trim()) {
-      setError('Email and password are required.')
-      return
-    }
+    if (!fullName.trim()) { setError('Full name is required.'); return }
+    if (!email.trim()) { setError('Email is required.'); return }
+    if (password.length < 6) { setError('Password must be at least 6 characters.'); return }
 
     setError('')
     setLoading(true)
-
     // Import lazily so createClient() is never called during SSR/prerender
     const { createClient } = await import('@/lib/supabase')
     const supabase = createClient()
 
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: { full_name: fullName },
+      },
+    })
 
     if (error) {
       setError(error.message)
       setLoading(false)
     } else {
-      router.push(next)
-      router.refresh()
+      // Supabase sends a confirmation email by default.
+      // If email confirmation is disabled in your project settings, the user
+      // is logged in immediately and we redirect to the dashboard.
+      setConfirmSent(true)
+      setTimeout(() => router.push('/dashboard'), 1500)
     }
+  }
+
+  if (confirmSent) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4">
+        <div className="w-full max-w-sm text-center">
+          <OwlMascot size={72} variant="reading" className="opacity-90 mx-auto mb-5" />
+          <h2 className="text-lg font-semibold text-white mb-2">Almost there!</h2>
+          <p className="text-sm text-slate-400">
+            Check your inbox to confirm your email, then you&apos;ll be signed in automatically.
+          </p>
+          <p className="text-xs text-slate-600 mt-4">Redirecting you now…</p>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -53,10 +75,24 @@ function LoginForm() {
         </div>
 
         <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
-          <h2 className="text-lg font-semibold text-white mb-1">Sign in</h2>
-          <p className="text-sm text-slate-400 mb-6">Welcome back. Sign in to continue.</p>
+          <h2 className="text-lg font-semibold text-white mb-1">Create account</h2>
+          <p className="text-sm text-slate-400 mb-6">Get started — it only takes a minute.</p>
 
           <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="block text-xs font-medium text-slate-300 mb-1.5">
+                Full Name
+              </label>
+              <input
+                type="text"
+                placeholder="Alex Johnson"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                autoComplete="name"
+                className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-sm text-slate-200 placeholder:text-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition"
+              />
+            </div>
+
             <div>
               <label className="block text-xs font-medium text-slate-300 mb-1.5">
                 Email
@@ -77,10 +113,10 @@ function LoginForm() {
               </label>
               <input
                 type="password"
-                placeholder="••••••••"
+                placeholder="Min. 6 characters"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                autoComplete="current-password"
+                autoComplete="new-password"
                 className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-sm text-slate-200 placeholder:text-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition"
               />
             </div>
@@ -96,26 +132,18 @@ function LoginForm() {
               disabled={loading}
               className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-60 disabled:cursor-not-allowed text-white text-sm font-medium rounded-lg transition-colors"
             >
-              {loading ? 'Signing in…' : 'Sign In'}
+              {loading ? 'Creating account…' : 'Create Account'}
             </button>
           </form>
 
           <p className="text-center text-xs text-slate-500 mt-5">
-            Don&apos;t have an account?{' '}
-            <Link href="/signup" className="text-indigo-400 hover:text-indigo-300 transition-colors">
-              Create one
+            Already have an account?{' '}
+            <Link href="/login" className="text-indigo-400 hover:text-indigo-300 transition-colors">
+              Sign in
             </Link>
           </p>
         </div>
       </div>
     </div>
-  )
-}
-
-export default function LoginPage() {
-  return (
-    <Suspense>
-      <LoginForm />
-    </Suspense>
   )
 }

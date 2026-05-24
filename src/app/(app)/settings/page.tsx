@@ -6,7 +6,7 @@ import { Topbar } from '@/components/layout/Topbar'
 import { Input } from '@/components/ui/Input'
 import { SelectInput } from '@/components/ui/SelectInput'
 import { Button } from '@/components/ui/Button'
-import { MOCK_USER } from '@/data/mock'
+import { useAuthUser } from '@/contexts/AuthContext'
 
 type Section = 'profile' | 'preferences' | 'account'
 
@@ -23,17 +23,33 @@ const THEME_OPTIONS = [
 ]
 
 export default function SettingsPage() {
+  const { user, signOut } = useAuthUser()
+
+  // Derive display name from Supabase user metadata
+  const fullName: string = user?.user_metadata?.full_name ?? ''
+  const nameParts = fullName.split(' ')
+  const defaultFirst = nameParts[0] ?? ''
+  const defaultLast = nameParts.slice(1).join(' ') ?? ''
+
   const [activeSection, setActiveSection] = useState<Section>('profile')
-  const [firstName, setFirstName] = useState(MOCK_USER.first_name)
-  const [lastName, setLastName] = useState(MOCK_USER.last_name)
-  const [email] = useState(MOCK_USER.email)
+  const [firstName, setFirstName] = useState(defaultFirst)
+  const [lastName, setLastName] = useState(defaultLast)
   const [theme, setTheme] = useState('system')
   const [saved, setSaved] = useState(false)
-  const [signOutNotice, setSignOutNotice] = useState(false)
+  const [signingOut, setSigningOut] = useState(false)
+
+  const email = user?.email ?? ''
+  const initials = [firstName[0], lastName[0]].filter(Boolean).join('').toUpperCase() || '?'
 
   const handleSave = () => {
+    // Profile update will be wired to Supabase in Phase 3B
     setSaved(true)
     setTimeout(() => setSaved(false), 2000)
+  }
+
+  const handleSignOut = async () => {
+    setSigningOut(true)
+    await signOut()
   }
 
   return (
@@ -75,9 +91,7 @@ export default function SettingsPage() {
                 <div className="flex items-center gap-4 mb-6">
                   <div className="relative">
                     <div className="w-16 h-16 rounded-full bg-indigo-700 flex items-center justify-center">
-                      <span className="text-white text-xl font-bold">
-                        {firstName.charAt(0)}{lastName.charAt(0)}
-                      </span>
+                      <span className="text-white text-xl font-bold">{initials}</span>
                     </div>
                     <button
                       title="Photo upload coming in a later phase"
@@ -88,7 +102,9 @@ export default function SettingsPage() {
                     </button>
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-white">{firstName} {lastName}</p>
+                    <p className="text-sm font-medium text-white">
+                      {firstName || lastName ? `${firstName} ${lastName}`.trim() : email}
+                    </p>
                     <p className="text-xs text-slate-400">Student</p>
                     <p className="text-xs text-slate-500 mt-0.5">JPG, GIF or PNG. Max size 800K</p>
                   </div>
@@ -113,12 +129,17 @@ export default function SettingsPage() {
                     value={email}
                     disabled
                   />
-                  <p className="text-xs text-slate-500 mt-1">Email cannot be changed here. Managed by auth provider.</p>
+                  <p className="text-xs text-slate-500 mt-1">
+                    Email is managed by Supabase Auth and cannot be changed here.
+                  </p>
                 </div>
 
                 <Button variant="primary" onClick={handleSave}>
                   {saved ? '✓ Saved' : 'Save Changes'}
                 </Button>
+                <p className="text-xs text-slate-600 mt-2">
+                  Profile name sync to Supabase coming in Phase 3B.
+                </p>
               </div>
             )}
 
@@ -142,25 +163,18 @@ export default function SettingsPage() {
             {activeSection === 'account' && (
               <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
                 <h3 className="text-sm font-semibold text-white mb-2">Account</h3>
-                <p className="text-sm text-slate-400 mb-6">Signed in as {email}</p>
+                <p className="text-sm text-slate-400 mb-6">Signed in as <span className="text-slate-300">{email}</span></p>
                 <Button
                   variant="destructive"
-                  onClick={() => { setSignOutNotice(true); setTimeout(() => setSignOutNotice(false), 4000) }}
+                  onClick={handleSignOut}
+                  disabled={signingOut}
                 >
                   <LogOut size={14} />
-                  Sign Out
+                  {signingOut ? 'Signing out…' : 'Sign Out'}
                 </Button>
-                {signOutNotice && (
-                  <div className="mt-3 px-4 py-2.5 bg-amber-900/20 border border-amber-700/40 rounded-lg">
-                    <p className="text-xs text-amber-400 font-medium">Auth not connected yet</p>
-                    <p className="text-xs text-slate-400 mt-0.5">Sign out will work once authentication is set up in Phase 3.</p>
-                  </div>
-                )}
-                {!signOutNotice && (
-                  <p className="text-xs text-slate-500 mt-3">
-                    Auth is not connected yet. Sign out will be functional in Phase 3.
-                  </p>
-                )}
+                <p className="text-xs text-slate-500 mt-3">
+                  You will be redirected to the login page.
+                </p>
               </div>
             )}
           </div>
