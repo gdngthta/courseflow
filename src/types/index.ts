@@ -91,14 +91,6 @@ export interface ProjectLink {
   url: string
 }
 
-export interface User {
-  id: string
-  email: string
-  first_name: string
-  last_name: string
-  avatar_url?: string
-}
-
 // ── Normalised view types used by UI components ──
 
 export interface TaskCardData {

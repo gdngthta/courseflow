@@ -1,13 +1,13 @@
 'use client'
 
 /**
- * Phase 3B/3C — Supabase-backed data store.
+ * Central data store for the authenticated user's courses, personal tasks,
+ * and projects (with members, tasks, and links).
  *
- * Loads the signed-in user's courses, personal tasks, and projects (with
- * members / tasks / links) and exposes mutation helpers that write to Supabase
- * and keep local state in sync.
- *
- * Dashboard + Calendar are wired up in Phase 3D.
+ * All Supabase reads and writes go through this context. Pages never query
+ * Supabase directly — they call the mutation helpers exposed here, which
+ * update local state optimistically and write to Supabase in the background.
+ * On write failure, the relevant refetch() is called to restore correct state.
  */
 
 import {

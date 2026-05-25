@@ -9,14 +9,20 @@ import type { ProjectWithRelations, ProjectMemberWithProfile } from '@/lib/api/p
 import type { Project, ProjectCardData, TaskCardData, ProjectRole, ProjectLink } from '@/types'
 import { calculateRisk, calculateProjectRisk } from '@/lib/risk'
 
+/** Percentage of tasks that are done, rounded to the nearest integer. */
+function calcProjectProgress(tasks: { status: string }[]): number {
+  if (tasks.length === 0) return 0
+  const completed = tasks.filter((t) => t.status === 'done').length
+  return Math.round((completed / tasks.length) * 100)
+}
+
 export function toProjectCards(
   data: ProjectWithRelations[],
   userId: string
 ): ProjectCardData[] {
   return data.map(({ project, course, members, tasks }) => {
     const userMember = members.find((m) => m.user_id === userId)
-    const completed = tasks.filter((t) => t.status === 'done').length
-    const progress = tasks.length > 0 ? Math.round((completed / tasks.length) * 100) : 0
+    const progress = calcProjectProgress(tasks)
     return {
       id: project.id,
       name: project.name,
@@ -54,8 +60,7 @@ export function toProjectDetail(
 
   const { project, course, members, tasks, links } = pd
   const userMember = members.find((m) => m.user_id === userId)
-  const completed = tasks.filter((t) => t.status === 'done').length
-  const progress = tasks.length > 0 ? Math.round((completed / tasks.length) * 100) : 0
+  const progress = calcProjectProgress(tasks)
 
   const taskCards: TaskCardData[] = tasks.map((t) => ({
     id: t.id,
