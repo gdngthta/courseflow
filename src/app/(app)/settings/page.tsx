@@ -7,6 +7,8 @@ import { Input } from '@/components/ui/Input'
 import { SelectInput } from '@/components/ui/SelectInput'
 import { Button } from '@/components/ui/Button'
 import { useAuthUser } from '@/contexts/AuthContext'
+import { updateMyProfile } from '@/lib/api/profiles'
+import { createClient } from '@/lib/supabase'
 
 type Section = 'profile' | 'preferences' | 'account'
 
@@ -35,16 +37,32 @@ export default function SettingsPage() {
   const [firstName, setFirstName] = useState(defaultFirst)
   const [lastName, setLastName] = useState(defaultLast)
   const [theme, setTheme] = useState('system')
+  const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
+  const [saveError, setSaveError] = useState('')
   const [signingOut, setSigningOut] = useState(false)
 
   const email = user?.email ?? ''
   const initials = [firstName[0], lastName[0]].filter(Boolean).join('').toUpperCase() || '?'
 
-  const handleSave = () => {
-    // Profile update will be wired to Supabase in Phase 3B
-    setSaved(true)
-    setTimeout(() => setSaved(false), 2000)
+  const handleSave = async () => {
+    const fullName = `${firstName} ${lastName}`.trim()
+    if (!fullName) return
+    setSaving(true)
+    setSaveError('')
+    try {
+      // 1. Update profiles table (visible to project co-members)
+      await updateMyProfile({ full_name: fullName })
+      // 2. Update auth user_metadata so greeting + sidebar reflect change immediately
+      const supabase = createClient()
+      await supabase.auth.updateUser({ data: { full_name: fullName } })
+      setSaved(true)
+      setTimeout(() => setSaved(false), 2500)
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : 'Failed to save profile.')
+    } finally {
+      setSaving(false)
+    }
   }
 
   const handleSignOut = async () => {
@@ -134,12 +152,12 @@ export default function SettingsPage() {
                   </p>
                 </div>
 
-                <Button variant="primary" onClick={handleSave}>
-                  {saved ? '✓ Saved' : 'Save Changes'}
+                {saveError && (
+                  <p className="text-xs text-red-400 mb-3">{saveError}</p>
+                )}
+                <Button variant="primary" onClick={handleSave} disabled={saving}>
+                  {saving ? 'Saving…' : saved ? '✓ Saved' : 'Save Changes'}
                 </Button>
-                <p className="text-xs text-slate-600 mt-2">
-                  Profile name sync to Supabase coming in Phase 3B.
-                </p>
               </div>
             )}
 

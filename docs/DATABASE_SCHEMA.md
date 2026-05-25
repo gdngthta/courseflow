@@ -1,23 +1,26 @@
 # CourseFlow — Database Schema
 
 > All tables use Supabase (PostgreSQL). Row Level Security (RLS) is enabled on all tables.
+> Non-recursive RLS is enforced via `SECURITY DEFINER` helper functions (see `supabase/phase3c.sql`).
 
 ---
 
 ## Tables
 
 ### `profiles`
-Extends Supabase auth.users.
+Automatically created on signup via `handle_new_user` trigger on `auth.users`.
 
 | Column | Type | Notes |
 |---|---|---|
 | id | uuid | FK → auth.users.id (PK) |
-| first_name | text | |
-| last_name | text | |
+| email | text | Copied from auth.users.email |
+| full_name | text | nullable — set from signup metadata |
 | avatar_url | text | nullable |
 | created_at | timestamptz | default now() |
 
-RLS: Users can only read/update their own profile.
+RLS:
+- Users can read/update their own profile row
+- Project co-members can read each other's profiles (via `shares_project_with` helper)
 
 ---
 
@@ -27,8 +30,8 @@ RLS: Users can only read/update their own profile.
 |---|---|---|
 | id | uuid | PK |
 | user_id | uuid | FK → profiles.id |
-| code | text | e.g. "WIA2005" |
-| name | text | e.g. "Algorithm Design" |
+| code | text | e.g. "CS101" |
+| name | text | e.g. "Introduction to Algorithms" |
 | lecturer | text | nullable |
 | semester | text | nullable |
 | color | text | hex color |
@@ -50,8 +53,10 @@ RLS: Users can only CRUD their own courses.
 | status | text | 'not_started' \| 'in_progress' \| 'done' |
 | difficulty | int2 | 1–5 |
 | progress | int2 | 0–100 |
-| due_date | date | |
+| due_date | date | stored as YYYY-MM-DD |
 | notes | text | nullable |
+| links | jsonb | nullable — `[{ label, url }]` |
+| checklist | jsonb | nullable — `[{ text, done }]` |
 | created_at | timestamptz | default now() |
 
 RLS: Users can only CRUD their own personal_tasks.
@@ -66,13 +71,17 @@ RLS: Users can only CRUD their own personal_tasks.
 | name | text | |
 | course_id | uuid | FK → courses.id, nullable |
 | description | text | nullable |
-| deadline | date | |
+| deadline | date | stored as YYYY-MM-DD |
 | status | text | 'active' \| 'completed', default 'active' |
 | completed_at | date | nullable, set when status → completed |
 | created_by | uuid | FK → profiles.id |
 | created_at | timestamptz | default now() |
 
-RLS: Readable by project members. Only leader can update/delete.
+RLS:
+- SELECT: project members, OR `created_by = auth.uid()` (allows creator to see immediately after `create_project` RPC)
+- UPDATE: leader only
+- DELETE: leader only
+- INSERT: via `create_project` RPC only (SECURITY DEFINER)
 
 ---
 
@@ -86,7 +95,10 @@ RLS: Readable by project members. Only leader can update/delete.
 | role | text | 'leader' \| 'admin' \| 'member' |
 | joined_at | timestamptz | default now() |
 
-RLS: Readable by project members. Only leader can insert/delete.
+RLS:
+- SELECT: project members (via `is_project_member` helper)
+- INSERT: leader only (or via `invite_member` RPC)
+- DELETE: leader only
 
 UNIQUE: (project_id, user_id)
 
@@ -102,15 +114,17 @@ UNIQUE: (project_id, user_id)
 | status | text | 'not_started' \| 'in_progress' \| 'done' |
 | difficulty | int2 | 1–5 |
 | progress | int2 | 0–100 |
-| due_date | date | |
+| due_date | date | stored as YYYY-MM-DD |
 | assigned_to | uuid | FK → profiles.id, nullable |
 | notes | text | nullable |
+| links | jsonb | nullable — `[{ label, url }]` |
+| checklist | jsonb | nullable — `[{ text, done }]` |
 | created_at | timestamptz | default now() |
 
 RLS:
-- Readable by all project members
-- INSERT/UPDATE/DELETE by leader or admin
-- Assigned member can UPDATE their own task's progress/status only
+- SELECT: all project members
+- INSERT/UPDATE/DELETE: leader or admin (via `is_project_manager` helper)
+- UPDATE own task (progress/status): assigned member
 
 ---
 
@@ -128,56 +142,33 @@ RLS: Readable by project members. Leader/Admin can CRUD.
 
 ---
 
-### `task_links` _(planned — Phase 4+)_
-
-Resource links attached to individual personal or project tasks.
-
-| Column | Type | Notes |
-|---|---|---|
-| id | uuid | PK |
-| task_type | text | 'personal' \| 'group' |
-| task_id | uuid | FK → personal_tasks.id or project_tasks.id |
-| label | text | Display label |
-| url | text | URL |
-| created_at | timestamptz | default now() |
-
-RLS: Readable by task owner or project members. Writable by task creator or leader/admin.
-
-> **Phase 1:** Mocked in-memory as `links?: TaskLink[]` on `TaskCardData`.
-
----
-
-### `task_checklist_items` _(planned — Phase 4+)_
-
-Sub-task checklist items for personal or project tasks.
-
-| Column | Type | Notes |
-|---|---|---|
-| id | uuid | PK |
-| task_type | text | 'personal' \| 'group' |
-| task_id | uuid | FK → personal_tasks.id or project_tasks.id |
-| text | text | Checklist item label |
-| done | boolean | default false |
-| position | int2 | Display order |
-| created_at | timestamptz | default now() |
-
-RLS: Same as parent task.
-
-> **Phase 1:** Mocked in-memory as `checklist?: TaskChecklistItem[]` on `TaskCardData`. Checkbox state is local to the modal session and resets on close.
-
----
-
 ## Key Design Decision: No Task Duplication
 
 `project_tasks` stores group tasks. They are **never copied** into `personal_tasks`.
 
-The My Tasks page combines:
-```sql
-SELECT * FROM personal_tasks WHERE user_id = $1
-UNION ALL
-SELECT pt.*, p.name as project_name FROM project_tasks pt
-JOIN project_members pm ON pt.project_id = pm.project_id
-WHERE pt.assigned_to = $1 AND pm.user_id = $1
+The My Tasks page combines personal + assigned project tasks purely client-side:
+
+```ts
+// src/lib/taskDerive.ts
+toAllTaskCards(personalTasks, courses, projects, userId)
+  // personal tasks fetched directly
+  // project tasks filtered from ProjectWithRelations[] where assigned_to === userId
+  // → TaskCardData[] rendered by a single TaskCard component
 ```
 
-This ensures a single source of truth per task.
+---
+
+## Key Design Decision: links & checklist as JSONB
+
+Rather than separate `task_links` and `task_checklist_items` tables (which would require per-task sub-queries), links and checklist items are stored as JSONB arrays directly on `personal_tasks` and `project_tasks`.
+
+Tradeoff: simpler queries, less normalization. Acceptable for MVP — a single task rarely has more than 10 links or 20 checklist items.
+
+---
+
+## Migrations
+
+| File | Description |
+|---|---|
+| `supabase/schema.sql` | Full initial schema — tables, triggers, indexes |
+| `supabase/phase3c.sql` | RLS fix: SECURITY DEFINER helpers, recreated policies, `create_project` + `invite_member` RPCs |

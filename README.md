@@ -2,7 +2,7 @@
 
 **CourseFlow** is a student productivity web app that combines personal coursework task management and shared group project task management into one dashboard.
 
-> One-week MVP — built with Next.js 16, TypeScript, Tailwind CSS v4, and Supabase.
+> Built with Next.js 16, TypeScript, Tailwind CSS v4, and Supabase.
 
 ---
 
@@ -20,25 +20,20 @@ CourseFlow combines both into one place. When a group project task is assigned t
 
 | Feature | Status |
 |---|---|
-| App shell (sidebar + topbar) | ✅ Phase 0 |
-| Mock data + risk algorithm | ✅ Phase 0 |
-| UI components + owl mascot | ✅ Phase 0 |
-| Dashboard — priority, risk, deadlines, course overview | ✅ Phase 1 |
-| My Tasks — tabs, filters, create/edit/delete, task detail | ✅ Phase 1 |
-| Projects list + Create Project modal | ✅ Phase 1 |
-| Project Detail — tasks, members, links, progress | ✅ Phase 1 |
-| Courses management — add/edit/archive | ✅ Phase 1 |
-| Settings — profile, preferences, account | ✅ Phase 1 |
-| Calendar — monthly view, task/deadline plotting, filters | ✅ Phase 1 |
-| UX polish, form validation, empty states, fake UI cleanup | ✅ Phase 1 |
-| Supabase DB schema + RLS | 🔜 Phase 2 |
-| Auth (login, signup, session, middleware) | 🔜 Phase 3 |
-| Connect real data (replace mock) | 🔜 Phase 4 |
-
-> **Phase 1 (complete):** All screens use shared mock/local state (React Context + useReducer). No Supabase, no auth, no database connected yet.
-> Mutations (create/edit/delete/mark-done/checklist/complete project) update a single shared store so all pages stay in sync.
-> Non-functional UI (topbar search, theme toggle, notifications, avatar upload) is clearly labelled as coming in a future phase.
-> State resets on hard-refresh — full persistence is planned for Phase 2 (Supabase).
+| App shell (sidebar + topbar) | ✅ |
+| Risk algorithm | ✅ |
+| Dashboard — priority, risk, deadlines, course overview | ✅ |
+| My Tasks — tabs, filters, create/edit/delete, task detail | ✅ |
+| Projects list + Create Project modal | ✅ |
+| Project Detail — tasks, members, links, progress | ✅ |
+| Courses management — add/edit/archive | ✅ |
+| Calendar — monthly view, task/deadline plotting, filters | ✅ |
+| Settings — profile, preferences, sign out | ✅ |
+| Form validation, empty states | ✅ |
+| Supabase DB schema + RLS | ✅ |
+| Auth (signup, login, session, route protection) | ✅ |
+| All data persisted to Supabase (real data, no mock) | ✅ |
+| Profile name save to Supabase | ✅ |
 
 ---
 
@@ -47,7 +42,7 @@ CourseFlow combines both into one place. When a group project task is assigned t
 - **Framework**: Next.js 16 (App Router)
 - **Language**: TypeScript
 - **Styling**: Tailwind CSS v4
-- **Backend/Auth/DB**: Supabase (PostgreSQL + Auth)
+- **Backend/Auth/DB**: Supabase (PostgreSQL + Auth + RLS)
 - **Icons**: lucide-react
 
 ---
@@ -68,15 +63,27 @@ npm install
 cp .env.example .env.local
 ```
 
-Fill in your Supabase project URL and anon key from [supabase.com](https://supabase.com).
+Fill in your Supabase project URL and anon key from [supabase.com](https://supabase.com):
 
-### 3. Run dev server
+```
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+```
+
+### 3. Run the database migrations
+
+Open the Supabase SQL Editor and run:
+
+1. `supabase/schema.sql` — creates all tables, triggers, indexes, and initial RLS policies
+2. `supabase/phase3c.sql` — applies SECURITY DEFINER helpers and RPCs to fix recursive RLS policies
+
+### 4. Run dev server
 
 ```bash
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000).
+Open [http://localhost:3000](http://localhost:3000). Sign up and start adding courses and tasks.
 
 ---
 
@@ -85,8 +92,9 @@ Open [http://localhost:3000](http://localhost:3000).
 ```
 src/
   app/
-    (auth)/login/         Auth pages
-    (app)/                App shell (sidebar + topbar)
+    (auth)/login/          Login page
+    (auth)/signup/         Signup page
+    (app)/                 App shell (sidebar + topbar, auth-protected)
       dashboard/
       tasks/
       projects/[id]/
@@ -94,18 +102,27 @@ src/
       calendar/
       settings/
   components/
-    layout/               Sidebar, Topbar
-    ui/                   Badge, Button, ProgressBar, Modal, EmptyState
-    tasks/                Task-specific components
-    projects/             Project-specific components
-    courses/              Course-specific components
+    layout/                Sidebar, Topbar
+    ui/                    Badge, Button, ProgressBar, Modal, EmptyState, Input, ConfirmModal
+    tasks/                 TaskCard, TaskDetailModal, TaskFormModal
+    projects/              InviteMemberModal
+    courses/               CourseCard, CourseFormModal
+    brand/                 OwlMascot
+  contexts/
+    AuthContext.tsx        Supabase auth state (user, loading, signOut)
+    DataContext.tsx        All app data (courses, tasks, projects) + mutations
   lib/
-    supabase.ts           Supabase client
-    risk.ts               Risk status calculation
-  types/index.ts          Shared TypeScript types
-  data/mock.ts            Mock data (used until Supabase is connected)
-docs/                     Project documentation
-screenshots/              App screenshots
+    supabase.ts            Supabase browser client factory
+    risk.ts                Risk status calculation
+    taskDerive.ts          Pure helpers: personalTaskToCard, toAllTaskCards, buildMemberNameMap
+    projectDerive.ts       Pure helpers: toProjectCards, toProjectDetail, toAssignedTaskCards
+    api/                   Supabase query modules (courses, personalTasks, projects, profiles...)
+  proxy.ts                 Next.js 16 route protection (replaces middleware.ts)
+  types/index.ts           Shared TypeScript types
+supabase/
+  schema.sql               Full initial schema
+  phase3c.sql              RLS fix migration (SECURITY DEFINER helpers + RPCs)
+docs/                      Project documentation
 ```
 
 ---
@@ -122,24 +139,12 @@ screenshots/              App screenshots
 
 ---
 
-## Current Phase: Phase 1 Complete — Next: Phase 2 Supabase Schema
+## Architecture Highlights
 
-Phase 1 delivered every screen as a fully working UI driven by shared mock/local state. All pages (Dashboard, Tasks, Projects, Calendar, Courses, Settings) read from and write to a single React Context store, so mutations made on one page are immediately reflected everywhere else.
+**No task duplication.** Group project tasks are stored in `project_tasks` and never copied into `personal_tasks`. The My Tasks page combines them client-side using `toAllTaskCards()` — a pure derive function that reads from the already-loaded `ProjectWithRelations[]`.
 
-**What's wired up in Phase 1:**
-- Create / edit / delete personal tasks with validation
-- Create / edit / delete project tasks with validation (leader + admin only)
-- Checklist toggles persist back to the store across pages
-- Newly assigned project tasks appear in My Tasks without page reload
-- Mark tasks and projects as done — dashboard and calendar update immediately
-- Archive/unarchive courses — archived courses are hidden from task/project dropdowns
-- Calendar plots all active tasks and project deadlines with correct local-time date keys
-- Form validation: title, due date required; resource link URLs validated (must start with http:// or https://)
-- Non-functional UI (topbar search, theme toggle, notifications, avatar upload) is clearly disabled with tooltips
-- Sign out shows an informative message instead of a browser alert
+**Non-recursive RLS.** Supabase RLS policies on `project_members` are backed by `SECURITY DEFINER` helper functions (`is_project_member`, `is_project_manager`, etc.) that bypass RLS internally, preventing infinite recursion in self-referential policies.
 
-State resets on hard-refresh — full persistence is planned for Phase 2 (Supabase).
+**Optimistic updates.** All mutations (create/edit/delete/checklist/mark-done) update local React state immediately, then write to Supabase. On error, `refetch()` restores the correct server state.
 
-**Phase 2** will set up the Supabase project: create all tables (profiles, courses, personal_tasks, projects, project_members, project_tasks, project_links), write Row Level Security policies, and prepare SQL migration scripts.
-
-Auth and real data connections are planned for Phase 3–4.
+**Atomic project creation.** A `create_project` RPC atomically inserts both the project row and the creator's leader membership row, avoiding a race condition where the creator couldn't read their own project immediately after creation.
