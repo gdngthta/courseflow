@@ -1,6 +1,6 @@
 # CourseFlow — Test Plan
 
-> This is the test plan for the one-week MVP. Testing strategy is pragmatic: manual testing for all user flows, with unit tests for critical logic.
+> Testing strategy: manual testing for all user flows, unit tests for critical logic.
 
 ---
 
@@ -22,78 +22,129 @@
 
 ## Manual Test Flows
 
-### Auth
-- [ ] Sign up with new email → lands on dashboard
+### Auth (Phase 3A)
+- [ ] Sign up with new email → lands on dashboard, greeting shows first name
 - [ ] Sign in with existing credentials → lands on dashboard
-- [ ] Invalid credentials → shows error
-- [ ] Sign out → redirected to login
-- [ ] Access protected page without auth → redirected to login
+- [ ] Invalid credentials → shows inline error message
+- [ ] Sign out from sidebar or Settings → redirected to /login
+- [ ] Access /dashboard without auth → redirected to /login
+- [ ] Access /login while logged in → redirected to /dashboard
 
-### Courses
-- [ ] Add a course → appears in course list
-- [ ] Edit a course → changes reflected in list and dropdowns
-- [ ] Archive a course → moves to Archived tab
-- [ ] Course appears in task/project course dropdowns
+### Courses (Phase 3B)
+- [ ] Add a course → appears in course list immediately (optimistic)
+- [ ] Edit a course → changes reflected in list and all course dropdowns
+- [ ] Archive a course → moves to Archived tab; disappears from task/project dropdowns
+- [ ] Unarchive a course → returns to Active tab
+- [ ] Course persists after page refresh (Supabase)
 
-### Personal Tasks
-- [ ] Create personal task → appears in My Tasks
+### Personal Tasks (Phase 3B)
+- [ ] Create personal task → appears in My Tasks immediately
 - [ ] Edit task → fields updated correctly
-- [ ] Delete task → removed from My Tasks (with confirmation)
-- [ ] Update progress → risk status recalculates
-- [ ] Mark as Done → status changes, risk shows Completed
+- [ ] Delete task → removed from My Tasks, Dashboard, Calendar (with confirmation)
+- [ ] Update progress → risk status recalculates correctly
+- [ ] Mark as Done → status changes, risk shows Completed; hidden from calendar
 - [ ] Filter by course → shows only matching tasks
 - [ ] Filter tabs (All / Personal / Critical / Completed) work correctly
+- [ ] Task with links → links show in Task Detail drawer
+- [ ] Task with checklist → checklist toggles persist after closing and reopening drawer
+- [ ] Task data persists after page refresh (Supabase)
 
-### Projects
+### Projects (Phase 3C)
 - [ ] Create project → appears in project list, creator is Leader
-- [ ] Invite member by email → member appears in project
+- [ ] Invite member by email → member appears in project members list
+- [ ] Invite non-existent email → shows "No CourseFlow user found with that email"
+- [ ] Invite already-a-member → shows "already a member" error
 - [ ] Add project task + assign → task appears in assigned member's My Tasks
-- [ ] Assigned member updates task progress → project progress updates
-- [ ] Leader edits project task → changes reflected
+- [ ] Assigned member updates task progress → project progress bar updates
+- [ ] Leader edits project task → changes reflected across all views
 - [ ] Leader deletes project task → removed from project and member's My Tasks
-- [ ] Member cannot delete task
-- [ ] Project progress = completed / total × 100
+- [ ] Member cannot add/edit/delete tasks (buttons hidden)
+- [ ] Project progress = completed / total × 100%
+- [ ] Complete project → moves to Completed tab, tasks become read-only
+- [ ] Project data persists after page refresh (Supabase)
 
-### Calendar
+### My Tasks — Combined View (Phase 3D)
+- [ ] Personal tasks and assigned group tasks both appear in All tab
+- [ ] Personal tab → only personal tasks
+- [ ] Assigned to Me tab → only group project tasks assigned to current user
+- [ ] Critical tab → only tasks with critical risk
+- [ ] Completed tab → only done tasks
+- [ ] Search by title → filters correctly
+- [ ] Course dropdown filter → shows only tasks from selected course
+- [ ] Marking a group task done via My Tasks → updates project progress
+
+### Dashboard (Phase 3D)
+- [ ] Greeting shows authenticated user's first name
+- [ ] Summary cards show correct real counts (not mock data)
+- [ ] Today's Priority shows tasks due today or overdue
+- [ ] Critical Risk shows critical tasks only
+- [ ] Upcoming Deadlines grouped by date, future tasks only
+- [ ] Course Overview shows real courses with real task counts
+- [ ] Clicking task card opens Task Detail modal
+- [ ] Owl mascot shows "thinking" variant when critical tasks exist
+- [ ] Creating a task on My Tasks → immediately reflected on Dashboard without refresh
+
+### Calendar (Phase 3D)
 - [ ] Monthly grid renders 42 cells (6 rows × 7 columns) starting on Sunday
 - [ ] Today's date shows indigo circle on the day number
-- [ ] Tasks and project deadlines appear as colored pills on their due dates
+- [ ] Tasks appear as colored pills on their due dates (indigo=personal, violet=group, red=critical)
+- [ ] Project deadlines appear as emerald pills (All filter)
 - [ ] Clicking a date selects it and updates the right-side detail panel
 - [ ] Detail panel groups items into Personal Tasks / Group Tasks / Project Deadlines
-- [ ] Upcoming Deadlines panel shows Today / Tomorrow / dated groups correctly
-- [ ] "Personal" filter hides group tasks and project deadlines from the grid
-- [ ] "Group" filter shows only group tasks
-- [ ] "Critical" filter shows only critical-risk tasks
-- [ ] Previous/Next month navigation updates the grid; day numbers are correct
-- [ ] "Today" button jumps back to current month and re-selects today
-- [ ] Clicking a task pill or sidebar item opens the Task Detail drawer
-- [ ] Clicking a project deadline pill or sidebar item navigates to /projects/[id]
-- [ ] Days from previous/next month appear dimmed (opacity reduced)
+- [ ] Upcoming Deadlines sidebar shows Today / Tomorrow / dated groups correctly
+- [ ] Filter tabs (All / Personal / Group / Critical) apply to grid and sidebar
+- [ ] Previous/Next month navigation; "Today" button resets to current month
 - [ ] "+N more" overflow label appears when a day has more than 3 items
-- [ ] Done tasks do not appear on the calendar
+- [ ] Clicking a task pill opens the Task Detail drawer
+- [ ] Clicking a project deadline pill navigates to /projects/[id]
+- [ ] Done tasks do NOT appear on the calendar
 
-### Dashboard
-- [ ] Summary cards show correct counts
-- [ ] Today's Priority shows tasks due today
-- [ ] Critical Risk shows critical tasks only
-- [ ] Upcoming Deadlines shows future tasks sorted by date
-- [ ] Clicking task card opens Task Detail
-- [ ] Completed tasks do not appear in Critical Risk
-
-### Task Detail
-- [ ] Shows correct task data
-- [ ] Progress can be updated
-- [ ] Status can be changed
-- [ ] Edit button opens edit form (leader/admin for group tasks)
-- [ ] Delete button shows confirmation modal
-- [ ] Member sees Edit/Delete disabled for group tasks they don't own
+### Settings (Phase 3E)
+- [ ] Profile section shows authenticated user's name from Supabase
+- [ ] Editing first/last name and saving → updates greeting on Dashboard and sidebar immediately (auth metadata updated)
+- [ ] Save button shows "Saving…" while in flight, then "✓ Saved"
+- [ ] Error during save → shows inline error message
+- [ ] Sign Out in Account section → redirects to /login
 
 ---
 
-## Edge Cases to Verify
+## Edge Cases
 
-- My Tasks page with no personal tasks and no assigned group tasks shows empty state
-- Project with no tasks shows 0% progress
-- Task with due_date in the past shows Critical (unless Done)
-- Creating a personal task without a course — should be allowed
-- Archiving a course does not delete its tasks or projects
+- My Tasks page with no personal tasks and no assigned group tasks → shows empty state
+- Project with no tasks → shows 0% progress
+- Task with due_date in the past → shows Critical risk (unless Done)
+- Creating a personal task without a course → should be allowed ("No course" label)
+- Archiving a course does not delete its tasks or projects — they remain in DB
+- Creating a task then immediately refreshing → task still appears (Supabase persistence)
+- Calendar date rendering uses local time (not UTC) — tasks appear on the correct local day
+
+---
+
+## Phase 1 UX Polish — Manual Checks
+
+### Form Validation
+- [ ] Creating a task with an empty title shows "Task title is required" error
+- [ ] Creating a task without a due date shows "Due date is required" error
+- [ ] Adding a resource link with URL not starting with http:// or https:// shows inline error
+- [ ] Fixing the URL clears the error immediately
+
+### Non-Functional UI
+- [ ] Topbar search input is disabled with tooltip
+- [ ] Topbar theme toggle and notifications buttons are disabled (tooltip on hover)
+- [ ] Settings avatar camera button is disabled with tooltip
+
+### Empty States
+- [ ] Courses > Archived tab with no archived courses → "No archived courses" (no Add button)
+- [ ] Projects > Completed tab with no completed projects → "No completed projects yet"
+- [ ] Projects > Active tab with no active projects → "No projects yet" with Create action
+
+### Invite Member Modal
+- [ ] Submitting invite shows success screen with the invited email
+- [ ] Error from RPC (user not found, already a member) shows inline error
+- [ ] Modal resets to form when reopened
+
+### Cross-Page State (Supabase persistence)
+- [ ] Creating a personal task on My Tasks → appears on Dashboard and Calendar
+- [ ] Archiving a course → disappears from task/project course dropdowns immediately
+- [ ] Marking a task done → task disappears from calendar and critical risk section
+- [ ] All changes above survive a full page refresh

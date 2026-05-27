@@ -1,18 +1,31 @@
 # CourseFlow — Future Improvements
 
-> Features and improvements beyond the one-week MVP scope.
+> Features and improvements beyond the current MVP scope.
 
 ---
 
 ## Short-Term (Post-MVP, 1–2 weeks)
 
+### Project Links CRUD
+- The `project_links` table exists in Supabase and links are fetched in `ProjectWithRelations`
+- The Project Detail page renders links but the "Add Link" button was deferred
+- Implement: add/delete project links from the Project Detail workspace
+
+### Profile Avatar Upload
+- Settings avatar camera button is currently disabled
+- Implement: upload avatar to Supabase Storage, save URL to `profiles.avatar_url`
+- Show avatar in Sidebar and Settings instead of initials
+
 ### Real-Time Collaboration
 - Live updates when a project member updates a task
-- Supabase Realtime subscriptions for project_tasks and project_members
+- Supabase Realtime subscriptions for `project_tasks` and `project_members`
+- No polling required — push updates to all open clients
 
-### Notifications
-- In-app notification bell for: task assigned to you, deadline approaching, task updated
+### Notifications & Reminders
+- In-app notification bell for: task assigned, deadline approaching, task updated
 - Email reminders for critical tasks and upcoming deadlines
+- **Telegram bot integration** — deadline reminders and task assignment alerts (post-auth)
+- Smart deadline reminders based on task difficulty and days remaining
 
 ### Mobile Responsive Layout
 - The MVP targets desktop (1280px+)
@@ -45,7 +58,11 @@
 
 ### Multiple Semesters
 - Archive entire semester with all its courses and tasks
-- View historical progress
+- View historical progress across semesters
+
+### Multi-User Course Visibility
+- Currently courses are strictly user-scoped; project co-members without the course added see blank course code/name
+- Allow non-owner members to read course names they're associated with through a project
 
 ---
 
@@ -74,7 +91,8 @@
 ## Technical Debt / Code Quality
 
 - Add proper error boundaries and loading states
-- Add unit tests for all UI components
-- Migrate to server-side data fetching with React Server Components for better performance
-- Add rate limiting and abuse prevention on API routes
-- Add proper logging and error monitoring (Sentry)
+- Add unit tests for all UI components (currently only risk algorithm is unit-tested)
+- Migrate hot paths to React Server Components for better initial load performance
+- Add rate limiting and abuse prevention
+- Add proper error monitoring (Sentry)
+- Settings profile name save currently updates auth metadata client-side — could be moved to a server action for better consistency

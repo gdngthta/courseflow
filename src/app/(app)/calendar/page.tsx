@@ -5,8 +5,9 @@ import { useRouter } from 'next/navigation'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { Topbar } from '@/components/layout/Topbar'
 import { TaskDetailModal } from '@/components/tasks/TaskDetailModal'
-import { useMockStore, deriveTaskCards, deriveProjectCards } from '@/store/mockStore'
-import { MOCK_MEMBERS } from '@/data/mock'
+import { useData } from '@/contexts/DataContext'
+import { toAllTaskCards, buildMemberNameMap } from '@/lib/taskDerive'
+import { toProjectCards } from '@/lib/projectDerive'
 import { formatFullDate } from '@/lib/utils'
 import type { TaskCardData, TaskChecklistItem } from '@/types'
 
@@ -57,7 +58,7 @@ function itemPillClass(item: CalendarItem): string {
 
 export default function CalendarPage() {
   const router = useRouter()
-  const { state, dispatch } = useMockStore()
+  const { userId, courses, personalTasks, projects, updatePersonalTaskChecklist, updateProjectTaskChecklist } = useData()
 
   const now = new Date()
   const todayKey = toDateKey(now)
@@ -68,8 +69,12 @@ export default function CalendarPage() {
   const [filter, setFilter] = useState<FilterType>('all')
   const [selectedTask, setSelectedTask] = useState<TaskCardData | null>(null)
 
-  const allTasks = useMemo(() => deriveTaskCards(state), [state])
-  const allProjects = useMemo(() => deriveProjectCards(state), [state])
+  const allTasks = useMemo(
+    () => toAllTaskCards(personalTasks, courses, projects, userId),
+    [personalTasks, courses, projects, userId]
+  )
+  const allProjects = useMemo(() => toProjectCards(projects, userId), [projects, userId])
+  const memberNames = useMemo(() => buildMemberNameMap(projects), [projects])
 
   const activeTasks = useMemo(() => allTasks.filter((t) => t.status !== 'done'), [allTasks])
   const activeProjects = useMemo(() => allProjects.filter((p) => p.status === 'active'), [allProjects])
@@ -151,12 +156,9 @@ export default function CalendarPage() {
   }, [filteredTasks, activeProjects, filter, todayKey])
 
   const handleChecklistUpdate = (taskId: string, checklist: TaskChecklistItem[]) => {
-    const isPersonal = state.personalTasks.some((t) => t.id === taskId)
-    if (isPersonal) {
-      dispatch({ type: 'UPDATE_PERSONAL_TASK_CHECKLIST', id: taskId, checklist })
-    } else {
-      dispatch({ type: 'UPDATE_PROJECT_TASK_CHECKLIST', id: taskId, checklist })
-    }
+    const isPersonal = personalTasks.some((t) => t.id === taskId)
+    if (isPersonal) updatePersonalTaskChecklist(taskId, checklist)
+    else updateProjectTaskChecklist(taskId, checklist)
   }
 
   const getDateLabel = (dateKey: string) => {
@@ -458,7 +460,7 @@ export default function CalendarPage() {
         onClose={() => setSelectedTask(null)}
         onChecklistUpdate={handleChecklistUpdate}
         assigneeName={
-          selectedTask?.assigned_to ? MOCK_MEMBERS[selectedTask.assigned_to]?.name : undefined
+          selectedTask?.assigned_to ? memberNames[selectedTask.assigned_to] : undefined
         }
       />
     </>

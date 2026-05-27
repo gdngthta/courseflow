@@ -41,7 +41,7 @@ const EMPTY_FORM: AddProjectTaskData = {
 
 export function AddProjectTaskModal({ open, onClose, onSubmit, members }: AddProjectTaskModalProps) {
   const [form, setForm] = useState<AddProjectTaskData>(EMPTY_FORM)
-  const [errors, setErrors] = useState<Partial<Record<'title' | 'due_date', string>>>({})
+  const [errors, setErrors] = useState<Partial<Record<'title' | 'due_date' | 'links', string>>>({})
 
   const memberOptions = members.map((m) => ({ value: m.id, label: m.name }))
 
@@ -64,6 +64,10 @@ export function AddProjectTaskModal({ open, onClose, onSubmit, members }: AddPro
     const e: typeof errors = {}
     if (!form.title.trim()) e.title = 'Task title is required'
     if (!form.due_date) e.due_date = 'Due date is required'
+    const badLink = form.links.find(
+      (l) => l.url.trim() && !l.url.trim().match(/^https?:\/\/.+/)
+    )
+    if (badLink) e.links = `Invalid URL "${badLink.url}" — must start with http:// or https://`
     setErrors(e)
     return Object.keys(e).length === 0
   }
@@ -140,14 +144,14 @@ export function AddProjectTaskModal({ open, onClose, onSubmit, members }: AddPro
                     type="text"
                     placeholder="Label"
                     value={link.label}
-                    onChange={(e) => updateLink(i, 'label', e.target.value)}
+                    onChange={(e) => { updateLink(i, 'label', e.target.value); setErrors((prev) => ({ ...prev, links: undefined })) }}
                     className="w-2/5 px-2.5 py-1.5 bg-slate-800 border border-slate-700 rounded-lg text-xs text-slate-200 placeholder:text-slate-500 focus:outline-none focus:border-indigo-500 transition"
                   />
                   <input
                     type="url"
                     placeholder="https://..."
                     value={link.url}
-                    onChange={(e) => updateLink(i, 'url', e.target.value)}
+                    onChange={(e) => { updateLink(i, 'url', e.target.value); setErrors((prev) => ({ ...prev, links: undefined })) }}
                     className="flex-1 px-2.5 py-1.5 bg-slate-800 border border-slate-700 rounded-lg text-xs text-slate-200 placeholder:text-slate-500 focus:outline-none focus:border-indigo-500 transition"
                   />
                   <button
@@ -159,6 +163,9 @@ export function AddProjectTaskModal({ open, onClose, onSubmit, members }: AddPro
                   </button>
                 </div>
               ))}
+              {errors.links && (
+                <p className="text-xs text-red-400">{errors.links}</p>
+              )}
             </div>
           ) : (
             <p className="text-xs text-slate-600 italic">No resources added.</p>

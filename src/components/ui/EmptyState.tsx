@@ -103,3 +103,23 @@ export function NoCoursesEmpty({ onAdd }: { onAdd?: () => void }) {
     />
   )
 }
+
+export function NoArchivedCoursesEmpty() {
+  return (
+    <EmptyState
+      owlVariant="thinking"
+      title="No archived courses"
+      description="Courses you archive will appear here. Active courses are still visible in the Active tab."
+    />
+  )
+}
+
+export function NoCompletedProjectsEmpty() {
+  return (
+    <EmptyState
+      owlVariant="thinking"
+      title="No completed projects yet"
+      description="Projects you mark as completed will appear here for reference."
+    />
+  )
+}

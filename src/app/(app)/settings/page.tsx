@@ -6,7 +6,9 @@ import { Topbar } from '@/components/layout/Topbar'
 import { Input } from '@/components/ui/Input'
 import { SelectInput } from '@/components/ui/SelectInput'
 import { Button } from '@/components/ui/Button'
-import { MOCK_USER } from '@/data/mock'
+import { useAuthUser } from '@/contexts/AuthContext'
+import { updateMyProfile } from '@/lib/api/profiles'
+import { createClient } from '@/lib/supabase'
 
 type Section = 'profile' | 'preferences' | 'account'
 
@@ -23,16 +25,49 @@ const THEME_OPTIONS = [
 ]
 
 export default function SettingsPage() {
-  const [activeSection, setActiveSection] = useState<Section>('profile')
-  const [firstName, setFirstName] = useState(MOCK_USER.first_name)
-  const [lastName, setLastName] = useState(MOCK_USER.last_name)
-  const [email] = useState(MOCK_USER.email)
-  const [theme, setTheme] = useState('system')
-  const [saved, setSaved] = useState(false)
+  const { user, signOut } = useAuthUser()
 
-  const handleSave = () => {
-    setSaved(true)
-    setTimeout(() => setSaved(false), 2000)
+  // Derive display name from Supabase user metadata
+  const fullName: string = user?.user_metadata?.full_name ?? ''
+  const nameParts = fullName.split(' ')
+  const defaultFirst = nameParts[0] ?? ''
+  const defaultLast = nameParts.slice(1).join(' ') ?? ''
+
+  const [activeSection, setActiveSection] = useState<Section>('profile')
+  const [firstName, setFirstName] = useState(defaultFirst)
+  const [lastName, setLastName] = useState(defaultLast)
+  const [theme, setTheme] = useState('system')
+  const [saving, setSaving] = useState(false)
+  const [saved, setSaved] = useState(false)
+  const [saveError, setSaveError] = useState('')
+  const [signingOut, setSigningOut] = useState(false)
+
+  const email = user?.email ?? ''
+  const initials = [firstName[0], lastName[0]].filter(Boolean).join('').toUpperCase() || '?'
+
+  const handleSave = async () => {
+    const fullName = `${firstName} ${lastName}`.trim()
+    if (!fullName) return
+    setSaving(true)
+    setSaveError('')
+    try {
+      // 1. Update profiles table (visible to project co-members)
+      await updateMyProfile({ full_name: fullName })
+      // 2. Update auth user_metadata so greeting + sidebar reflect change immediately
+      const supabase = createClient()
+      await supabase.auth.updateUser({ data: { full_name: fullName } })
+      setSaved(true)
+      setTimeout(() => setSaved(false), 2500)
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : 'Failed to save profile.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleSignOut = async () => {
+    setSigningOut(true)
+    await signOut()
   }
 
   return (
@@ -74,16 +109,20 @@ export default function SettingsPage() {
                 <div className="flex items-center gap-4 mb-6">
                   <div className="relative">
                     <div className="w-16 h-16 rounded-full bg-indigo-700 flex items-center justify-center">
-                      <span className="text-white text-xl font-bold">
-                        {firstName.charAt(0)}{lastName.charAt(0)}
-                      </span>
+                      <span className="text-white text-xl font-bold">{initials}</span>
                     </div>
-                    <button className="absolute -bottom-1 -right-1 w-6 h-6 bg-slate-700 hover:bg-slate-600 border border-slate-600 rounded-full flex items-center justify-center transition-colors">
-                      <Camera size={11} className="text-slate-300" />
+                    <button
+                      title="Photo upload coming in a later phase"
+                      disabled
+                      className="absolute -bottom-1 -right-1 w-6 h-6 bg-slate-700 border border-slate-600 rounded-full flex items-center justify-center cursor-not-allowed opacity-60"
+                    >
+                      <Camera size={11} className="text-slate-400" />
                     </button>
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-white">{firstName} {lastName}</p>
+                    <p className="text-sm font-medium text-white">
+                      {firstName || lastName ? `${firstName} ${lastName}`.trim() : email}
+                    </p>
                     <p className="text-xs text-slate-400">Student</p>
                     <p className="text-xs text-slate-500 mt-0.5">JPG, GIF or PNG. Max size 800K</p>
                   </div>
@@ -108,11 +147,16 @@ export default function SettingsPage() {
                     value={email}
                     disabled
                   />
-                  <p className="text-xs text-slate-500 mt-1">Email cannot be changed here. Managed by auth provider.</p>
+                  <p className="text-xs text-slate-500 mt-1">
+                    Email is managed by Supabase Auth and cannot be changed here.
+                  </p>
                 </div>
 
-                <Button variant="primary" onClick={handleSave}>
-                  {saved ? '✓ Saved' : 'Save Changes'}
+                {saveError && (
+                  <p className="text-xs text-red-400 mb-3">{saveError}</p>
+                )}
+                <Button variant="primary" onClick={handleSave} disabled={saving}>
+                  {saving ? 'Saving…' : saved ? '✓ Saved' : 'Save Changes'}
                 </Button>
               </div>
             )}
@@ -137,16 +181,17 @@ export default function SettingsPage() {
             {activeSection === 'account' && (
               <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
                 <h3 className="text-sm font-semibold text-white mb-2">Account</h3>
-                <p className="text-sm text-slate-400 mb-6">Signed in as {email}</p>
+                <p className="text-sm text-slate-400 mb-6">Signed in as <span className="text-slate-300">{email}</span></p>
                 <Button
                   variant="destructive"
-                  onClick={() => alert('Sign out — auth not connected yet (Phase 1).')}
+                  onClick={handleSignOut}
+                  disabled={signingOut}
                 >
                   <LogOut size={14} />
-                  Sign Out
+                  {signingOut ? 'Signing out…' : 'Sign Out'}
                 </Button>
                 <p className="text-xs text-slate-500 mt-3">
-                  Auth is not connected yet. Sign out will be functional in Phase 3.
+                  You will be redirected to the login page.
                 </p>
               </div>
             )}

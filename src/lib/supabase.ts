@@ -1,9 +1,23 @@
-// Supabase client — not connected yet (Phase 0)
-// Will be replaced with @supabase/supabase-js createClient() in Phase 1
+import { createBrowserClient } from '@supabase/ssr'
 
-export const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? ''
-export const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? ''
+/**
+ * Returns a Supabase browser client.
+ * Safe to call in any client component — @supabase/ssr caches by URL+key internally.
+ *
+ * Throws a clear error if environment variables are missing so misconfiguration
+ * is caught immediately in development rather than producing confusing auth failures.
+ */
+export function createClient() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
-// Placeholder — Phase 1 will install @supabase/supabase-js and replace this
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const supabase: any = null
+  if (!supabaseUrl || !supabaseAnonKey) {
+    throw new Error(
+      '[CourseFlow] Missing Supabase environment variables.\n' +
+      'Copy .env.example → .env.local and set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY.\n' +
+      'See the README for setup instructions.'
+    )
+  }
+
+  return createBrowserClient(supabaseUrl, supabaseAnonKey)
+}

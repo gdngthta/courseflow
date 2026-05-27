@@ -12,7 +12,7 @@ import {
   LogOut,
 } from 'lucide-react'
 import { OwlMascot } from '@/components/brand/OwlMascot'
-import { MOCK_USER } from '@/data/mock'
+import { useAuthUser } from '@/contexts/AuthContext'
 
 const NAV_ITEMS = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -25,8 +25,16 @@ const NAV_ITEMS = [
 
 export function Sidebar() {
   const pathname = usePathname()
+  const { user, signOut } = useAuthUser()
 
-  const initials = `${MOCK_USER.first_name[0]}${MOCK_USER.last_name[0]}`
+  // Derive display name from auth metadata → fallback to email
+  const fullName: string = user?.user_metadata?.full_name ?? user?.email ?? 'User'
+  const initials = fullName
+    .split(' ')
+    .map((w) => w[0])
+    .slice(0, 2)
+    .join('')
+    .toUpperCase() || '?'
 
   return (
     <aside className="fixed inset-y-0 left-0 w-60 flex flex-col bg-slate-900 border-r border-slate-800 z-30">
@@ -64,11 +72,14 @@ export function Sidebar() {
             <span className="text-white text-xs font-semibold">{initials}</span>
           </div>
           <div className="min-w-0">
-            <p className="text-sm font-medium text-slate-200 truncate">{MOCK_USER.first_name}</p>
-            <p className="text-xs text-slate-500">Student</p>
+            <p className="text-sm font-medium text-slate-200 truncate">{fullName}</p>
+            <p className="text-xs text-slate-500 truncate">{user?.email ?? ''}</p>
           </div>
         </div>
-        <button className="flex w-full items-center gap-3 px-3 py-2 rounded-lg text-sm text-slate-400 hover:bg-slate-800 hover:text-slate-200 transition-colors">
+        <button
+          onClick={signOut}
+          className="flex w-full items-center gap-3 px-3 py-2 rounded-lg text-sm text-slate-400 hover:bg-slate-800 hover:text-slate-200 transition-colors"
+        >
           <LogOut size={16} />
           Log Out
         </button>

@@ -12,24 +12,42 @@ import { InviteMemberModal } from '@/components/projects/InviteMemberModal'
 import { CompleteProjectModal } from '@/components/projects/CompleteProjectModal'
 import { RiskBadge, RoleBadge } from '@/components/ui/Badge'
 import { ProgressBar } from '@/components/ui/ProgressBar'
-import { useMockStore, deriveProjectDetail } from '@/store/mockStore'
-import { MOCK_MEMBERS } from '@/data/mock'
-import { calculateRisk } from '@/lib/risk'
+import { useData } from '@/contexts/DataContext'
+import { toProjectDetail } from '@/lib/projectDerive'
 import { formatFullDate } from '@/lib/utils'
-import type { TaskCardData, ProjectTask, TaskChecklistItem } from '@/types'
+import type { TaskCardData, TaskChecklistItem, ProjectRole } from '@/types'
 
 export default function ProjectDetailPage() {
   const params = useParams()
   const projectId = params?.id as string
-  const { state, dispatch } = useMockStore()
+
+  const {
+    userId, projects, projectsLoading,
+    addProjectTask, updateProjectTaskNotes, deleteProjectTask,
+    markProjectTaskDone, completeProject, updateProjectTaskChecklist,
+    inviteMember,
+  } = useData()
 
   const [selectedTask, setSelectedTask] = useState<TaskCardData | null>(null)
   const [showAddTask, setShowAddTask] = useState(false)
   const [showInvite, setShowInvite] = useState(false)
   const [showCompleteModal, setShowCompleteModal] = useState(false)
 
-  // Derive project detail from shared state — reactively updates on every store change
-  const detail = useMemo(() => deriveProjectDetail(state, projectId), [state, projectId])
+  const detail = useMemo(
+    () => toProjectDetail(projects, projectId, userId),
+    [projects, projectId, userId]
+  )
+
+  if (projectsLoading && !detail) {
+    return (
+      <>
+        <Topbar title="Project Detail" />
+        <div className="p-6">
+          <div className="flex items-center justify-center py-20 text-sm text-slate-500">Loading project…</div>
+        </div>
+      </>
+    )
+  }
 
   if (!detail) {
     return (
@@ -56,53 +74,48 @@ export default function ProjectDetailPage() {
   const unfinishedTasks = tasks.filter((t) => t.status !== 'done')
 
   const memberOptions = members.map((m) => ({ id: m.user_id, name: m.name }))
+  const assigneeName = selectedTask?.assigned_to
+    ? members.find((m) => m.user_id === selectedTask.assigned_to)?.name
+    : undefined
 
   // ── Handlers ──
 
-  const handleAddTask = (data: AddProjectTaskData) => {
-    const newTask: ProjectTask = {
-      id: `pjt-${Date.now()}`,
+  const handleAddTask = async (data: AddProjectTaskData) => {
+    await addProjectTask({
       project_id: project.id,
       title: data.title,
-      type: 'group',
-      status: 'not_started',
-      difficulty: data.difficulty,
-      progress: 0,
-      due_date: data.due_date,
       assigned_to: data.assigned_to || undefined,
+      due_date: data.due_date,
+      difficulty: data.difficulty,
       notes: data.notes || undefined,
-      links: data.links.length > 0 ? data.links : undefined,
-      checklist: data.checklist.filter((i) => i.text.trim()).length > 0
-        ? data.checklist.filter((i) => i.text.trim())
-        : undefined,
-      created_at: new Date().toISOString(),
-    }
-    dispatch({ type: 'ADD_PROJECT_TASK', task: newTask })
+      links: data.links,
+      checklist: data.checklist.filter((i) => i.text.trim()),
+    })
   }
 
-  const handleUpdateNotes = (task: TaskCardData, notes: string) => {
-    dispatch({ type: 'UPDATE_PROJECT_TASK_NOTES', id: task.id, notes })
+  const handleUpdateNotes = async (task: TaskCardData, notes: string) => {
+    await updateProjectTaskNotes(task.id, notes)
   }
 
-  const handleDeleteTask = (task: TaskCardData) => {
-    dispatch({ type: 'DELETE_PROJECT_TASK', id: task.id })
+  const handleDeleteTask = async (task: TaskCardData) => {
+    await deleteProjectTask(task.id)
   }
 
-  const handleMarkDone = (task: TaskCardData) => {
-    const existing = state.projectTasks.find((t) => t.id === task.id)
-    if (existing) {
-      dispatch({ type: 'UPDATE_PROJECT_TASK', task: { ...existing, status: 'done', progress: 100 } })
-    }
+  const handleMarkDone = async (task: TaskCardData) => {
+    await markProjectTaskDone(task.id)
   }
 
-  const handleCompleteProject = () => {
-    const today = new Date().toISOString().split('T')[0]
-    dispatch({ type: 'COMPLETE_PROJECT', id: project.id, completedAt: today })
+  const handleCompleteProject = async () => {
+    await completeProject(project.id)
     setShowCompleteModal(false)
   }
 
   const handleChecklistUpdate = (taskId: string, checklist: TaskChecklistItem[]) => {
-    dispatch({ type: 'UPDATE_PROJECT_TASK_CHECKLIST', id: taskId, checklist })
+    updateProjectTaskChecklist(taskId, checklist)
+  }
+
+  const handleInvite = async ({ email, role }: { email: string; role: ProjectRole }) => {
+    return inviteMember(project.id, email, role === 'admin' ? 'admin' : 'member')
   }
 
   return (
@@ -258,11 +271,6 @@ export default function ProjectDetailPage() {
             <div className="bg-slate-900 border border-slate-800 rounded-xl p-5">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-sm font-semibold text-white">Important Links</h3>
-                {canManage && !isCompleted && (
-                  <button className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors">
-                    + Add Link
-                  </button>
-                )}
               </div>
               {links.length > 0 ? (
                 <div className="space-y-2">
@@ -270,6 +278,8 @@ export default function ProjectDetailPage() {
                     <a
                       key={link.id}
                       href={link.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
                       className="flex items-center gap-2 text-sm text-slate-300 hover:text-indigo-400 transition-colors"
                     >
                       <ExternalLink size={13} className="text-slate-500 flex-shrink-0" />
@@ -294,7 +304,7 @@ export default function ProjectDetailPage() {
         onUpdateNotes={isCompleted ? undefined : handleUpdateNotes}
         onChecklistUpdate={isCompleted ? undefined : handleChecklistUpdate}
         userRole={userRole}
-        assigneeName={selectedTask?.assigned_to ? MOCK_MEMBERS[selectedTask.assigned_to]?.name : undefined}
+        assigneeName={assigneeName}
       />
 
       {!isCompleted && (
@@ -309,7 +319,7 @@ export default function ProjectDetailPage() {
           <InviteMemberModal
             open={showInvite}
             onClose={() => setShowInvite(false)}
-            onSubmit={() => {}}
+            onSubmit={handleInvite}
           />
         </>
       )}

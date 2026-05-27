@@ -6,26 +6,23 @@ import { Search } from 'lucide-react'
 import { Topbar } from '@/components/layout/Topbar'
 import { ProjectCard } from '@/components/projects/ProjectCard'
 import { CreateProjectModal, type CreateProjectData } from '@/components/projects/CreateProjectModal'
-import { NoProjectsEmpty } from '@/components/ui/EmptyState'
-import { useMockStore, deriveProjectCards } from '@/store/mockStore'
-import type { Project, ProjectMember } from '@/types'
+import { NoProjectsEmpty, NoCompletedProjectsEmpty } from '@/components/ui/EmptyState'
+import { useData } from '@/contexts/DataContext'
+import { toProjectCards } from '@/lib/projectDerive'
 
 export default function ProjectsPage() {
   const router = useRouter()
-  const { state, dispatch } = useMockStore()
+  const { userId, courses, projects, projectsLoading, error, createProject } = useData()
 
   const [activeTab, setActiveTab] = useState<'active' | 'completed'>('active')
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCourse, setSelectedCourse] = useState('all')
 
-  const projects = useMemo(() => deriveProjectCards(state), [state])
+  const projectCards = useMemo(() => toProjectCards(projects, userId), [projects, userId])
 
-  // Only non-archived courses in filter dropdown
-  const activeCourses = useMemo(
-    () => state.courses.filter((c) => !c.is_archived),
-    [state.courses]
-  )
+  // Only non-archived courses in the create modal + filter dropdown
+  const activeCourses = useMemo(() => courses.filter((c) => !c.is_archived), [courses])
 
   const courseFilterOptions = [
     { value: 'all', label: 'All Courses' },
@@ -33,9 +30,9 @@ export default function ProjectsPage() {
   ]
 
   const filtered = useMemo(() => {
-    let result = projects.filter((p) => p.status === activeTab)
+    let result = projectCards.filter((p) => p.status === activeTab)
     if (selectedCourse !== 'all') {
-      const course = state.courses.find((c) => c.id === selectedCourse)
+      const course = courses.find((c) => c.id === selectedCourse)
       if (course) result = result.filter((p) => p.course_code === course.code)
     }
     if (searchQuery.trim()) {
@@ -43,30 +40,17 @@ export default function ProjectsPage() {
       result = result.filter((p) => p.name.toLowerCase().includes(q) || p.course_name.toLowerCase().includes(q))
     }
     return result
-  }, [projects, activeTab, searchQuery, selectedCourse, state.courses])
+  }, [projectCards, activeTab, searchQuery, selectedCourse, courses])
 
-  const activeCount = projects.filter((p) => p.status === 'active').length
-  const completedCount = projects.filter((p) => p.status === 'completed').length
+  const activeCount = projectCards.filter((p) => p.status === 'active').length
+  const completedCount = projectCards.filter((p) => p.status === 'completed').length
 
-  const handleCreate = (data: CreateProjectData) => {
-    const id = `proj-${Date.now()}`
-    const newProject: Project = {
-      id,
+  const handleCreate = async (data: CreateProjectData) => {
+    await createProject({
       name: data.name,
       course_id: data.course_id,
       deadline: data.deadline,
-      status: 'active',
-      created_by: state.currentUser.id,
-      created_at: new Date().toISOString(),
-    }
-    const userMember: ProjectMember = {
-      id: `pm-${Date.now()}`,
-      project_id: id,
-      user_id: state.currentUser.id,
-      role: 'leader',
-      joined_at: new Date().toISOString(),
-    }
-    dispatch({ type: 'ADD_PROJECT', project: newProject, userMember })
+    })
   }
 
   return (
@@ -139,7 +123,15 @@ export default function ProjectsPage() {
           </div>
         </div>
 
-        {filtered.length > 0 ? (
+        {error && (
+          <div className="mb-4 px-4 py-3 bg-red-900/20 border border-red-800/40 rounded-lg text-sm text-red-400">
+            {error}
+          </div>
+        )}
+
+        {projectsLoading ? (
+          <div className="flex items-center justify-center py-20 text-sm text-slate-500">Loading projects…</div>
+        ) : filtered.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
             {filtered.map((project) => (
               <ProjectCard
@@ -149,6 +141,8 @@ export default function ProjectsPage() {
               />
             ))}
           </div>
+        ) : activeTab === 'completed' ? (
+          <NoCompletedProjectsEmpty />
         ) : (
           <NoProjectsEmpty onAdd={() => setShowCreateModal(true)} />
         )}

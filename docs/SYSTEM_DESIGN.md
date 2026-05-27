@@ -3,17 +3,17 @@
 ## Architecture Overview
 
 CourseFlow is a full-stack web application using:
-- **Next.js 16** (App Router) for the frontend and API routes
+- **Next.js 16** (App Router) for the frontend and routing
 - **Supabase** for authentication, database (PostgreSQL), and row-level security
 - **Tailwind CSS v4** for styling
 
 ```
 Browser
   └─ Next.js App (React, App Router)
-       ├─ Client Components (interactive UI)
-       ├─ Server Components (data fetching)
-       └─ Supabase Client (auth + DB queries)
-            └─ Supabase (PostgreSQL + Auth + RLS)
+       ├─ Client Components (interactive UI, data mutations)
+       ├─ proxy.ts (route protection — replaces Next.js middleware.ts)
+       └─ Supabase Browser Client (@supabase/ssr)
+            └─ Supabase (PostgreSQL + Auth + RLS + SECURITY DEFINER RPCs)
 ```
 
 ## Route Structure
@@ -21,6 +21,7 @@ Browser
 ```
 /                          → redirect to /dashboard
 /(auth)/login              → login page
+/(auth)/signup             → signup page
 /(app)/dashboard           → dashboard (app shell)
 /(app)/tasks               → my tasks
 /(app)/projects            → projects list
@@ -35,39 +36,77 @@ Browser
 ```
 components/
   layout/
-    Sidebar.tsx            Fixed left nav (240px)
-    Topbar.tsx             Fixed top bar with search
+    Sidebar.tsx            Fixed left nav (240px) — reads user from AuthContext
+    Topbar.tsx             Fixed top bar with page title
   ui/
     Badge.tsx              RiskBadge, StatusBadge, TypeBadge, RoleBadge
     Button.tsx             Primary, Secondary, Destructive, Ghost
     ProgressBar.tsx        Visual progress indicator
     Modal.tsx              Reusable modal wrapper
-    EmptyState.tsx         Empty state placeholder
+    EmptyState.tsx         Empty state placeholders
+    Input.tsx              Styled input + label
+    SelectInput.tsx        Styled select + label
+    ConfirmModal.tsx       Generic confirmation modal
   tasks/
-    TaskCard.tsx           Task card (used on Dashboard + My Tasks)
-    TaskDetail.tsx         Task detail modal
-    CreateTaskModal.tsx    Create/edit personal task
+    TaskCard.tsx           Task card (Dashboard, My Tasks, Calendar)
+    TaskDetailModal.tsx    Task detail drawer
+    TaskFormModal.tsx      Create/edit personal task
   projects/
-    ProjectCard.tsx        Project card (used on Projects list)
-    ProjectDetail.tsx      Full project workspace
-    AddTaskModal.tsx       Add project task modal
-    InviteMemberModal.tsx  Invite member modal
+    ProjectCard.tsx        Project card (Projects list)
+    InviteMemberModal.tsx  Invite member by email
   courses/
     CourseCard.tsx         Course card
-    AddCourseModal.tsx     Add/edit course modal
+    CourseFormModal.tsx    Add/edit course
+  brand/
+    OwlMascot.tsx          Owl SVG mascot (Dashboard tip card)
 ```
 
-## Data Flow — My Tasks (Core Feature)
+## Data Flow — Auth & Session
+
+```
+proxy.ts (Next.js 16 middleware)
+  └─ Reads Supabase session cookie on every request
+       ├─ No session → redirect to /login
+       └─ Auth pages while logged in → redirect to /dashboard
+
+AuthContext (client-side)
+  └─ onAuthStateChange listener → { user, loading, signOut }
+       └─ User object read by: Sidebar, Settings, Dashboard greeting
+```
+
+## Data Flow — All Data (DataContext)
+
+```
+DataContext mounts on app load (inside AuthProvider)
+  └─ Triggers on userId change (auth state)
+       ├─ fetchCourses()      → courses[]
+       ├─ fetchPersonalTasks() → personalTasks[]
+       └─ fetchProjects()     → ProjectWithRelations[]
+            └─ nested Supabase select:
+                 projects + courses + project_members + profiles
+                          + project_tasks + project_links
+
+Exposed mutations (all optimistic — local state first, DB second):
+  Courses:       addCourse, updateCourse, setCourseArchived
+  PersonalTasks: addPersonalTask, updatePersonalTask, deletePersonalTask,
+                 markPersonalTaskDone, updatePersonalTaskChecklist
+  Projects:      createProject (via RPC), completeProject,
+                 addProjectTask, updateProjectTask, deleteProjectTask,
+                 markProjectTaskDone, updateProjectTaskNotes,
+                 updateProjectTaskChecklist, inviteMember (via RPC)
+```
+
+## Data Flow — My Tasks
 
 ```
 My Tasks page
-  ├─ Query: personal_tasks WHERE user_id = current_user
-  └─ Query: project_tasks WHERE assigned_to = current_user
-       └─ JOIN projects, courses for source_label
+  useMemo → toAllTaskCards(personalTasks, courses, projects, userId)
+    ├─ personalTasks.map(t → personalTaskToCard(t, courses))
+    └─ toAssignedTaskCards(projects, userId)
+         └─ project_tasks WHERE assigned_to === userId
+              (derived from ProjectWithRelations[], no extra query)
 
-Both result sets are normalised into TaskCardData[] and rendered
-by the same TaskCard component.
-
+Both result sets normalised into TaskCardData[] rendered by TaskCard.
 NO data is copied between tables.
 ```
 
@@ -75,23 +114,24 @@ NO data is copied between tables.
 
 ```
 Calendar page
-  ├─ getMockTaskCards()     → all TaskCardData[] (personal + assigned group tasks)
-  │    └─ filter: status !== 'done'  → activeTasks
-  └─ getMockProjectCards()  → all ProjectCardData[]
-       └─ filter: status === 'active' → activeProjects
+  useMemo → toAllTaskCards(...)  → allTasks
+  useMemo → toProjectCards(...)  → allProjects
 
-Filter applied (All / Personal / Group / Critical) → filteredTasks
+  filter: status !== 'done'  → activeTasks
+  filter: status === 'active' → activeProjects
 
-itemsByDate: Record<YYYY-MM-DD, CalendarItem[]>
-  ├─ filteredTasks grouped by due_date
-  └─ activeProjects grouped by deadline (All filter only)
+  Filter tab (All / Personal / Group / Critical) → filteredTasks
 
-CalendarItem union type:
-  | { kind: 'task';    data: TaskCardData }
-  | { kind: 'project'; id, name, courseCode, deadline }
+  itemsByDate: Record<YYYY-MM-DD, CalendarItem[]>
+    ├─ filteredTasks grouped by task.due_date (string key, no UTC conversion)
+    └─ activeProjects grouped by p.deadline (All filter only)
 
-getCalendarDays(year, month) → 42 Date cells (6 rows × 7 cols, starting Sunday)
-toDateKey(date) → YYYY-MM-DD string (local time, avoids UTC offset issues)
+  CalendarItem union type:
+    | { kind: 'task';    data: TaskCardData }
+    | { kind: 'project'; id, name, courseCode, deadline }
+
+  getCalendarDays(year, month) → 42 Date cells (6 rows × 7 cols, Sunday start)
+  toDateKey(date) → YYYY-MM-DD string (local time, avoids UTC offset issues)
 ```
 
 ## Data Flow — Risk Calculation
@@ -101,51 +141,59 @@ Risk is calculated entirely on the client side using `src/lib/risk.ts`.
 Input: `{ status, due_date, progress, difficulty }`
 Output: `'safe' | 'warning' | 'critical' | 'completed'`
 
-The same function is used everywhere: Dashboard, My Tasks, Project Detail.
-
-## Authentication Flow (Phase 3+)
-
-```
-User visits /dashboard
-  └─ Middleware checks Supabase session
-       ├─ No session → redirect to /login
-       └─ Session valid → render app
-```
+The same function is used everywhere: Dashboard, My Tasks, Project Detail, Calendar.
 
 ## State Management
 
-### Phase 1 — Shared Mock State (`src/store/mockStore.tsx`)
+### Phase 3+ — Supabase (current)
 
-All entity state lives in a single React Context + useReducer store that is mounted at the `(app)` layout level.
+All entity state lives in two React Contexts:
 
 ```
-MockStoreProvider  (app)/layout.tsx
-  └─ MockState
-       ├─ currentUser
-       ├─ courses
-       ├─ personalTasks  (links & checklist inlined)
-       ├─ projects
-       ├─ projectMembers
-       ├─ projectTasks   (links & checklist inlined)
-       └─ projectLinks
+AuthProvider  (contexts/AuthContext.tsx)
+  └─ { user, loading, signOut }  ← Supabase Auth
+
+DataProvider  (contexts/DataContext.tsx)
+  └─ { userId, courses, personalTasks, projects, loading, error, ... }
+       ├─ Pure derive functions (useMemo, no extra fetch):
+       │    toAllTaskCards, toProjectCards, toProjectDetail,
+       │    toAssignedTaskCards, buildMemberNameMap
+       └─ Mutations update local state optimistically, then write to Supabase
 ```
 
-Every page calls `useMockStore()` to get `{ state, dispatch }`. Derived views (TaskCardData[], ProjectCardData[], project detail) are produced by pure helper functions (`deriveTaskCards`, `deriveProjectCards`, `deriveProjectDetail`) called inside `useMemo()`.
+Mounted in `(app)/layout.tsx`:
+```tsx
+<AuthProvider>
+  <DataProvider>
+    {children}
+  </DataProvider>
+</AuthProvider>
+```
 
-This ensures:
-- Mutations on any page are immediately visible on every other page.
-- Newly assigned project tasks appear in My Tasks without page reload.
-- Calendar reflects newly created tasks and projects.
-- Checklist toggles in the Task Detail drawer persist back to the store.
+## Database RPCs (SECURITY DEFINER)
 
-State resets on hard-refresh. Full server-side persistence is planned for Phase 2 (Supabase).
+Two stored procedures bypass RLS for atomic or privileged operations:
 
-### Phase 2+ — Supabase
+| RPC | Purpose |
+|---|---|
+| `create_project(name, course_id, deadline, description)` | Atomically inserts project + leader membership row |
+| `invite_member(project_id, email, role)` | Looks up profile by email (bypasses profiles RLS), inserts membership |
 
-State management will be replaced with direct Supabase queries (server components + client mutations). The shared mock store will be removed.
+Helper functions (internal, SECURITY DEFINER):
+
+| Function | Purpose |
+|---|---|
+| `is_project_member(pid, uid)` | Returns true if uid is in project_members for pid |
+| `is_project_manager(pid, uid)` | Returns true if uid is leader or admin |
+| `is_project_leader(pid, uid)` | Returns true if uid is leader |
+| `shares_project_with(uid)` | Returns true if current_user shares any project with uid |
+
+These prevent infinite recursion in self-referential RLS policies.
 
 ## Security
 
 - Supabase Row Level Security (RLS) enforces data ownership at the database level
 - Users can only read/write rows they own or belong to
 - Project role checks are enforced in both RLS policies and UI
+- `SECURITY DEFINER` functions run with elevated privileges only for the specific atomic operations that require it
+- `.env.local` contains real Supabase credentials and is gitignored — never committed

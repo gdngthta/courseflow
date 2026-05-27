@@ -12,23 +12,35 @@ export function Topbar({ title }: TopbarProps) {
       <h1 className="text-base font-semibold text-white">{title}</h1>
 
       <div className="flex items-center gap-3">
-        {/* Search */}
-        <div className="relative hidden sm:flex items-center">
-          <Search size={14} className="absolute left-3 text-slate-500 pointer-events-none" />
+        {/* Search — disabled until Phase 4 */}
+        <div
+          className="relative hidden sm:flex items-center"
+          title="Search coming in a future update"
+        >
+          <Search size={14} className="absolute left-3 text-slate-600 pointer-events-none" />
           <input
             type="text"
             placeholder="Search tasks, projects..."
-            className="pl-9 pr-4 py-2 text-sm bg-slate-800 border border-slate-700 rounded-lg text-slate-300 placeholder:text-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 w-56 transition"
+            disabled
+            className="pl-9 pr-4 py-2 text-sm bg-slate-800/50 border border-slate-700/50 rounded-lg text-slate-500 placeholder:text-slate-600 w-56 cursor-not-allowed opacity-60 select-none"
           />
         </div>
 
-        {/* Theme toggle */}
-        <button className="p-2 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition-colors">
+        {/* Theme toggle — coming soon */}
+        <button
+          disabled
+          title="Theme switching coming in a future update"
+          className="p-2 rounded-lg text-slate-600 cursor-not-allowed opacity-50"
+        >
           <Sun size={17} />
         </button>
 
-        {/* Notifications */}
-        <button className="p-2 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition-colors">
+        {/* Notifications — coming soon */}
+        <button
+          disabled
+          title="Notifications coming in a future update"
+          className="p-2 rounded-lg text-slate-600 cursor-not-allowed opacity-50"
+        >
           <Bell size={17} />
         </button>
       </div>
