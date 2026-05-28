@@ -10,7 +10,7 @@ import type { Course } from '@/types'
 interface CreateProjectModalProps {
   open: boolean
   onClose: () => void
-  onSubmit: (data: CreateProjectData) => void
+  onSubmit: (data: CreateProjectData) => Promise<void>
   courses: Course[]
 }
 
@@ -23,6 +23,8 @@ export interface CreateProjectData {
 export function CreateProjectModal({ open, onClose, onSubmit, courses }: CreateProjectModalProps) {
   const [form, setForm] = useState<CreateProjectData>({ name: '', course_id: '', deadline: '' })
   const [errors, setErrors] = useState<Partial<CreateProjectData>>({})
+  const [submitting, setSubmitting] = useState(false)
+  const [submitError, setSubmitError] = useState('')
 
   const courseOptions = courses.map((c) => ({ value: c.id, label: `${c.code} — ${c.name}` }))
 
@@ -34,11 +36,19 @@ export function CreateProjectModal({ open, onClose, onSubmit, courses }: CreateP
     return Object.keys(e).length === 0
   }
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!validate()) return
-    onSubmit(form)
-    setForm({ name: '', course_id: '', deadline: '' })
-    onClose()
+    setSubmitting(true)
+    setSubmitError('')
+    try {
+      await onSubmit(form)
+      setForm({ name: '', course_id: '', deadline: '' })
+      onClose()
+    } catch (e) {
+      setSubmitError(e instanceof Error ? e.message : 'Something went wrong. Please try again.')
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   return (
@@ -68,9 +78,14 @@ export function CreateProjectModal({ open, onClose, onSubmit, courses }: CreateP
         <p className="text-xs text-slate-500">
           You will be set as the project Leader. Members can be invited after creation.
         </p>
+        {submitError && (
+          <p className="text-xs text-red-400 bg-red-900/20 border border-red-800/30 rounded-lg px-3 py-2">{submitError}</p>
+        )}
         <div className="flex justify-end gap-3 pt-2">
-          <Button variant="secondary" onClick={onClose}>Cancel</Button>
-          <Button variant="primary" onClick={handleSubmit}>Create Project</Button>
+          <Button variant="secondary" onClick={onClose} disabled={submitting}>Cancel</Button>
+          <Button variant="primary" onClick={handleSubmit} disabled={submitting}>
+            {submitting ? 'Creating…' : 'Create Project'}
+          </Button>
         </div>
       </div>
     </Modal>

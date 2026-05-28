@@ -11,7 +11,7 @@ import type { Course, TaskCardData, TaskLink, TaskChecklistItem, Difficulty, Tas
 interface TaskFormModalProps {
   open: boolean
   onClose: () => void
-  onSubmit: (data: TaskFormData) => void
+  onSubmit: (data: TaskFormData) => Promise<void>
   courses: Course[]
   editingTask?: TaskCardData | null
 }
@@ -52,6 +52,8 @@ export function TaskFormModal({ open, onClose, onSubmit, courses, editingTask }:
 
   const [form, setForm] = useState<TaskFormData>(EMPTY_FORM)
   const [errors, setErrors] = useState<Partial<Record<'title' | 'due_date' | 'links', string>>>({})
+  const [submitting, setSubmitting] = useState(false)
+  const [submitError, setSubmitError] = useState('')
 
   useEffect(() => {
     if (editingTask) {
@@ -70,6 +72,7 @@ export function TaskFormModal({ open, onClose, onSubmit, courses, editingTask }:
       setForm(EMPTY_FORM)
     }
     setErrors({})
+    setSubmitError('')
   }, [editingTask, open])
 
   const courseOptions = courses.map((c) => ({ value: c.id, label: `${c.code} — ${c.name}` }))
@@ -101,10 +104,18 @@ export function TaskFormModal({ open, onClose, onSubmit, courses, editingTask }:
     return Object.keys(e).length === 0
   }
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!validate()) return
-    onSubmit(form)
-    onClose()
+    setSubmitting(true)
+    setSubmitError('')
+    try {
+      await onSubmit(form)
+      onClose()
+    } catch (e) {
+      setSubmitError(e instanceof Error ? e.message : 'Something went wrong. Please try again.')
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   return (
@@ -266,10 +277,13 @@ export function TaskFormModal({ open, onClose, onSubmit, courses, editingTask }:
           )}
         </div>
 
+        {submitError && (
+          <p className="text-xs text-red-400 bg-red-900/20 border border-red-800/30 rounded-lg px-3 py-2">{submitError}</p>
+        )}
         <div className="flex justify-end gap-3 pt-2">
-          <Button variant="secondary" onClick={onClose}>Cancel</Button>
-          <Button variant="primary" onClick={handleSubmit}>
-            {isEditing ? 'Save Changes' : 'Create Task'}
+          <Button variant="secondary" onClick={onClose} disabled={submitting}>Cancel</Button>
+          <Button variant="primary" onClick={handleSubmit} disabled={submitting}>
+            {submitting ? 'Saving…' : isEditing ? 'Save Changes' : 'Create Task'}
           </Button>
         </div>
       </div>

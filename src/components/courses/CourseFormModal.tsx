@@ -14,7 +14,7 @@ const PRESET_COLORS = [
 interface CourseFormModalProps {
   open: boolean
   onClose: () => void
-  onSubmit: (data: CourseFormData) => void
+  onSubmit: (data: CourseFormData) => Promise<void>
   editingCourse?: Course | null
 }
 
@@ -33,6 +33,8 @@ export function CourseFormModal({ open, onClose, onSubmit, editingCourse }: Cour
     code: '', name: '', lecturer: '', semester: '', color: PRESET_COLORS[0],
   })
   const [errors, setErrors] = useState<Partial<CourseFormData>>({})
+  const [submitting, setSubmitting] = useState(false)
+  const [submitError, setSubmitError] = useState('')
 
   useEffect(() => {
     if (editingCourse) {
@@ -47,6 +49,7 @@ export function CourseFormModal({ open, onClose, onSubmit, editingCourse }: Cour
       setForm({ code: '', name: '', lecturer: '', semester: '', color: PRESET_COLORS[0] })
     }
     setErrors({})
+    setSubmitError('')
   }, [editingCourse, open])
 
   const validate = () => {
@@ -57,10 +60,18 @@ export function CourseFormModal({ open, onClose, onSubmit, editingCourse }: Cour
     return Object.keys(e).length === 0
   }
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!validate()) return
-    onSubmit(form)
-    onClose()
+    setSubmitting(true)
+    setSubmitError('')
+    try {
+      await onSubmit(form)
+      onClose()
+    } catch (e) {
+      setSubmitError(e instanceof Error ? e.message : 'Something went wrong. Please try again.')
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   return (
@@ -111,10 +122,13 @@ export function CourseFormModal({ open, onClose, onSubmit, editingCourse }: Cour
           </div>
         </div>
 
+        {submitError && (
+          <p className="text-xs text-red-400 bg-red-900/20 border border-red-800/30 rounded-lg px-3 py-2">{submitError}</p>
+        )}
         <div className="flex justify-end gap-3 pt-2">
-          <Button variant="secondary" onClick={onClose}>Cancel</Button>
-          <Button variant="primary" onClick={handleSubmit}>
-            {isEditing ? 'Save Changes' : 'Save Course'}
+          <Button variant="secondary" onClick={onClose} disabled={submitting}>Cancel</Button>
+          <Button variant="primary" onClick={handleSubmit} disabled={submitting}>
+            {submitting ? 'Saving…' : isEditing ? 'Save Changes' : 'Save Course'}
           </Button>
         </div>
       </div>

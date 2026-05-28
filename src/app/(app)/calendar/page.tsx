@@ -58,7 +58,7 @@ function itemPillClass(item: CalendarItem): string {
 
 export default function CalendarPage() {
   const router = useRouter()
-  const { userId, courses, personalTasks, projects, updatePersonalTaskChecklist, updateProjectTaskChecklist } = useData()
+  const { userId, courses, personalTasks, projects, loading, updatePersonalTaskChecklist, updateProjectTaskChecklist } = useData()
 
   const now = new Date()
   const todayKey = toDateKey(now)
@@ -166,6 +166,17 @@ export default function CalendarPage() {
     const tomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1)
     if (dateKey === toDateKey(tomorrow)) return 'Tomorrow'
     return formatFullDate(dateKey)
+  }
+
+  if (loading) {
+    return (
+      <>
+        <Topbar title="Calendar" />
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <p className="text-sm text-slate-500">Loading calendar…</p>
+        </div>
+      </>
+    )
   }
 
   return (
