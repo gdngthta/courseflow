@@ -13,7 +13,7 @@ interface Member { id: string; name: string }
 interface AddProjectTaskModalProps {
   open: boolean
   onClose: () => void
-  onSubmit: (data: AddProjectTaskData) => void
+  onSubmit: (data: AddProjectTaskData) => Promise<void>
   members: Member[]
 }
 
@@ -42,6 +42,8 @@ const EMPTY_FORM: AddProjectTaskData = {
 export function AddProjectTaskModal({ open, onClose, onSubmit, members }: AddProjectTaskModalProps) {
   const [form, setForm] = useState<AddProjectTaskData>(EMPTY_FORM)
   const [errors, setErrors] = useState<Partial<Record<'title' | 'due_date' | 'links', string>>>({})
+  const [submitting, setSubmitting] = useState(false)
+  const [submitError, setSubmitError] = useState('')
 
   const memberOptions = members.map((m) => ({ value: m.id, label: m.name }))
 
@@ -72,11 +74,19 @@ export function AddProjectTaskModal({ open, onClose, onSubmit, members }: AddPro
     return Object.keys(e).length === 0
   }
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!validate()) return
-    onSubmit(form)
-    setForm(EMPTY_FORM)
-    onClose()
+    setSubmitting(true)
+    setSubmitError('')
+    try {
+      await onSubmit(form)
+      setForm(EMPTY_FORM)
+      onClose()
+    } catch (e) {
+      setSubmitError(e instanceof Error ? e.message : 'Something went wrong. Please try again.')
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   return (
@@ -211,9 +221,14 @@ export function AddProjectTaskModal({ open, onClose, onSubmit, members }: AddPro
           )}
         </div>
 
+        {submitError && (
+          <p className="text-xs text-red-400 bg-red-900/20 border border-red-800/30 rounded-lg px-3 py-2">{submitError}</p>
+        )}
         <div className="flex justify-end gap-3 pt-2">
-          <Button variant="secondary" onClick={onClose}>Cancel</Button>
-          <Button variant="primary" onClick={handleSubmit}>Add Task</Button>
+          <Button variant="secondary" onClick={onClose} disabled={submitting}>Cancel</Button>
+          <Button variant="primary" onClick={handleSubmit} disabled={submitting}>
+            {submitting ? 'Adding…' : 'Add Task'}
+          </Button>
         </div>
       </div>
     </Modal>

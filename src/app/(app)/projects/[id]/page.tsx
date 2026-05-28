@@ -22,7 +22,7 @@ export default function ProjectDetailPage() {
   const projectId = params?.id as string
 
   const {
-    userId, projects, projectsLoading,
+    userId, projects, projectsLoading, error,
     addProjectTask, updateProjectTaskNotes, deleteProjectTask,
     markProjectTaskDone, completeProject, updateProjectTaskChecklist,
     inviteMember,
@@ -32,6 +32,7 @@ export default function ProjectDetailPage() {
   const [showAddTask, setShowAddTask] = useState(false)
   const [showInvite, setShowInvite] = useState(false)
   const [showCompleteModal, setShowCompleteModal] = useState(false)
+  const [mutationError, setMutationError] = useState('')
 
   const detail = useMemo(
     () => toProjectDetail(projects, projectId, userId),
@@ -106,8 +107,14 @@ export default function ProjectDetailPage() {
   }
 
   const handleCompleteProject = async () => {
-    await completeProject(project.id)
-    setShowCompleteModal(false)
+    setMutationError('')
+    try {
+      await completeProject(project.id)
+      setShowCompleteModal(false)
+    } catch (err) {
+      setMutationError(err instanceof Error ? err.message : 'Failed to complete project.')
+      setShowCompleteModal(false)
+    }
   }
 
   const handleChecklistUpdate = (taskId: string, checklist: TaskChecklistItem[]) => {
@@ -126,6 +133,13 @@ export default function ProjectDetailPage() {
         <Link href="/projects" className="text-sm text-slate-400 hover:text-slate-200 transition-colors mb-5 inline-flex items-center gap-1">
           ← Back to Projects
         </Link>
+
+        {/* Data / mutation error banners */}
+        {(error || mutationError) && (
+          <div className="mb-4 px-4 py-3 bg-red-900/20 border border-red-800/40 rounded-lg text-sm text-red-400">
+            {mutationError || error}
+          </div>
+        )}
 
         {/* Completed banner */}
         {isCompleted && (

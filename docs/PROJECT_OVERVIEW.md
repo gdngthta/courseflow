@@ -62,3 +62,20 @@ Out of scope for MVP:
 - Mobile native app
 - Grade tracking
 - Calendar integrations (Google Calendar, etc.)
+
+---
+
+## Current Limitations
+
+Known limitations of the MVP that will be addressed post-launch:
+
+| Area | Limitation |
+|---|---|
+| **Course visibility** | Courses are strictly user-scoped. Project co-members without the same course added will see blank course code/name on shared tasks. |
+| **Real-time sync** | Data is fetched once on load. Changes made by another team member in a shared project are not reflected until the page is refreshed. |
+| **Mobile layout** | The UI targets desktop (1280px+). On small screens the sidebar collapses but some table/grid layouts may overflow. |
+| **Avatar upload** | The camera button in Settings is disabled. Avatars are initials only. Supabase Storage integration is deferred. |
+| **Project links** | The "Important Links" panel on Project Detail is read-only. Add/delete links UI is deferred. |
+| **Notifications** | No in-app, email, or push notifications. No reminders for upcoming deadlines. |
+| **Global search** | The topbar search icon is a UI placeholder. Full-text search is not yet implemented. |
+| **Theme switching** | Only dark mode is available. The theme select in Settings has no effect. |

@@ -25,7 +25,7 @@ const THEME_OPTIONS = [
 ]
 
 export default function SettingsPage() {
-  const { user, signOut } = useAuthUser()
+  const { user, loading: authLoading, signOut } = useAuthUser()
 
   // Derive display name from Supabase user metadata
   const fullName: string = user?.user_metadata?.full_name ?? ''
@@ -68,6 +68,17 @@ export default function SettingsPage() {
   const handleSignOut = async () => {
     setSigningOut(true)
     await signOut()
+  }
+
+  if (authLoading) {
+    return (
+      <>
+        <Topbar title="Settings" />
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <p className="text-sm text-slate-500">Loading…</p>
+        </div>
+      </>
+    )
   }
 
   return (

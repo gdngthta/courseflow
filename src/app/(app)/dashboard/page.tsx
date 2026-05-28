@@ -17,7 +17,7 @@ import { formatDueDate } from '@/lib/utils'
 import type { TaskCardData, TaskChecklistItem } from '@/types'
 
 export default function DashboardPage() {
-  const { userId, courses, personalTasks, projects, updatePersonalTaskChecklist, updateProjectTaskChecklist } = useData()
+  const { userId, courses, personalTasks, projects, loading, updatePersonalTaskChecklist, updateProjectTaskChecklist } = useData()
   const { user } = useAuthUser()
   const [selectedTask, setSelectedTask] = useState<TaskCardData | null>(null)
 
@@ -31,6 +31,9 @@ export default function DashboardPage() {
   const activeProjects = useMemo(() => allProjects.filter((p) => p.status === 'active'), [allProjects])
 
   const firstName = (user?.user_metadata?.full_name as string | undefined)?.split(' ')[0] || 'there'
+
+  const hour = new Date().getHours()
+  const timeGreeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening'
 
   const today = new Date().toISOString().split('T')[0]
   const todayTasks = allTasks.filter((t) => t.status !== 'done' && t.due_date <= today)
@@ -63,6 +66,17 @@ export default function DashboardPage() {
     else updateProjectTaskChecklist(taskId, checklist)
   }
 
+  if (loading) {
+    return (
+      <>
+        <Topbar title="Dashboard" />
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <p className="text-sm text-slate-500">Loading your dashboard…</p>
+        </div>
+      </>
+    )
+  }
+
   return (
     <>
       <Topbar title="Dashboard" />
@@ -70,7 +84,7 @@ export default function DashboardPage() {
         {/* Greeting */}
         <div className="mb-6">
           <h2 className="text-xl font-semibold text-white">
-            Good morning, {firstName} 👋
+            {timeGreeting}, {firstName} 👋
           </h2>
           <p className="text-sm text-slate-400 mt-0.5">
             Here&apos;s what&apos;s happening with your coursework today.

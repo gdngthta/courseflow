@@ -24,8 +24,20 @@
 ### Notifications & Reminders
 - In-app notification bell for: task assigned, deadline approaching, task updated
 - Email reminders for critical tasks and upcoming deadlines
-- **Telegram bot integration** — deadline reminders and task assignment alerts (post-auth)
 - Smart deadline reminders based on task difficulty and days remaining
+
+#### Multi-Channel Automation (n8n)
+The cleanest path for adding reminders without coupling the Next.js app to messaging SDKs is an **n8n** self-hosted workflow engine:
+
+- n8n polls or receives a webhook from Supabase (via pg_cron or Edge Functions) when a task is approaching its deadline or is marked critical
+- A single n8n workflow fans out to whichever channels the user has enabled:
+  - **Telegram bot** — sends deadline alerts and task assignment notifications via Bot API
+  - **WhatsApp** — sends reminders via the WhatsApp Cloud API (Meta) or Twilio for WhatsApp; no user app install required beyond number registration
+  - **Email** — sends summary digests via SMTP or SendGrid
+- n8n's visual workflow editor makes it easy to add new channels without changing application code
+- User channel preferences (Telegram chat ID, WhatsApp number, email) would be stored in the `profiles` table and toggled from Settings
+
+This keeps the Next.js app channel-agnostic: it writes events to Supabase, and n8n handles delivery. Adding a new channel (e.g., Discord, Slack) requires only a new n8n node — zero app-code changes.
 
 ### Mobile Responsive Layout
 - The MVP targets desktop (1280px+)
@@ -90,9 +102,9 @@
 
 ## Technical Debt / Code Quality
 
-- Add proper error boundaries and loading states
+- Add React error boundaries (component-level crash recovery)
 - Add unit tests for all UI components (currently only risk algorithm is unit-tested)
 - Migrate hot paths to React Server Components for better initial load performance
 - Add rate limiting and abuse prevention
-- Add proper error monitoring (Sentry)
+- Add proper error monitoring (Sentry or similar)
 - Settings profile name save currently updates auth metadata client-side — could be moved to a server action for better consistency
