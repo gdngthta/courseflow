@@ -1,6 +1,7 @@
 'use client'
 
-import { Search, Sun, Bell } from 'lucide-react'
+import { Sun, Bell } from 'lucide-react'
+import { GlobalSearch } from '@/components/layout/GlobalSearch'
 
 interface TopbarProps {
   title: string
@@ -12,21 +13,9 @@ export function Topbar({ title }: TopbarProps) {
       <h1 className="text-base font-semibold text-white">{title}</h1>
 
       <div className="flex items-center gap-3">
-        {/* Search — disabled until Phase 4 */}
-        <div
-          className="relative hidden sm:flex items-center"
-          title="Search coming in a future update"
-        >
-          <Search size={14} className="absolute left-3 text-slate-600 pointer-events-none" />
-          <input
-            type="text"
-            placeholder="Search tasks, projects..."
-            disabled
-            className="pl-9 pr-4 py-2 text-sm bg-slate-800/50 border border-slate-700/50 rounded-lg text-slate-500 placeholder:text-slate-600 w-56 cursor-not-allowed opacity-60 select-none"
-          />
-        </div>
+        <GlobalSearch />
 
-        {/* Theme toggle — coming soon */}
+        {/* Theme toggle — wired up in Phase 5A sub-commit #3 */}
         <button
           disabled
           title="Theme switching coming in a future update"
@@ -35,7 +24,7 @@ export function Topbar({ title }: TopbarProps) {
           <Sun size={17} />
         </button>
 
-        {/* Notifications — coming soon */}
+        {/* Notifications — wired up in Phase 5A sub-commit #2 */}
         <button
           disabled
           title="Notifications coming in a future update"
