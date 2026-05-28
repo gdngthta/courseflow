@@ -179,13 +179,18 @@ export function findReminderCandidates(
 ): ReminderCandidate[] {
   if (!prefs.enabled) return []
 
+  // Per task: at most ONE reminder per day. If a task qualifies for
+  // both reminder types (e.g. critical AND due tomorrow), prefer
+  // high_risk — it's strictly more urgent information and the
+  // user otherwise gets two messages that read almost identically.
   const out: ReminderCandidate[] = []
   for (const t of tasks) {
-    if (shouldSendAroundDeadlineReminder(t, prefs, today)) {
-      out.push({ ...t, reminder_type: 'around_deadline' })
-    }
-    if (shouldSendHighRiskReminder(t, prefs)) {
+    const highRisk = shouldSendHighRiskReminder(t, prefs)
+    const aroundDeadline = shouldSendAroundDeadlineReminder(t, prefs, today)
+    if (highRisk) {
       out.push({ ...t, reminder_type: 'high_risk' })
+    } else if (aroundDeadline) {
+      out.push({ ...t, reminder_type: 'around_deadline' })
     }
   }
   return out
