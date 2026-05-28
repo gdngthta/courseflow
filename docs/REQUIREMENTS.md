@@ -55,6 +55,18 @@
 - FR-REM-8: Failed sends are logged with `status='failed'` and an error message; not retried within the same day
 - FR-REM-9: Telegram bot token and CRON secret are server-side only (no `NEXT_PUBLIC_` prefix)
 
+### Telegram Bot Assistant ✅ (Phase 4.5)
+- FR-BOT-1: A webhook endpoint receives Telegram updates and identifies the CourseFlow user by `telegram_chat_id`
+- FR-BOT-2: The webhook is authenticated via `X-Telegram-Bot-Api-Secret-Token` header (matched against `TELEGRAM_WEBHOOK_SECRET`)
+- FR-BOT-3: The bot responds to `/help`, `/critical`, `/today`, `/upcoming`, `/closest`, `/projects` and plain-English aliases
+- FR-BOT-4: Unknown messages get a fallback that lists the available commands
+- FR-BOT-5: Unconnected Telegram chats receive a "not connected" reply with no data leak
+- FR-BOT-6: A Telegram user can ONLY see data belonging to the profile linked to their chat ID
+- FR-BOT-7: The bot uses the same `calculateRisk()` helper as the web app — risk classifications are consistent
+- FR-BOT-8: Project tasks are NOT duplicated into personal tasks in any bot response (same rule as My Tasks)
+- FR-BOT-9: Bot is read-only — no commands to create, edit, or delete tasks
+- FR-BOT-10: No LLM / no natural language AI — exact command matching only
+
 ### Dashboard ✅ (Phase 3D)
 - FR-DASH-1: Shows summary cards: Today's Tasks, Critical Tasks, Active Projects, Active Courses
 - FR-DASH-2: Shows Today's Priority section (tasks due today or overdue)

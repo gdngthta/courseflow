@@ -17,8 +17,8 @@ Automatically created on signup via `handle_new_user` trigger on `auth.users`.
 | email | text | Copied from auth.users.email |
 | full_name | text | nullable — set from signup metadata |
 | avatar_url | text | nullable |
-| telegram_chat_id | text | nullable — set from Settings → Reminders |
-| telegram_enabled | boolean | default false — master switch for Telegram delivery |
+| telegram_chat_id | text | nullable — set from Settings → Reminders. Also the authorization key for the Telegram bot webhook. |
+| telegram_enabled | boolean | default false — master switch for Telegram delivery AND for the command bot. |
 | created_at | timestamptz | default now() |
 
 RLS:

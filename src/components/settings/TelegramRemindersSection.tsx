@@ -137,9 +137,10 @@ export function TelegramRemindersSection() {
   return (
     <div className="flex flex-col gap-5">
       <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
-        <h3 className="text-sm font-semibold text-white mb-1">Telegram Reminders</h3>
+        <h3 className="text-sm font-semibold text-white mb-1">Telegram Integration</h3>
         <p className="text-xs text-slate-400 mb-5">
-          Get a Telegram message when a deadline is around the corner or a task becomes high risk.
+          Connect your Telegram account to receive scheduled reminders and ask the CourseFlow bot
+          about your tasks on demand.
         </p>
 
         {loadError && (
@@ -190,12 +191,31 @@ export function TelegramRemindersSection() {
           </div>
 
           <ToggleRow
-            label="Enable Telegram reminders"
-            description="Master switch. Disable to pause all delivery without losing your preferences."
+            label="Enable Telegram integration"
+            description="Master switch. Required for scheduled reminders AND for the bot to respond to your commands."
             checked={telegramEnabled}
             onChange={setTelegramEnabled}
           />
         </div>
+      </div>
+
+      {/* Bot commands reference */}
+      <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
+        <h3 className="text-sm font-semibold text-white mb-1">Bot Commands</h3>
+        <p className="text-xs text-slate-400 mb-4">
+          Once connected, message your bot in Telegram with any of these:
+        </p>
+        <ul className="flex flex-col gap-1.5 text-xs">
+          <li><span className="text-indigo-400 font-mono">/critical</span> <span className="text-slate-400">— show critical tasks</span></li>
+          <li><span className="text-indigo-400 font-mono">/today</span> <span className="text-slate-400">— show today&apos;s tasks</span></li>
+          <li><span className="text-indigo-400 font-mono">/upcoming</span> <span className="text-slate-400">— show upcoming deadlines</span></li>
+          <li><span className="text-indigo-400 font-mono">/closest</span> <span className="text-slate-400">— show your closest deadline</span></li>
+          <li><span className="text-indigo-400 font-mono">/projects</span> <span className="text-slate-400">— show active projects</span></li>
+          <li><span className="text-indigo-400 font-mono">/help</span> <span className="text-slate-400">— show command list</span></li>
+        </ul>
+        <p className="text-xs text-slate-500 mt-3">
+          Natural-language aliases work too (e.g. &quot;what should i do today&quot;, &quot;closest deadline&quot;).
+        </p>
       </div>
 
       {/* Preferences card */}

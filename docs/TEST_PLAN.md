@@ -143,6 +143,22 @@
 - [ ] Error from RPC (user not found, already a member) shows inline error
 - [ ] Modal resets to form when reopened
 
+### Telegram Bot Assistant (Phase 4.5)
+- [ ] POST `/api/telegram/webhook` without the secret header → 401 Unauthorized (when `TELEGRAM_WEBHOOK_SECRET` is set)
+- [ ] POST `/api/telegram/webhook` with the secret header but a chat_id NOT linked to any profile → bot DMs "Your Telegram is not connected to CourseFlow yet."
+- [ ] Connected user messages `/help` → bot replies with the 6-command list
+- [ ] Connected user messages `/critical` → bot returns up to 5 tasks where `calculateRisk()` is `critical`, sorted by nearest due_date, including the "Closest deadline" summary line
+- [ ] Connected user with NO critical tasks messages `/critical` → bot replies "No critical tasks right now."
+- [ ] Connected user messages `/today` → bot returns tasks due today + critical tasks, sorted critical-first, with a "Focus first" suggestion
+- [ ] Connected user messages `/upcoming` → bot groups items under "Today", "Tomorrow", "This Week"
+- [ ] Connected user messages `/closest` → bot returns the single nearest deadline (task or project), with a tailored next-action sentence
+- [ ] Connected user messages `/projects` → bot returns active projects only, with role and progress
+- [ ] Project tasks under a *completed* project do NOT appear in any bot response
+- [ ] Aliases work: `what should i do today`, `closest deadline`, `active projects`, `critical tasks`
+- [ ] Unknown text → bot replies with the fallback command-list message
+- [ ] Connected user A's data is NEVER returned to connected user B's chat (chat_id mapping is the only auth)
+- [ ] Disabling `telegram_enabled` on the profile → bot replies "not connected" until re-enabled
+
 ### Telegram Reminders (Phase 4.5)
 - [ ] Settings → Reminders shows "Not connected" pill when chat ID is empty
 - [ ] Saving a chat ID and toggling "Enable Telegram reminders" → "Telegram connected" pill turns green

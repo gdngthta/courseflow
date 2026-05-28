@@ -21,7 +21,28 @@ Browser
                   └─ Telegram Bot API (https://api.telegram.org)
 ```
 
-### Telegram Reminder Pipeline
+### Telegram Bot Pipeline (inbound)
+
+```
+User → Telegram chat → /critical
+       ↓
+Telegram → POST /api/telegram/webhook   (X-Telegram-Bot-Api-Secret-Token)
+       ├─ Verify secret header
+       ├─ Extract chat_id + message text
+       ├─ findProfileByChatId(chat_id)
+       │     └─ no match? → reply "not connected", stop
+       ├─ parseCommand(text)  ← exact-match alias parser, NO LLM
+       ├─ Dispatch (one of):
+       │     ├─ fetchCombinedIncompleteTasks(profile.id) → format
+       │     └─ fetchActiveProjects(profile.id)          → format
+       └─ sendTelegramMessage(chat_id, reply)
+```
+
+Authorization model: the `profiles.telegram_chat_id` mapping IS the
+authorization. The webhook never trusts any field from Telegram other
+than `chat.id`, and it serves only data scoped to that profile's user_id.
+
+### Telegram Reminder Pipeline (outbound, scheduled)
 
 ```
 Vercel Cron (08:00 UTC)

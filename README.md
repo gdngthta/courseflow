@@ -35,6 +35,7 @@ CourseFlow combines both into one place. When a group project task is assigned t
 | All data persisted to Supabase (real data, no mock) | ✅ |
 | Profile name save to Supabase | ✅ |
 | Telegram scheduled reminders (around-deadline + high-risk) | ✅ |
+| Telegram command bot (/critical /today /upcoming /closest /projects) | ✅ |
 
 ---
 
@@ -79,6 +80,9 @@ SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 TELEGRAM_BOT_TOKEN=your-bot-token
 # Any long random string. Vercel Cron sends this as a Bearer token.
 CRON_SECRET=your-long-random-string
+
+# Any random alphanumeric string (used by Telegram webhook).
+TELEGRAM_WEBHOOK_SECRET=your-webhook-secret
 ```
 
 ### 3. Run the database migrations
@@ -178,6 +182,45 @@ Returns a JSON summary: `{ users_checked, candidates_found, sent, skipped_duplic
 - Failed sends are logged but **not retried** — the unique-key slot is claimed for the day to avoid retry storms. Fix the chat ID; tomorrow's run will send again.
 - WhatsApp delivery is not implemented (see `docs/FUTURE_IMPROVEMENTS.md`).
 - n8n / message queues are not used; the single Vercel Cron endpoint is the entire delivery pipeline.
+
+---
+
+## Telegram Bot Assistant
+
+The same Telegram connection that powers scheduled reminders also exposes a **command bot**. After connecting your chat ID, message the bot with any of these commands and it replies with live data from your Supabase account:
+
+| Command | What it shows |
+|---|---|
+| `/help` | List of all commands |
+| `/critical` | Top 5 tasks where calculated risk is Critical |
+| `/today` | Tasks due today + currently-critical tasks |
+| `/upcoming` | Tasks + project deadlines grouped Today / Tomorrow / This Week |
+| `/closest` | The single closest upcoming deadline (task or project) |
+| `/projects` | Active projects you're a member of, with role and progress |
+
+Plain-English aliases work too — e.g. `what is my closest deadline`, `tasks today`, `active projects`. Unknown messages get a fallback list.
+
+**Authorization model:** a Telegram chat is linked to a CourseFlow user via `profiles.telegram_chat_id`. The webhook handler looks up the profile by chat ID and serves only that user's data. Chats not linked to any profile get a not-connected message.
+
+**Webhook setup (production):**
+1. Get your bot token from [@BotFather](https://t.me/BotFather) (same one used for reminders — one bot does both jobs).
+2. Set `TELEGRAM_BOT_TOKEN` and `TELEGRAM_WEBHOOK_SECRET` in Vercel.
+3. Deploy. Then register the webhook with Telegram (one-time):
+
+```bash
+curl -X POST "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/setWebhook" \
+  -d "url=https://YOUR_DOMAIN/api/telegram/webhook" \
+  -d "secret_token=$TELEGRAM_WEBHOOK_SECRET"
+```
+
+4. In Telegram, `/start` the bot, get your chat ID via [@userinfobot](https://t.me/userinfobot), paste into Settings → Reminders, enable, and try `/help`.
+
+**Local testing:** Telegram won't reach `localhost`. Use a tunnel like `ngrok http 3000` and point the webhook at `https://<ngrok-id>.ngrok.io/api/telegram/webhook`. The webhook secret check happens via the `X-Telegram-Bot-Api-Secret-Token` header — only Telegram (or someone with the secret) can hit it.
+
+**Out of scope (honest):**
+- No free-form LLM / natural language understanding — commands and exact aliases only.
+- Bot is read-only. It will not create, edit, or delete tasks from chat.
+- WhatsApp and n8n routing are documented as future work, not built.
 
 ---
 

@@ -26,6 +26,12 @@
 **Shipped in Phase 4.5:**
 - Telegram scheduled reminders (around-deadline + high-risk), daily via Vercel Cron
 - Per-user preferences, test send, audit log, duplicate prevention
+- Telegram command bot (`/critical`, `/today`, `/upcoming`, `/closest`, `/projects`, `/help`) with plain-English aliases
+
+**Bot — explicitly out of scope (kept simple on purpose):**
+- No LLM / no natural-language understanding — exact alias matching only
+- Bot is read-only — no commands to create, edit, complete, or delete tasks from chat
+- No multi-step conversations / no inline keyboards / no per-task drill-down
 
 **Still to do:**
 - In-app notification bell for: task assigned, deadline approaching, task updated
