@@ -125,11 +125,14 @@ export async function POST(req: NextRequest) {
           fetchCombinedIncompleteTasks(profile.id),
           fetchActiveProjects(profile.id),
         ])
-        const deadlines: UpcomingProjectDeadline[] = projects.map((p) => ({
-          project_id: p.id,
-          project_name: p.name,
-          deadline: p.deadline,
-        }))
+        // Skip projects already at 100% — same logic as /closest.
+        const deadlines: UpcomingProjectDeadline[] = projects
+          .filter((p) => p.progress < 100)
+          .map((p) => ({
+            project_id: p.id,
+            project_name: p.name,
+            deadline: p.deadline,
+          }))
         reply = formatUpcoming(tasks, deadlines, today)
         break
       }

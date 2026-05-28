@@ -309,7 +309,7 @@ export type ClosestItem =
 export function formatClosest(items: ClosestItem[], today: Date = new Date()): string {
   if (items.length === 0) {
     return [
-      '🦉 Closest CourseFlow Deadline',
+      '🦉 Closest CourseFlow Deadlines',
       '',
       'No upcoming incomplete task or active project deadline found.',
     ].join('\n')
@@ -343,7 +343,7 @@ export function formatClosest(items: ClosestItem[], today: Date = new Date()): s
   })
 
   return [
-    '🦉 Closest CourseFlow Deadline',
+    '🦉 Closest CourseFlow Deadlines',
     '',
     blocks.join('\n\n'),
     '',
@@ -354,10 +354,11 @@ export function formatClosest(items: ClosestItem[], today: Date = new Date()): s
 
 /**
  * Pick the closest-deadline items from a combined list of incomplete
- * tasks + active-project deadlines. If multiple items share the
- * single earliest date, return up to 3 of them. If there are
- * overdue items, the most overdue one is returned first.
+ * tasks + active-project deadlines. Returns up to 3 items sorted by
+ * nearest date ascending, so overdue items naturally surface first.
  */
+const CLOSEST_LIMIT = 3
+
 export function deriveClosestDeadlineItems(
   tasks: BotTaskItem[],
   projects: BotProjectItem[]
@@ -368,6 +369,11 @@ export function deriveClosestDeadlineItems(
     candidates.push({ date: t.due_date, item: { kind: 'task', task: t } })
   }
   for (const p of projects) {
+    // Skip projects whose tasks are all done. status='active' alone isn't
+    // enough — the user may not have clicked "Mark as Completed" yet.
+    // A 100%-progress project is done in practice and shouldn't surface
+    // as an upcoming deadline.
+    if (p.progress >= 100) continue
     candidates.push({
       date: p.deadline,
       item: {
@@ -383,11 +389,7 @@ export function deriveClosestDeadlineItems(
   if (candidates.length === 0) return []
 
   candidates.sort((a, b) => a.date.localeCompare(b.date))
-  const earliestDate = candidates[0].date
-  // If the most-urgent item is overdue, return only it (single most urgent).
-  // Otherwise return up to 3 sharing the same earliest date.
-  const earliest = candidates.filter((c) => c.date === earliestDate)
-  return earliest.slice(0, 3).map((c) => c.item)
+  return candidates.slice(0, CLOSEST_LIMIT).map((c) => c.item)
 }
 
 // ── /projects ──────────────────────────────────────────────
