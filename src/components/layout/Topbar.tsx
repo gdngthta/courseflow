@@ -1,7 +1,8 @@
 'use client'
 
-import { Sun, Bell } from 'lucide-react'
+import { Sun } from 'lucide-react'
 import { GlobalSearch } from '@/components/layout/GlobalSearch'
+import { NotificationsPanel } from '@/components/layout/NotificationsPanel'
 
 interface TopbarProps {
   title: string
@@ -24,14 +25,7 @@ export function Topbar({ title }: TopbarProps) {
           <Sun size={17} />
         </button>
 
-        {/* Notifications — wired up in Phase 5A sub-commit #2 */}
-        <button
-          disabled
-          title="Notifications coming in a future update"
-          className="p-2 rounded-lg text-slate-600 cursor-not-allowed opacity-50"
-        >
-          <Bell size={17} />
-        </button>
+        <NotificationsPanel />
       </div>
     </header>
   )
