@@ -12,8 +12,32 @@ Browser
   └─ Next.js App (React, App Router)
        ├─ Client Components (interactive UI, data mutations)
        ├─ proxy.ts (route protection — replaces Next.js middleware.ts)
-       └─ Supabase Browser Client (@supabase/ssr)
-            └─ Supabase (PostgreSQL + Auth + RLS + SECURITY DEFINER RPCs)
+       ├─ Supabase Browser Client (@supabase/ssr)
+       │    └─ Supabase (PostgreSQL + Auth + RLS + SECURITY DEFINER RPCs)
+       └─ Server-only API routes (Node runtime)
+            ├─ /api/cron/send-reminders ← Vercel Cron (daily 08:00 UTC)
+            └─ /api/telegram/test       ← user-initiated test send
+                  ├─ Supabase Admin Client (service role key — bypasses RLS)
+                  └─ Telegram Bot API (https://api.telegram.org)
+```
+
+### Telegram Reminder Pipeline
+
+```
+Vercel Cron (08:00 UTC)
+  → GET /api/cron/send-reminders   (Bearer CRON_SECRET)
+       ├─ Load profiles WHERE telegram_enabled AND chat_id IS NOT NULL
+       ├─ For each user with reminder_preferences.enabled:
+       │     ├─ Load incomplete personal_tasks
+       │     ├─ Load incomplete assigned project_tasks
+       │     ├─ findReminderCandidates(tasks, prefs)  ← pure function
+       │     ├─ For each candidate:
+       │     │     1. INSERT reminder_logs (status='sent')
+       │     │        └─ unique-violation? → skip (dedupe)
+       │     │     2. generateReminderMessage(candidate) ← pure function
+       │     │     3. sendTelegramMessage(chat_id, text)
+       │     │     4. If send failed → UPDATE log to status='failed'
+       └─ Return summary JSON
 ```
 
 ## Route Structure

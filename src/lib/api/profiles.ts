@@ -5,6 +5,8 @@ export interface Profile {
   email: string
   full_name: string
   avatar_url?: string
+  telegram_chat_id?: string
+  telegram_enabled: boolean
   created_at: string
 }
 
@@ -13,6 +15,8 @@ interface ProfileRow {
   email: string
   full_name: string | null
   avatar_url: string | null
+  telegram_chat_id: string | null
+  telegram_enabled: boolean | null
   created_at: string
 }
 
@@ -22,6 +26,8 @@ function rowToProfile(row: ProfileRow): Profile {
     email: row.email,
     full_name: row.full_name ?? '',
     avatar_url: row.avatar_url ?? undefined,
+    telegram_chat_id: row.telegram_chat_id ?? undefined,
+    telegram_enabled: row.telegram_enabled ?? false,
     created_at: row.created_at,
   }
 }
@@ -38,10 +44,12 @@ export async function getMyProfile(): Promise<Profile | null> {
   return data ? rowToProfile(data as ProfileRow) : null
 }
 
-/** Update the signed-in user's profile name / avatar. */
+/** Update the signed-in user's profile name / avatar / Telegram fields. */
 export async function updateMyProfile(input: {
   full_name?: string
   avatar_url?: string
+  telegram_chat_id?: string | null
+  telegram_enabled?: boolean
 }): Promise<Profile> {
   const supabase = createClient()
   const {

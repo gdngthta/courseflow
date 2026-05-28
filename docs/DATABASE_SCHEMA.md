@@ -2,6 +2,7 @@
 
 > All tables use Supabase (PostgreSQL). Row Level Security (RLS) is enabled on all tables.
 > Non-recursive RLS is enforced via `SECURITY DEFINER` helper functions (see `supabase/phase3c.sql`).
+> Telegram reminder tables are added in `supabase/phase4.sql`.
 
 ---
 
@@ -16,6 +17,8 @@ Automatically created on signup via `handle_new_user` trigger on `auth.users`.
 | email | text | Copied from auth.users.email |
 | full_name | text | nullable — set from signup metadata |
 | avatar_url | text | nullable |
+| telegram_chat_id | text | nullable — set from Settings → Reminders |
+| telegram_enabled | boolean | default false — master switch for Telegram delivery |
 | created_at | timestamptz | default now() |
 
 RLS:
@@ -166,9 +169,57 @@ Tradeoff: simpler queries, less normalization. Acceptable for MVP — a single t
 
 ---
 
+### `reminder_preferences`
+One row per user, holds toggles and timing for Telegram reminders.
+
+| Column | Type | Notes |
+|---|---|---|
+| id | uuid | PK |
+| user_id | uuid | FK → profiles.id, UNIQUE |
+| enabled | boolean | default true — master toggle for the scheduled job |
+| around_deadline_enabled | boolean | default true |
+| high_risk_enabled | boolean | default true |
+| days_before | integer | default 1, check in (0, 1, 3, 7) |
+| send_time | text | default '08:00' (display-only; cron runs once daily) |
+| created_at | timestamptz | default now() |
+| updated_at | timestamptz | default now() — auto-stamped via trigger |
+
+RLS:
+- Users can read/insert/update their own preferences row
+- No delete policy — rows cascade with the profile
+
+---
+
+### `reminder_logs`
+Audit trail of every Telegram reminder attempted. The composite unique
+constraint is the duplicate-prevention mechanism — the cron job inserts
+before sending, and a unique-violation means "already sent today, skip."
+
+| Column | Type | Notes |
+|---|---|---|
+| id | uuid | PK |
+| user_id | uuid | FK → profiles.id |
+| task_type | text | check in ('personal', 'project') |
+| task_id | uuid | id of the underlying personal_task or project_task |
+| reminder_type | text | check in ('around_deadline', 'high_risk') |
+| sent_to | text | snapshot of the chat ID used (audit) |
+| sent_date | date | default current_date |
+| sent_at | timestamptz | default now() |
+| status | text | check in ('sent', 'failed') |
+| error_message | text | nullable — populated when status='failed' |
+
+Unique constraint: `(user_id, task_type, task_id, reminder_type, sent_date)`
+
+RLS:
+- Users can read their own logs only
+- No insert/update/delete policies — the cron job writes via the service role key (bypasses RLS)
+
+---
+
 ## Migrations
 
 | File | Description |
 |---|---|
 | `supabase/schema.sql` | Full initial schema — tables, triggers, indexes |
 | `supabase/phase3c.sql` | RLS fix: SECURITY DEFINER helpers, recreated policies, `create_project` + `invite_member` RPCs |
+| `supabase/phase4.sql` | Telegram reminders: profile columns, `reminder_preferences`, `reminder_logs` |

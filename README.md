@@ -34,6 +34,7 @@ CourseFlow combines both into one place. When a group project task is assigned t
 | Auth (signup, login, session, route protection) | ✅ |
 | All data persisted to Supabase (real data, no mock) | ✅ |
 | Profile name save to Supabase | ✅ |
+| Telegram scheduled reminders (around-deadline + high-risk) | ✅ |
 
 ---
 
@@ -63,19 +64,30 @@ npm install
 cp .env.example .env.local
 ```
 
-Fill in your Supabase project URL and anon key from [supabase.com](https://supabase.com):
+Fill in:
 
 ```
+# From Supabase → Project Settings → API
 NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+
+# Service role key (same page in Supabase). Server-side ONLY.
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+
+# For Telegram reminders (optional — leave blank to disable the feature locally).
+# Get a bot token from @BotFather on Telegram.
+TELEGRAM_BOT_TOKEN=your-bot-token
+# Any long random string. Vercel Cron sends this as a Bearer token.
+CRON_SECRET=your-long-random-string
 ```
 
 ### 3. Run the database migrations
 
-Open the Supabase SQL Editor and run:
+Open the Supabase SQL Editor and run, in order:
 
 1. `supabase/schema.sql` — creates all tables, triggers, indexes, and initial RLS policies
 2. `supabase/phase3c.sql` — applies SECURITY DEFINER helpers and RPCs to fix recursive RLS policies
+3. `supabase/phase4.sql` — adds Telegram fields on `profiles` plus `reminder_preferences` and `reminder_logs` tables
 
 ### 4. Run dev server
 
@@ -136,6 +148,36 @@ docs/                      Project documentation
 - [Risk Algorithm](docs/RISK_ALGORITHM.md)
 - [Test Plan](docs/TEST_PLAN.md)
 - [Future Improvements](docs/FUTURE_IMPROVEMENTS.md)
+
+---
+
+## Telegram Reminders
+
+CourseFlow can send a Telegram message when a deadline is around the corner or a task becomes high-risk.
+
+**Per-user setup:**
+1. Talk to [@BotFather](https://t.me/BotFather) on Telegram → `/newbot` → save the token in `TELEGRAM_BOT_TOKEN`.
+2. Start a chat with the bot, then forward any of its messages to [@userinfobot](https://t.me/userinfobot) to get your numeric chat ID.
+3. In CourseFlow → **Settings → Reminders**, paste the chat ID, enable Telegram reminders, choose your preferences, and click **Save**.
+4. Click **Send Test Reminder** to verify delivery.
+
+**Scheduled sends (production):**
+- Deploy to Vercel. Set `TELEGRAM_BOT_TOKEN`, `CRON_SECRET`, and `SUPABASE_SERVICE_ROLE_KEY` in the Vercel project's env vars.
+- `vercel.json` schedules `GET /api/cron/send-reminders` at `0 8 * * *` (08:00 UTC daily). Vercel automatically attaches `Authorization: Bearer $CRON_SECRET`.
+- The cron job checks each opted-in user's tasks, finds reminder candidates (around-deadline + high-risk), and sends one Telegram message per (user × task × reminder_type × day). Duplicates are prevented by a unique constraint on `reminder_logs`.
+
+**Local manual test:**
+```bash
+curl -X GET http://localhost:3000/api/cron/send-reminders \
+  -H "Authorization: Bearer $CRON_SECRET"
+```
+Returns a JSON summary: `{ users_checked, candidates_found, sent, skipped_duplicate, failed }`.
+
+**Limitations (honest):**
+- The cron runs once daily. The "Preferred send time" field in Settings is display-only.
+- Failed sends are logged but **not retried** — the unique-key slot is claimed for the day to avoid retry storms. Fix the chat ID; tomorrow's run will send again.
+- WhatsApp delivery is not implemented (see `docs/FUTURE_IMPROVEMENTS.md`).
+- n8n / message queues are not used; the single Vercel Cron endpoint is the entire delivery pipeline.
 
 ---
 
