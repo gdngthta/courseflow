@@ -111,6 +111,36 @@ export interface TaskCardData {
   assigned_to?: string
 }
 
+// ── Telegram reminders ──
+
+export type ReminderType = 'around_deadline' | 'high_risk'
+export type ReminderDaysBefore = 0 | 1 | 3 | 7
+
+export interface ReminderPreferences {
+  id: string
+  user_id: string
+  enabled: boolean
+  around_deadline_enabled: boolean
+  high_risk_enabled: boolean
+  days_before: ReminderDaysBefore
+  send_time: string
+  created_at: string
+  updated_at: string
+}
+
+export interface ReminderLog {
+  id: string
+  user_id: string
+  task_type: 'personal' | 'project'
+  task_id: string
+  reminder_type: ReminderType
+  sent_to: string
+  sent_date: string
+  sent_at: string
+  status: 'sent' | 'failed'
+  error_message?: string
+}
+
 export interface ProjectCardData {
   id: string
   name: string

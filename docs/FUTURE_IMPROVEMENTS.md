@@ -22,22 +22,43 @@
 - No polling required — push updates to all open clients
 
 ### Notifications & Reminders
+
+**Shipped in Phase 4.5:**
+- Telegram scheduled reminders (around-deadline + high-risk), daily via Vercel Cron
+- Per-user preferences, test send, audit log, duplicate prevention
+- Telegram command bot (`/critical`, `/today`, `/upcoming`, `/closest`, `/projects`, `/help`) with plain-English aliases
+
+**Bot — explicitly out of scope (kept simple on purpose):**
+- No LLM / no natural-language understanding — exact alias matching only
+- Bot is read-only — no commands to create, edit, complete, or delete tasks from chat
+- No multi-step conversations / no inline keyboards / no per-task drill-down
+
+**Still to do:**
 - In-app notification bell for: task assigned, deadline approaching, task updated
-- Email reminders for critical tasks and upcoming deadlines
-- Smart deadline reminders based on task difficulty and days remaining
+- Email reminders (SMTP or Resend) for critical tasks and upcoming deadlines
+- Hourly cron (rather than daily) so the "Preferred send time" field becomes real
+- Per-task custom send schedules
+- Reminder *digests* (one Telegram message summarising the day's tasks instead of one-per-task)
+- Failure retry policy beyond the current day-lock
 
-#### Multi-Channel Automation (n8n)
-The cleanest path for adding reminders without coupling the Next.js app to messaging SDKs is an **n8n** self-hosted workflow engine:
+#### WhatsApp Delivery (future)
+The current `reminder_logs` schema already supports a third channel without changes — `sent_to` is just a string. To add WhatsApp:
 
-- n8n polls or receives a webhook from Supabase (via pg_cron or Edge Functions) when a task is approaching its deadline or is marked critical
-- A single n8n workflow fans out to whichever channels the user has enabled:
-  - **Telegram bot** — sends deadline alerts and task assignment notifications via Bot API
-  - **WhatsApp** — sends reminders via the WhatsApp Cloud API (Meta) or Twilio for WhatsApp; no user app install required beyond number registration
-  - **Email** — sends summary digests via SMTP or SendGrid
-- n8n's visual workflow editor makes it easy to add new channels without changing application code
-- User channel preferences (Telegram chat ID, WhatsApp number, email) would be stored in the `profiles` table and toggled from Settings
+- Add `whatsapp_number` + `whatsapp_enabled` to `profiles`
+- Add a `sendWhatsAppMessage()` helper alongside `sendTelegramMessage()`, using the WhatsApp Cloud API (Meta) or Twilio for WhatsApp
+- Extend the cron loop to fan out to enabled channels per user
 
-This keeps the Next.js app channel-agnostic: it writes events to Supabase, and n8n handles delivery. Adding a new channel (e.g., Discord, Slack) requires only a new n8n node — zero app-code changes.
+Not shipped in MVP — Telegram covers the core demo and WhatsApp Cloud API requires business verification.
+
+#### Multi-Channel Automation (n8n, future optional layer)
+For deployments that want more than 2–3 channels, an **n8n** self-hosted workflow engine is the natural next step:
+
+- The Next.js app stays focused on data + the daily cron *trigger*
+- The cron fires a webhook into n8n with the candidate list
+- n8n fans out to Telegram, WhatsApp, Discord, Slack, email, SMS — adding a new channel becomes a new n8n node with zero app-code changes
+- User per-channel preferences stay in `profiles` / `reminder_preferences`
+
+This is intentionally **not** part of the MVP: the current single-endpoint Vercel Cron is simpler and ships the same user-facing feature for the Telegram-only case.
 
 ### Mobile Responsive Layout
 - The MVP targets desktop (1280px+)

@@ -9,11 +9,13 @@ import { Button } from '@/components/ui/Button'
 import { useAuthUser } from '@/contexts/AuthContext'
 import { updateMyProfile } from '@/lib/api/profiles'
 import { createClient } from '@/lib/supabase'
+import { TelegramRemindersSection } from '@/components/settings/TelegramRemindersSection'
 
-type Section = 'profile' | 'preferences' | 'account'
+type Section = 'profile' | 'reminders' | 'preferences' | 'account'
 
 const SECTIONS: { id: Section; label: string }[] = [
   { id: 'profile', label: 'Profile' },
+  { id: 'reminders', label: 'Reminders' },
   { id: 'preferences', label: 'Preferences' },
   { id: 'account', label: 'Account' },
 ]
@@ -171,6 +173,8 @@ export default function SettingsPage() {
                 </Button>
               </div>
             )}
+
+            {activeSection === 'reminders' && <TelegramRemindersSection />}
 
             {activeSection === 'preferences' && (
               <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">

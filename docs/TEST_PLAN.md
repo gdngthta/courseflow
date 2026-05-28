@@ -143,6 +143,36 @@
 - [ ] Error from RPC (user not found, already a member) shows inline error
 - [ ] Modal resets to form when reopened
 
+### Telegram Bot Assistant (Phase 4.5)
+- [ ] POST `/api/telegram/webhook` without the secret header → 401 Unauthorized (when `TELEGRAM_WEBHOOK_SECRET` is set)
+- [ ] POST `/api/telegram/webhook` with the secret header but a chat_id NOT linked to any profile → bot DMs "Your Telegram is not connected to CourseFlow yet."
+- [ ] Connected user messages `/help` → bot replies with the 6-command list
+- [ ] Connected user messages `/critical` → bot returns up to 5 tasks where `calculateRisk()` is `critical`, sorted by nearest due_date, including the "Closest deadline" summary line
+- [ ] Connected user with NO critical tasks messages `/critical` → bot replies "No critical tasks right now."
+- [ ] Connected user messages `/today` → bot returns tasks due today + critical tasks, sorted critical-first, with a "Focus first" suggestion
+- [ ] Connected user messages `/upcoming` → bot groups items under "Today", "Tomorrow", "This Week"
+- [ ] Connected user messages `/closest` → bot returns the single nearest deadline (task or project), with a tailored next-action sentence
+- [ ] Connected user messages `/projects` → bot returns active projects only, with role and progress
+- [ ] Project tasks under a *completed* project do NOT appear in any bot response
+- [ ] Aliases work: `what should i do today`, `closest deadline`, `active projects`, `critical tasks`
+- [ ] Unknown text → bot replies with the fallback command-list message
+- [ ] Connected user A's data is NEVER returned to connected user B's chat (chat_id mapping is the only auth)
+- [ ] Disabling `telegram_enabled` on the profile → bot replies "not connected" until re-enabled
+
+### Telegram Reminders (Phase 4.5)
+- [ ] Settings → Reminders shows "Not connected" pill when chat ID is empty
+- [ ] Saving a chat ID and toggling "Enable Telegram reminders" → "Telegram connected" pill turns green
+- [ ] Send Test Reminder → message arrives in Telegram chat with "🦉 CourseFlow Test" header
+- [ ] Send Test Reminder with no chat ID → 400 error displayed inline
+- [ ] Save Reminder Settings → toggles and days-before persist across page refresh
+- [ ] Manual cron call: `curl -H "Authorization: Bearer $CRON_SECRET" http://localhost:3000/api/cron/send-reminders` returns summary JSON
+- [ ] Cron call with wrong/missing Bearer token → 401 Unauthorized
+- [ ] After creating a task due tomorrow with `days_before=1` enabled → cron call sends a Telegram message
+- [ ] Calling the cron a second time the same day → summary shows `skipped_duplicate > 0`, no second message arrives
+- [ ] Settings → Recent Reminders list shows the sent message with status `sent`
+- [ ] Disabling `enabled` in reminder_preferences → next cron call skips the user
+- [ ] Marking the reminded task as done → cron no longer sends for it
+
 ### Cross-Page State (Supabase persistence)
 - [ ] Creating a personal task on My Tasks → appears on Dashboard and Calendar
 - [ ] Archiving a course → disappears from task/project course dropdowns immediately
