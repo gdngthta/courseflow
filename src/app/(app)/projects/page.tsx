@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
@@ -59,13 +59,13 @@ export default function ProjectsPage() {
       <div className="p-6">
         <div className="flex items-start justify-between gap-4 mb-6">
           <div>
-            <h2 className="text-xl font-semibold text-white">Projects</h2>
-            <p className="text-sm text-slate-400 mt-0.5">Shared workspaces for group assignments and projects.</p>
+            <h2 className="text-xl font-semibold text-slate-900 dark:text-white">Projects</h2>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">Shared workspaces for group assignments and projects.</p>
           </div>
           {activeTab === 'active' && (
             <button
               onClick={() => setShowCreateModal(true)}
-              className="flex-shrink-0 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-lg transition-colors"
+              className="flex-shrink-0 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-slate-900 dark:text-white text-sm font-medium rounded-lg transition-colors"
             >
               + Create Project
             </button>
@@ -74,26 +74,26 @@ export default function ProjectsPage() {
 
         {/* Tabs */}
         <div className="flex items-center justify-between gap-4 mb-6 flex-wrap">
-          <div className="flex items-center gap-1 border border-slate-800 rounded-lg p-1 bg-slate-900">
+          <div className="flex items-center gap-1 border border-slate-200 dark:border-slate-800 rounded-lg p-1 bg-white dark:bg-slate-900">
             <button
               onClick={() => setActiveTab('active')}
               className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors flex items-center gap-2 ${
-                activeTab === 'active' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-slate-200'
+                activeTab === 'active' ? 'bg-indigo-600 text-slate-900 dark:text-white' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
               }`}
             >
               Active
-              <span className={`text-xs px-1.5 py-0.5 rounded-full ${activeTab === 'active' ? 'bg-indigo-500 text-white' : 'bg-slate-700 text-slate-400'}`}>
+              <span className={`text-xs px-1.5 py-0.5 rounded-full ${activeTab === 'active' ? 'bg-indigo-500 text-slate-900 dark:text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400'}`}>
                 {activeCount}
               </span>
             </button>
             <button
               onClick={() => setActiveTab('completed')}
               className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors flex items-center gap-2 ${
-                activeTab === 'completed' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-slate-200'
+                activeTab === 'completed' ? 'bg-indigo-600 text-slate-900 dark:text-white' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
               }`}
             >
               Completed / History
-              <span className={`text-xs px-1.5 py-0.5 rounded-full ${activeTab === 'completed' ? 'bg-indigo-500 text-white' : 'bg-slate-700 text-slate-400'}`}>
+              <span className={`text-xs px-1.5 py-0.5 rounded-full ${activeTab === 'completed' ? 'bg-indigo-500 text-slate-900 dark:text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400'}`}>
                 {completedCount}
               </span>
             </button>
@@ -108,16 +108,16 @@ export default function ProjectsPage() {
                 placeholder="Search projects..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm text-slate-200 placeholder:text-slate-500 focus:outline-none focus:border-indigo-500 transition"
+                className="w-full pl-9 pr-4 py-2 bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-sm text-slate-700 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-indigo-500 transition"
               />
             </div>
             <select
               value={selectedCourse}
               onChange={(e) => setSelectedCourse(e.target.value)}
-              className="appearance-none pl-3 pr-8 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm text-slate-200 focus:outline-none focus:border-indigo-500 transition"
+              className="appearance-none pl-3 pr-8 py-2 bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-sm text-slate-700 dark:text-slate-200 focus:outline-none focus:border-indigo-500 transition"
             >
               {courseFilterOptions.map((opt) => (
-                <option key={opt.value} value={opt.value} className="bg-slate-800">{opt.label}</option>
+                <option key={opt.value} value={opt.value} className="bg-slate-100 dark:bg-slate-800">{opt.label}</option>
               ))}
             </select>
           </div>

@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { Calendar } from 'lucide-react'
 import { TypeBadge, RiskBadge, StatusBadge } from '@/components/ui/Badge'
@@ -15,7 +15,7 @@ interface TaskCardProps {
 export function TaskCard({ task, onClick }: TaskCardProps) {
   return (
     <div
-      className="bg-slate-900 border border-slate-800 rounded-xl p-4 flex flex-col gap-3 cursor-pointer hover:border-slate-600 transition-colors group"
+      className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 flex flex-col gap-3 cursor-pointer hover:border-slate-400 dark:hover:border-slate-600 transition-colors group"
       onClick={() => onClick(task)}
     >
       {/* Top row — badges */}
@@ -29,15 +29,15 @@ export function TaskCard({ task, onClick }: TaskCardProps) {
 
       {/* Title + source */}
       <div>
-        <p className="text-sm font-semibold text-white leading-snug group-hover:text-indigo-300 transition-colors">
+        <p className="text-sm font-semibold text-slate-900 dark:text-white leading-snug group-hover:text-indigo-300 transition-colors">
           {task.title}
         </p>
-        <p className="text-xs text-slate-400 mt-0.5 truncate">{task.source_label}</p>
+        <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 truncate">{task.source_label}</p>
       </div>
 
       {/* Meta row */}
       <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-1 text-xs text-slate-400">
+        <div className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
           <Calendar size={11} />
           <span>{formatDueDate(task.due_date)}</span>
         </div>

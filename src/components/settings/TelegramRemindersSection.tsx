@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useEffect, useState } from 'react'
 import { Send, CheckCircle2, AlertCircle, Clock } from 'lucide-react'
@@ -125,7 +125,7 @@ export function TelegramRemindersSection() {
 
   if (loading) {
     return (
-      <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-6">
         <p className="text-sm text-slate-500">Loading reminder settings…</p>
       </div>
     )
@@ -136,9 +136,9 @@ export function TelegramRemindersSection() {
 
   return (
     <div className="flex flex-col gap-5">
-      <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
-        <h3 className="text-sm font-semibold text-white mb-1">Telegram Integration</h3>
-        <p className="text-xs text-slate-400 mb-5">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-6">
+        <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-1">Telegram Integration</h3>
+        <p className="text-xs text-slate-500 dark:text-slate-400 mb-5">
           Connect your Telegram account to receive scheduled reminders and ask the CourseFlow bot
           about your tasks on demand.
         </p>
@@ -155,7 +155,7 @@ export function TelegramRemindersSection() {
             className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${
               isConnected
                 ? 'bg-emerald-900/30 text-emerald-400 border-emerald-800/50'
-                : 'bg-slate-800 text-slate-400 border-slate-700'
+                : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-300 dark:border-slate-700'
             }`}
           >
             <CheckCircle2 size={11} />
@@ -165,7 +165,7 @@ export function TelegramRemindersSection() {
             className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${
               scheduleActive
                 ? 'bg-indigo-900/30 text-indigo-400 border-indigo-800/50'
-                : 'bg-slate-800 text-slate-400 border-slate-700'
+                : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-300 dark:border-slate-700'
             }`}
           >
             <Clock size={11} />
@@ -184,9 +184,9 @@ export function TelegramRemindersSection() {
             />
             <p className="text-xs text-slate-500 mt-1">
               Open Telegram, message{' '}
-              <span className="text-slate-300">@CourseFlowBot</span> (or your configured bot), then
+              <span className="text-slate-600 dark:text-slate-300">@CourseFlowBot</span> (or your configured bot), then
               forward any of its messages to{' '}
-              <span className="text-slate-300">@userinfobot</span> to get your numeric chat ID.
+              <span className="text-slate-600 dark:text-slate-300">@userinfobot</span> to get your numeric chat ID.
             </p>
           </div>
 
@@ -200,18 +200,18 @@ export function TelegramRemindersSection() {
       </div>
 
       {/* Bot commands reference */}
-      <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
-        <h3 className="text-sm font-semibold text-white mb-1">Bot Commands</h3>
-        <p className="text-xs text-slate-400 mb-4">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-6">
+        <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-1">Bot Commands</h3>
+        <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">
           Once connected, message your bot in Telegram with any of these:
         </p>
         <ul className="flex flex-col gap-1.5 text-xs">
-          <li><span className="text-indigo-400 font-mono">/critical</span> <span className="text-slate-400">— show critical tasks</span></li>
-          <li><span className="text-indigo-400 font-mono">/today</span> <span className="text-slate-400">— show today&apos;s tasks</span></li>
-          <li><span className="text-indigo-400 font-mono">/upcoming</span> <span className="text-slate-400">— show upcoming deadlines</span></li>
-          <li><span className="text-indigo-400 font-mono">/closest</span> <span className="text-slate-400">— show your closest deadline</span></li>
-          <li><span className="text-indigo-400 font-mono">/projects</span> <span className="text-slate-400">— show active projects</span></li>
-          <li><span className="text-indigo-400 font-mono">/help</span> <span className="text-slate-400">— show command list</span></li>
+          <li><span className="text-indigo-400 font-mono">/critical</span> <span className="text-slate-500 dark:text-slate-400">— show critical tasks</span></li>
+          <li><span className="text-indigo-400 font-mono">/today</span> <span className="text-slate-500 dark:text-slate-400">— show today&apos;s tasks</span></li>
+          <li><span className="text-indigo-400 font-mono">/upcoming</span> <span className="text-slate-500 dark:text-slate-400">— show upcoming deadlines</span></li>
+          <li><span className="text-indigo-400 font-mono">/closest</span> <span className="text-slate-500 dark:text-slate-400">— show your closest deadline</span></li>
+          <li><span className="text-indigo-400 font-mono">/projects</span> <span className="text-slate-500 dark:text-slate-400">— show active projects</span></li>
+          <li><span className="text-indigo-400 font-mono">/help</span> <span className="text-slate-500 dark:text-slate-400">— show command list</span></li>
         </ul>
         <p className="text-xs text-slate-500 mt-3">
           Natural-language aliases work too (e.g. &quot;what should i do today&quot;, &quot;closest deadline&quot;).
@@ -219,8 +219,8 @@ export function TelegramRemindersSection() {
       </div>
 
       {/* Preferences card */}
-      <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
-        <h3 className="text-sm font-semibold text-white mb-4">Reminder Preferences</h3>
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-6">
+        <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-4">Reminder Preferences</h3>
 
         <div className="flex flex-col gap-3">
           <ToggleRow
@@ -251,12 +251,12 @@ export function TelegramRemindersSection() {
             onChange={(e) => setDaysBefore(Number(e.target.value) as ReminderDaysBefore)}
           />
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-medium text-slate-300">Preferred send time</label>
+            <label className="text-xs font-medium text-slate-600 dark:text-slate-300">Preferred send time</label>
             <input
               type="time"
               value={sendTime}
               disabled
-              className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-sm text-slate-400 cursor-not-allowed"
+              className="w-full px-3 py-2.5 bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-sm text-slate-500 dark:text-slate-400 cursor-not-allowed"
             />
             <p className="text-xs text-slate-500">
               The MVP cron runs once daily (08:00 UTC). Exact custom send times are not implemented.
@@ -294,9 +294,9 @@ export function TelegramRemindersSection() {
       </div>
 
       {/* Recent logs */}
-      <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
-        <h3 className="text-sm font-semibold text-white mb-1">Recent Reminders</h3>
-        <p className="text-xs text-slate-400 mb-4">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-6">
+        <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-1">Recent Reminders</h3>
+        <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">
           The 5 most recent reminders sent on your behalf. Updated after each cron run.
         </p>
         {logs.length === 0 ? (
@@ -306,7 +306,7 @@ export function TelegramRemindersSection() {
             {logs.map((log) => (
               <li
                 key={log.id}
-                className="flex items-start gap-3 text-xs px-3 py-2 bg-slate-800/50 border border-slate-800 rounded-lg"
+                className="flex items-start gap-3 text-xs px-3 py-2 bg-slate-100/50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-lg"
               >
                 {log.status === 'sent' ? (
                   <CheckCircle2 size={13} className="text-emerald-400 flex-shrink-0 mt-0.5" />
@@ -314,7 +314,7 @@ export function TelegramRemindersSection() {
                   <AlertCircle size={13} className="text-red-400 flex-shrink-0 mt-0.5" />
                 )}
                 <div className="flex-1 min-w-0">
-                  <p className="text-slate-200">
+                  <p className="text-slate-700 dark:text-slate-200">
                     {log.reminder_type === 'around_deadline' ? 'Around-deadline' : 'High-risk'}{' '}
                     reminder
                     <span className="text-slate-500"> · {log.task_type} task</span>
@@ -346,7 +346,7 @@ function ToggleRow({ label, description, checked, onChange }: ToggleRowProps) {
   return (
     <div className="flex items-start justify-between gap-4 py-1">
       <div className="flex-1 min-w-0">
-        <p className="text-sm text-slate-200">{label}</p>
+        <p className="text-sm text-slate-700 dark:text-slate-200">{label}</p>
         <p className="text-xs text-slate-500">{description}</p>
       </div>
       <button
@@ -355,7 +355,7 @@ function ToggleRow({ label, description, checked, onChange }: ToggleRowProps) {
         role="switch"
         aria-checked={checked}
         className={`relative inline-flex h-5 w-9 flex-shrink-0 items-center rounded-full transition-colors mt-1 ${
-          checked ? 'bg-indigo-600' : 'bg-slate-700'
+          checked ? 'bg-indigo-600' : 'bg-slate-200 dark:bg-slate-700'
         }`}
       >
         <span

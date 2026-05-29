@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState } from 'react'
 import { X, Square } from 'lucide-react'
@@ -124,20 +124,20 @@ export function AddProjectTaskModal({ open, onClose, onSubmit, members }: AddPro
 
         {/* Notes */}
         <div className="flex flex-col gap-1.5">
-          <label className="text-xs font-medium text-slate-300">Instructions / Notes <span className="text-slate-500">(Optional)</span></label>
+          <label className="text-xs font-medium text-slate-600 dark:text-slate-300">Instructions / Notes <span className="text-slate-500">(Optional)</span></label>
           <textarea
             rows={3}
             placeholder="Add instructions or context for the assigned member..."
             value={form.notes}
             onChange={(e) => setForm({ ...form, notes: e.target.value })}
-            className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-sm text-slate-200 placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:border-indigo-500 focus:ring-indigo-500 transition resize-none"
+            className="w-full px-3 py-2.5 bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-sm text-slate-700 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:border-indigo-500 focus:ring-indigo-500 transition resize-none"
           />
         </div>
 
         {/* Resources */}
         <div className="flex flex-col gap-2">
           <div className="flex items-center justify-between">
-            <label className="text-xs font-medium text-slate-300">Resources <span className="text-slate-500">(Optional)</span></label>
+            <label className="text-xs font-medium text-slate-600 dark:text-slate-300">Resources <span className="text-slate-500">(Optional)</span></label>
             <button
               type="button"
               onClick={addLink}
@@ -155,19 +155,19 @@ export function AddProjectTaskModal({ open, onClose, onSubmit, members }: AddPro
                     placeholder="Label"
                     value={link.label}
                     onChange={(e) => { updateLink(i, 'label', e.target.value); setErrors((prev) => ({ ...prev, links: undefined })) }}
-                    className="w-2/5 px-2.5 py-1.5 bg-slate-800 border border-slate-700 rounded-lg text-xs text-slate-200 placeholder:text-slate-500 focus:outline-none focus:border-indigo-500 transition"
+                    className="w-2/5 px-2.5 py-1.5 bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-xs text-slate-700 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-indigo-500 transition"
                   />
                   <input
                     type="url"
                     placeholder="https://..."
                     value={link.url}
                     onChange={(e) => { updateLink(i, 'url', e.target.value); setErrors((prev) => ({ ...prev, links: undefined })) }}
-                    className="flex-1 px-2.5 py-1.5 bg-slate-800 border border-slate-700 rounded-lg text-xs text-slate-200 placeholder:text-slate-500 focus:outline-none focus:border-indigo-500 transition"
+                    className="flex-1 px-2.5 py-1.5 bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-xs text-slate-700 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-indigo-500 transition"
                   />
                   <button
                     type="button"
                     onClick={() => removeLink(i)}
-                    className="p-1 rounded text-slate-500 hover:text-red-400 hover:bg-slate-700 transition-colors flex-shrink-0"
+                    className="p-1 rounded text-slate-500 hover:text-red-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors flex-shrink-0"
                   >
                     <X size={13} />
                   </button>
@@ -185,7 +185,7 @@ export function AddProjectTaskModal({ open, onClose, onSubmit, members }: AddPro
         {/* Checklist */}
         <div className="flex flex-col gap-2">
           <div className="flex items-center justify-between">
-            <label className="text-xs font-medium text-slate-300">Checklist <span className="text-slate-500">(Optional)</span></label>
+            <label className="text-xs font-medium text-slate-600 dark:text-slate-300">Checklist <span className="text-slate-500">(Optional)</span></label>
             <button
               type="button"
               onClick={addChecklistItem}
@@ -204,12 +204,12 @@ export function AddProjectTaskModal({ open, onClose, onSubmit, members }: AddPro
                     placeholder="Checklist item..."
                     value={item.text}
                     onChange={(e) => updateChecklistItem(i, e.target.value)}
-                    className="flex-1 px-2.5 py-1.5 bg-slate-800 border border-slate-700 rounded-lg text-xs text-slate-200 placeholder:text-slate-500 focus:outline-none focus:border-indigo-500 transition"
+                    className="flex-1 px-2.5 py-1.5 bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-xs text-slate-700 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-indigo-500 transition"
                   />
                   <button
                     type="button"
                     onClick={() => removeChecklistItem(i)}
-                    className="p-1 rounded text-slate-500 hover:text-red-400 hover:bg-slate-700 transition-colors flex-shrink-0"
+                    className="p-1 rounded text-slate-500 hover:text-red-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors flex-shrink-0"
                   >
                     <X size={13} />
                   </button>

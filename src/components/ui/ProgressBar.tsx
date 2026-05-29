@@ -1,4 +1,4 @@
-interface ProgressBarProps {
+﻿interface ProgressBarProps {
   value: number
   className?: string
   showLabel?: boolean
@@ -15,14 +15,14 @@ export function ProgressBar({ value, className = '', showLabel = false }: Progre
 
   return (
     <div className={`flex items-center gap-2 ${className}`}>
-      <div className="flex-1 h-1.5 bg-slate-700 rounded-full overflow-hidden">
+      <div className="flex-1 h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
         <div
           className={`h-full rounded-full transition-all ${barColor}`}
           style={{ width: `${clamped}%` }}
         />
       </div>
       {showLabel && (
-        <span className="text-xs text-slate-400 tabular-nums w-8 text-right">{clamped}%</span>
+        <span className="text-xs text-slate-500 dark:text-slate-400 tabular-nums w-8 text-right">{clamped}%</span>
       )}
     </div>
   )

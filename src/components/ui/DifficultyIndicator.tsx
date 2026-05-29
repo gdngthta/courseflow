@@ -1,4 +1,4 @@
-import type { Difficulty } from '@/types'
+﻿import type { Difficulty } from '@/types'
 
 const labels: Record<Difficulty, string> = {
   1: 'Very Easy',
@@ -21,13 +21,13 @@ export function DifficultyIndicator({ level, showLabel = false }: DifficultyIndi
           <span
             key={i}
             className={`inline-block w-1.5 h-1.5 rounded-full ${
-              i <= level ? 'bg-indigo-400' : 'bg-slate-700'
+              i <= level ? 'bg-indigo-400' : 'bg-slate-200 dark:bg-slate-700'
             }`}
           />
         ))}
       </span>
       {showLabel && (
-        <span className="text-xs text-slate-400">{labels[level]}</span>
+        <span className="text-xs text-slate-500 dark:text-slate-400">{labels[level]}</span>
       )}
     </span>
   )

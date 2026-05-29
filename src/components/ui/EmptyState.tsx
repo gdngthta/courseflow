@@ -1,4 +1,4 @@
-import { OwlMascot } from '@/components/brand/OwlMascot'
+﻿import { OwlMascot } from '@/components/brand/OwlMascot'
 
 interface EmptyStateProps {
   title: string
@@ -22,7 +22,7 @@ export function EmptyState({
           <OwlMascot size={72} variant={owlVariant} />
         </div>
       )}
-      <p className="text-sm font-medium text-slate-300">{title}</p>
+      <p className="text-sm font-medium text-slate-600 dark:text-slate-300">{title}</p>
       {description && (
         <p className="mt-1.5 text-xs text-slate-500 max-w-xs leading-relaxed">{description}</p>
       )}
@@ -43,7 +43,7 @@ export function NoTasksEmpty({ onAdd }: { onAdd?: () => void }) {
         onAdd && (
           <button
             onClick={onAdd}
-            className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-lg transition-colors"
+            className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-slate-900 dark:text-white text-sm font-medium rounded-lg transition-colors"
           >
             + New Personal Task
           </button>
@@ -63,7 +63,7 @@ export function NoProjectsEmpty({ onAdd }: { onAdd?: () => void }) {
         onAdd && (
           <button
             onClick={onAdd}
-            className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-lg transition-colors"
+            className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-slate-900 dark:text-white text-sm font-medium rounded-lg transition-colors"
           >
             + Create Project
           </button>
@@ -94,7 +94,7 @@ export function NoCoursesEmpty({ onAdd }: { onAdd?: () => void }) {
         onAdd && (
           <button
             onClick={onAdd}
-            className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-lg transition-colors"
+            className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-slate-900 dark:text-white text-sm font-medium rounded-lg transition-colors"
           >
             + Add Course
           </button>

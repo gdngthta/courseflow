@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect } from 'react'
 import { CheckCircle2 } from 'lucide-react'
@@ -67,8 +67,8 @@ export function InviteMemberModal({ open, onClose, onSubmit }: InviteMemberModal
             <CheckCircle2 size={24} className="text-emerald-400" />
           </div>
           <div>
-            <p className="text-sm font-medium text-white">Member added!</p>
-            <p className="text-xs text-slate-400 mt-1">{email}</p>
+            <p className="text-sm font-medium text-slate-900 dark:text-white">Member added!</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">{email}</p>
           </div>
           <p className="text-xs text-slate-500">
             They now have access to this project.

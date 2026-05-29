@@ -1,4 +1,4 @@
-import type { RiskStatus, TaskStatus, TaskType, ProjectRole } from '@/types'
+﻿import type { RiskStatus, TaskStatus, TaskType, ProjectRole } from '@/types'
 
 // --- Risk Badge ---
 
@@ -6,7 +6,7 @@ const riskStyles: Record<RiskStatus, string> = {
   critical: 'bg-red-500/15 text-red-400 border border-red-500/30',
   warning: 'bg-amber-500/15 text-amber-400 border border-amber-500/30',
   safe: 'bg-green-500/15 text-green-400 border border-green-500/30',
-  completed: 'bg-slate-500/15 text-slate-400 border border-slate-500/30',
+  completed: 'bg-slate-500/15 text-slate-500 dark:text-slate-400 border border-slate-500/30',
 }
 
 const riskLabels: Record<RiskStatus, string> = {
@@ -27,7 +27,7 @@ export function RiskBadge({ risk }: { risk: RiskStatus }) {
 // --- Status Badge ---
 
 const statusStyles: Record<TaskStatus, string> = {
-  not_started: 'bg-slate-500/15 text-slate-400 border border-slate-500/30',
+  not_started: 'bg-slate-500/15 text-slate-500 dark:text-slate-400 border border-slate-500/30',
   in_progress: 'bg-blue-500/15 text-blue-400 border border-blue-500/30',
   done: 'bg-green-500/15 text-green-400 border border-green-500/30',
 }
@@ -71,7 +71,7 @@ export function TypeBadge({ type }: { type: TaskType }) {
 const roleStyles: Record<ProjectRole, string> = {
   leader: 'bg-amber-500/15 text-amber-400 border border-amber-500/30',
   admin: 'bg-blue-500/15 text-blue-400 border border-blue-500/30',
-  member: 'bg-slate-500/15 text-slate-400 border border-slate-500/30',
+  member: 'bg-slate-500/15 text-slate-500 dark:text-slate-400 border border-slate-500/30',
 }
 
 const roleLabels: Record<ProjectRole, string> = {

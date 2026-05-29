@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState } from 'react'
 import { Camera, LogOut } from 'lucide-react'
@@ -88,8 +88,8 @@ export default function SettingsPage() {
       <Topbar title="Settings" />
       <div className="p-6">
         <div className="mb-6">
-          <h2 className="text-xl font-semibold text-white">Settings</h2>
-          <p className="text-sm text-slate-400 mt-0.5">Manage your account and preferences.</p>
+          <h2 className="text-xl font-semibold text-slate-900 dark:text-white">Settings</h2>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">Manage your account and preferences.</p>
         </div>
 
         <div className="flex gap-6 max-w-3xl">
@@ -103,7 +103,7 @@ export default function SettingsPage() {
                   className={`text-left px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${
                     activeSection === s.id
                       ? 'bg-indigo-600/20 text-indigo-400'
-                      : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'
+                      : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-700 dark:hover:text-slate-200'
                   }`}
                 >
                   {s.label}
@@ -115,28 +115,28 @@ export default function SettingsPage() {
           {/* Content */}
           <div className="flex-1">
             {activeSection === 'profile' && (
-              <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
-                <h3 className="text-sm font-semibold text-white mb-5">Profile Information</h3>
+              <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-6">
+                <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-5">Profile Information</h3>
 
                 {/* Avatar */}
                 <div className="flex items-center gap-4 mb-6">
                   <div className="relative">
                     <div className="w-16 h-16 rounded-full bg-indigo-700 flex items-center justify-center">
-                      <span className="text-white text-xl font-bold">{initials}</span>
+                      <span className="text-slate-900 dark:text-white text-xl font-bold">{initials}</span>
                     </div>
                     <button
                       title="Photo upload coming in a later phase"
                       disabled
-                      className="absolute -bottom-1 -right-1 w-6 h-6 bg-slate-700 border border-slate-600 rounded-full flex items-center justify-center cursor-not-allowed opacity-60"
+                      className="absolute -bottom-1 -right-1 w-6 h-6 bg-slate-200 dark:bg-slate-700 border border-slate-400 dark:border-slate-600 rounded-full flex items-center justify-center cursor-not-allowed opacity-60"
                     >
-                      <Camera size={11} className="text-slate-400" />
+                      <Camera size={11} className="text-slate-500 dark:text-slate-400" />
                     </button>
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-white">
+                    <p className="text-sm font-medium text-slate-900 dark:text-white">
                       {firstName || lastName ? `${firstName} ${lastName}`.trim() : email}
                     </p>
-                    <p className="text-xs text-slate-400">Student</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">Student</p>
                     <p className="text-xs text-slate-500 mt-0.5">JPG, GIF or PNG. Max size 800K</p>
                   </div>
                 </div>
@@ -177,8 +177,8 @@ export default function SettingsPage() {
             {activeSection === 'reminders' && <TelegramRemindersSection />}
 
             {activeSection === 'preferences' && (
-              <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
-                <h3 className="text-sm font-semibold text-white mb-5">Preferences</h3>
+              <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-6">
+                <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-5">Preferences</h3>
                 <div className="max-w-xs">
                   <SelectInput
                     label="Theme"
@@ -194,9 +194,9 @@ export default function SettingsPage() {
             )}
 
             {activeSection === 'account' && (
-              <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
-                <h3 className="text-sm font-semibold text-white mb-2">Account</h3>
-                <p className="text-sm text-slate-400 mb-6">Signed in as <span className="text-slate-300">{email}</span></p>
+              <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-6">
+                <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-2">Account</h3>
+                <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">Signed in as <span className="text-slate-600 dark:text-slate-300">{email}</span></p>
                 <Button
                   variant="destructive"
                   onClick={handleSignOut}

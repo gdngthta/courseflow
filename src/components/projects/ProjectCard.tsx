@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { Calendar, Users, ArrowRight, CheckCircle2 } from 'lucide-react'
 import { RiskBadge, RoleBadge } from '@/components/ui/Badge'
@@ -15,7 +15,7 @@ export function ProjectCard({ project, onClick }: ProjectCardProps) {
   const isCompleted = project.status === 'completed'
 
   return (
-    <div className={`bg-slate-900 border rounded-xl p-5 flex flex-col gap-4 hover:border-slate-600 transition-colors ${isCompleted ? 'border-slate-700 opacity-90' : 'border-slate-800'}`}>
+    <div className={`bg-white dark:bg-slate-900 border rounded-xl p-5 flex flex-col gap-4 hover:border-slate-400 dark:hover:border-slate-600 transition-colors ${isCompleted ? 'border-slate-300 dark:border-slate-700 opacity-90' : 'border-slate-200 dark:border-slate-800'}`}>
       {/* Top row */}
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-center gap-1.5 flex-wrap">
@@ -33,14 +33,14 @@ export function ProjectCard({ project, onClick }: ProjectCardProps) {
 
       {/* Name + course */}
       <div>
-        <h3 className="text-sm font-semibold text-white leading-snug">{project.name}</h3>
-        <p className="text-xs text-slate-400 mt-0.5">
+        <h3 className="text-sm font-semibold text-slate-900 dark:text-white leading-snug">{project.name}</h3>
+        <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
           {project.course_code} — {project.course_name}
         </p>
       </div>
 
       {/* Meta */}
-      <div className="flex items-center gap-4 text-xs text-slate-400">
+      <div className="flex items-center gap-4 text-xs text-slate-500 dark:text-slate-400">
         <span className="flex items-center gap-1">
           <Calendar size={11} />
           {isCompleted && project.completed_at
@@ -57,8 +57,8 @@ export function ProjectCard({ project, onClick }: ProjectCardProps) {
       {/* Progress */}
       <div>
         <div className="flex justify-between items-center mb-1.5">
-          <span className="text-xs text-slate-400">Project Progress</span>
-          <span className="text-xs font-semibold text-white">{project.progress}%</span>
+          <span className="text-xs text-slate-500 dark:text-slate-400">Project Progress</span>
+          <span className="text-xs font-semibold text-slate-900 dark:text-white">{project.progress}%</span>
         </div>
         <ProgressBar value={project.progress} />
       </div>
@@ -68,8 +68,8 @@ export function ProjectCard({ project, onClick }: ProjectCardProps) {
         onClick={() => onClick(project)}
         className={`flex items-center justify-center gap-2 w-full py-2 border text-sm rounded-lg transition-colors mt-auto ${
           isCompleted
-            ? 'bg-slate-800/50 hover:bg-slate-800 border-slate-700 text-slate-400 hover:text-slate-200'
-            : 'bg-slate-800 hover:bg-slate-700 border-slate-700 hover:border-slate-600 text-slate-200'
+            ? 'bg-slate-100/50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 border-slate-300 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
+            : 'bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 border-slate-300 dark:border-slate-700 hover:border-slate-400 dark:hover:border-slate-600 text-slate-700 dark:text-slate-200'
         }`}
       >
         {isCompleted ? 'View History' : 'Open Project'}

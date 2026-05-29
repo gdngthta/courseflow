@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useMemo, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
@@ -123,21 +123,21 @@ export function NotificationsPanel() {
         <button
           onClick={() => setOpen((v) => !v)}
           title="Notifications"
-          className="relative p-2 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition-colors"
+          className="relative p-2 rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
         >
           <Bell size={17} />
           {unread > 0 && (
-            <span className="absolute top-1 right-1 min-w-[1rem] h-4 px-1 flex items-center justify-center bg-red-500 text-white text-[10px] font-bold rounded-full">
+            <span className="absolute top-1 right-1 min-w-[1rem] h-4 px-1 flex items-center justify-center bg-red-500 text-slate-900 dark:text-white text-[10px] font-bold rounded-full">
               {unread > 9 ? '9+' : unread}
             </span>
           )}
         </button>
 
         {open && (
-          <div className="absolute top-full right-0 mt-2 w-[22rem] max-h-[28rem] bg-slate-900 border border-slate-700 rounded-xl shadow-xl z-50 flex flex-col">
+          <div className="absolute top-full right-0 mt-2 w-[22rem] max-h-[28rem] bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl shadow-xl z-50 flex flex-col">
             {/* Header */}
-            <div className="flex items-center justify-between px-4 py-3 border-b border-slate-800">
-              <p className="text-sm font-semibold text-white">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-slate-800">
+              <p className="text-sm font-semibold text-slate-900 dark:text-white">
                 Notifications {unread > 0 && <span className="text-slate-500">({unread})</span>}
               </p>
               {unread > 0 && (
@@ -163,7 +163,7 @@ export function NotificationsPanel() {
                     return (
                       <li
                         key={n.id}
-                        className="border-b border-slate-800 last:border-b-0 hover:bg-slate-800/60 transition-colors"
+                        className="border-b border-slate-200 dark:border-slate-800 last:border-b-0 hover:bg-slate-100/60 dark:hover:bg-slate-800/60 transition-colors"
                       >
                         <div className="flex items-start gap-3 px-4 py-3">
                           <Icon size={14} className={`${COLOR[n.type]} flex-shrink-0 mt-0.5`} />
@@ -172,13 +172,13 @@ export function NotificationsPanel() {
                             className="flex-1 text-left min-w-0"
                           >
                             <p className="text-xs text-slate-500 mb-0.5">{LABEL[n.type]}</p>
-                            <p className="text-sm text-slate-200 truncate">{n.title}</p>
+                            <p className="text-sm text-slate-700 dark:text-slate-200 truncate">{n.title}</p>
                             <p className="text-xs text-slate-500 truncate">{n.subtitle}</p>
                           </button>
                           <button
                             onClick={(e) => handleDismiss(n, e)}
                             title="Dismiss"
-                            className="p-1 rounded text-slate-500 hover:text-slate-300 hover:bg-slate-700 transition-colors flex-shrink-0"
+                            className="p-1 rounded text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors flex-shrink-0"
                           >
                             <X size={12} />
                           </button>
@@ -191,7 +191,7 @@ export function NotificationsPanel() {
             </div>
 
             {/* Footer note */}
-            <div className="px-4 py-2 border-t border-slate-800">
+            <div className="px-4 py-2 border-t border-slate-200 dark:border-slate-800">
               <p className="text-xs text-slate-600">
                 Live from your current tasks &amp; projects. Dismissed on this browser only.
               </p>
