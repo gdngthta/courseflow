@@ -1,12 +1,32 @@
 @import "tailwindcss";
 
+/* ──────────────────────────────────────────────────────────
+   Class-based dark mode.
+   Components that need theming use `dark:` modifiers — e.g.
+   `bg-white dark:bg-slate-900`. The ThemeProvider toggles
+   the `dark` class on <html>.
+   ────────────────────────────────────────────────────────── */
+@variant dark (&:where(.dark, .dark *));
+
 :root {
+  color-scheme: light;
+  --bg-body: #f8fafc;    /* slate-50  */
+  --fg-body: #0f172a;    /* slate-900 */
+  --scrollbar-thumb: #cbd5e1;        /* slate-300 */
+  --scrollbar-thumb-hover: #94a3b8;  /* slate-400 */
+}
+
+html.dark {
   color-scheme: dark;
+  --bg-body: #020617;    /* slate-950 */
+  --fg-body: #e2e8f0;    /* slate-200 */
+  --scrollbar-thumb: #334155;        /* slate-700 */
+  --scrollbar-thumb-hover: #475569;  /* slate-600 */
 }
 
 body {
-  background-color: #020617; /* slate-950 */
-  color: #e2e8f0; /* slate-200 */
+  background-color: var(--bg-body);
+  color: var(--fg-body);
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   -webkit-font-smoothing: antialiased;
 }
@@ -20,9 +40,9 @@ body {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #334155;
+  background: var(--scrollbar-thumb);
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #475569;
+  background: var(--scrollbar-thumb-hover);
 }
