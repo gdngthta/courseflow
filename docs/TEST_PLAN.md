@@ -143,6 +143,32 @@
 - [ ] Error from RPC (user not found, already a member) shows inline error
 - [ ] Modal resets to form when reopened
 
+### App Shell — Topbar, Search, Notifications, Theme (Phase 5A)
+- [ ] Topbar search dropdown opens on focus / typing ≥ 2 chars
+- [ ] Search returns matches across Tasks, Projects, Courses sections; per-group cap of 5
+- [ ] Clicking a personal-task result opens the Task Detail drawer with full content
+- [ ] Clicking a project-task result opens the Task Detail drawer with full content
+- [ ] Clicking a project result routes to /projects/[id]
+- [ ] Clicking a course result routes to /courses
+- [ ] Escape / click-outside closes the dropdown
+- [ ] Bell badge shows a count when there are non-dismissed urgent items
+- [ ] Bell panel lists notifications grouped/labelled by type with the right icon and color
+- [ ] Clicking a critical / overdue / due-today / due-tomorrow personal-task notification opens the Task Detail drawer
+- [ ] Clicking a project-task notification opens the Task Detail drawer
+- [ ] Clicking a project-deadline notification navigates to /projects/[id]
+- [ ] Clicking a notification for a task that no longer exists shows an inline red error in the panel (not an empty drawer)
+- [ ] Dismiss-individual removes the notification and decrements the badge
+- [ ] Dismiss-all removes everything from the panel and clears the badge
+- [ ] Dismissed state survives a refresh on the same browser
+- [ ] Dismissed state does NOT carry across browsers (documented limitation)
+- [ ] Theme toggle button in topbar switches dark ↔ light immediately
+- [ ] Settings → Preferences theme dropdown reflects current theme and offers System
+- [ ] Choosing System tracks OS dark-mode preference and reacts to OS changes
+- [ ] Theme survives a refresh in the same browser
+- [ ] No flash of wrong-theme content on initial load
+- [ ] Project Detail "Add member" button opens the Add Member by Email modal; modal title reads "Add Member by Email"
+- [ ] Settings → Profile shows initials avatar only (no disabled camera button)
+
 ### Telegram Bot Assistant (Phase 4.5)
 - [ ] POST `/api/telegram/webhook` without the secret header → 401 Unauthorized (when `TELEGRAM_WEBHOOK_SECRET` is set)
 - [ ] POST `/api/telegram/webhook` with the secret header but a chat_id NOT linked to any profile → bot DMs "Your Telegram is not connected to CourseFlow yet."

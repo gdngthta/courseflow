@@ -60,7 +60,7 @@ export function InviteMemberModal({ open, onClose, onSubmit }: InviteMemberModal
   }
 
   return (
-    <Modal open={open} onClose={onClose} title="Invite Member" maxWidth="max-w-sm">
+    <Modal open={open} onClose={onClose} title="Add Member by Email" maxWidth="max-w-sm">
       {sent ? (
         <div className="flex flex-col items-center gap-3 py-6 text-center">
           <div className="w-12 h-12 rounded-full bg-emerald-900/30 flex items-center justify-center">

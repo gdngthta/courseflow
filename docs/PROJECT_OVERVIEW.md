@@ -74,8 +74,8 @@ Known limitations of the MVP that will be addressed post-launch:
 | **Course visibility** | Courses are strictly user-scoped. Project co-members without the same course added will see blank course code/name on shared tasks. |
 | **Real-time sync** | Data is fetched once on load. Changes made by another team member in a shared project are not reflected until the page is refreshed. |
 | **Mobile layout** | The UI targets desktop (1280px+). On small screens the sidebar collapses but some table/grid layouts may overflow. |
-| **Avatar upload** | The camera button in Settings is disabled. Avatars are initials only. Supabase Storage integration is deferred. |
+| **Avatar upload** | Avatars are initials only. Supabase Storage integration is deferred. |
 | **Project links** | The "Important Links" panel on Project Detail is read-only. Add/delete links UI is deferred. |
-| **Notifications** | No in-app, email, or push notifications. No reminders for upcoming deadlines. |
-| **Global search** | The topbar search icon is a UI placeholder. Full-text search is not yet implemented. |
-| **Theme switching** | Only dark mode is available. The theme select in Settings has no effect. |
+| **Email / push notifications** | No email or push delivery. Telegram reminders (Phase 4.5) and the in-app notifications panel (Phase 5A) are the only delivery channels. |
+| **Notification dismiss state** | Stored per browser in `localStorage`. Dismissals do not carry across devices — a Supabase-backed dismissal table is future work. |
+| **Theme persistence** | Persisted per browser in `localStorage`. Cross-device sync would require a `profiles.theme` column. |

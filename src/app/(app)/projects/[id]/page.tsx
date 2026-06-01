@@ -259,7 +259,7 @@ export default function ProjectDetailPage() {
                     onClick={() => setShowInvite(true)}
                     className="flex items-center gap-1 text-xs text-indigo-400 hover:text-indigo-300 transition-colors"
                   >
-                    <UserPlus size={12} /> Invite
+                    <UserPlus size={12} /> Add member
                   </button>
                 )}
               </div>

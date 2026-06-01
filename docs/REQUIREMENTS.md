@@ -55,6 +55,18 @@
 - FR-REM-8: Failed sends are logged with `status='failed'` and an error message; not retried within the same day
 - FR-REM-9: Telegram bot token and CRON secret are server-side only (no `NEXT_PUBLIC_` prefix)
 
+### App Shell — Topbar / Search / Notifications / Theme ✅ (Phase 5A)
+- FR-SHELL-1: Global search in the topbar runs over personal tasks, assigned project tasks, projects, and courses with a grouped dropdown of results
+- FR-SHELL-2: Task search results open the Task Detail drawer; project results route to /projects/[id]; course results route to /courses
+- FR-SHELL-3: Notification bell shows an unread count (derived live from current Supabase data — overdue, critical, due-today, due-tomorrow, project-deadline within 7 days)
+- FR-SHELL-4: Per task, only the highest-priority notification type is emitted (overdue > critical > due_today > due_tomorrow) to avoid duplicate rows
+- FR-SHELL-5: Project-deadline notifications skip projects whose tasks are all done (100% progress) to avoid nagging on effectively-completed work
+- FR-SHELL-6: Clicking a notification re-derives a fresh TaskCardData from current data and opens the drawer (no stale cached references); shows an inline error if the entity no longer exists
+- FR-SHELL-7: Notifications can be dismissed individually or all at once; dismiss state is stored in localStorage (per browser) and pruned after 30 days
+- FR-SHELL-8: Theme toggle in the topbar switches between dark and light; the Settings → Preferences dropdown adds a "System" option that follows the OS preference and reacts to its changes
+- FR-SHELL-9: Theme preference is persisted under `courseflow:theme` in localStorage and applied via an inline `<head>` script before hydration to avoid flash of wrong theme
+- FR-SHELL-10: Adding a member to a project goes via email lookup of an existing CourseFlow account (label "Add Member by Email" / "Add member"); no email is sent, so the UI does not claim it is
+
 ### Telegram Bot Assistant ✅ (Phase 4.5)
 - FR-BOT-1: A webhook endpoint receives Telegram updates and identifies the CourseFlow user by `telegram_chat_id`
 - FR-BOT-2: The webhook is authenticated via `X-Telegram-Bot-Api-Secret-Token` header (matched against `TELEGRAM_WEBHOOK_SECRET`)

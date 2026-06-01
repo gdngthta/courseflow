@@ -1,12 +1,13 @@
 ﻿'use client'
 
 import { useState } from 'react'
-import { Camera, LogOut } from 'lucide-react'
+import { LogOut } from 'lucide-react'
 import { Topbar } from '@/components/layout/Topbar'
 import { Input } from '@/components/ui/Input'
 import { SelectInput } from '@/components/ui/SelectInput'
 import { Button } from '@/components/ui/Button'
 import { useAuthUser } from '@/contexts/AuthContext'
+import { useTheme, type Theme } from '@/contexts/ThemeContext'
 import { updateMyProfile } from '@/lib/api/profiles'
 import { createClient } from '@/lib/supabase'
 import { TelegramRemindersSection } from '@/components/settings/TelegramRemindersSection'
@@ -28,6 +29,7 @@ const THEME_OPTIONS = [
 
 export default function SettingsPage() {
   const { user, loading: authLoading, signOut } = useAuthUser()
+  const { theme, setTheme } = useTheme()
 
   // Derive display name from Supabase user metadata
   const fullName: string = user?.user_metadata?.full_name ?? ''
@@ -38,7 +40,6 @@ export default function SettingsPage() {
   const [activeSection, setActiveSection] = useState<Section>('profile')
   const [firstName, setFirstName] = useState(defaultFirst)
   const [lastName, setLastName] = useState(defaultLast)
-  const [theme, setTheme] = useState('system')
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [saveError, setSaveError] = useState('')
@@ -120,24 +121,14 @@ export default function SettingsPage() {
 
                 {/* Avatar */}
                 <div className="flex items-center gap-4 mb-6">
-                  <div className="relative">
-                    <div className="w-16 h-16 rounded-full bg-indigo-700 flex items-center justify-center">
-                      <span className="text-slate-900 dark:text-white text-xl font-bold">{initials}</span>
-                    </div>
-                    <button
-                      title="Photo upload coming in a later phase"
-                      disabled
-                      className="absolute -bottom-1 -right-1 w-6 h-6 bg-slate-200 dark:bg-slate-700 border border-slate-400 dark:border-slate-600 rounded-full flex items-center justify-center cursor-not-allowed opacity-60"
-                    >
-                      <Camera size={11} className="text-slate-500 dark:text-slate-400" />
-                    </button>
+                  <div className="w-16 h-16 rounded-full bg-indigo-700 flex items-center justify-center flex-shrink-0">
+                    <span className="text-white text-xl font-bold">{initials}</span>
                   </div>
                   <div>
                     <p className="text-sm font-medium text-slate-900 dark:text-white">
                       {firstName || lastName ? `${firstName} ${lastName}`.trim() : email}
                     </p>
                     <p className="text-xs text-slate-500 dark:text-slate-400">Student</p>
-                    <p className="text-xs text-slate-500 mt-0.5">JPG, GIF or PNG. Max size 800K</p>
                   </div>
                 </div>
 
@@ -184,10 +175,11 @@ export default function SettingsPage() {
                     label="Theme"
                     options={THEME_OPTIONS}
                     value={theme}
-                    onChange={(e) => setTheme(e.target.value)}
+                    onChange={(e) => setTheme(e.target.value as Theme)}
                   />
-                  <p className="text-xs text-slate-500 mt-2">
-                    Full theme switching coming in a later phase. Currently dark mode only.
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
+                    Saved in this browser. You can also toggle dark/light from
+                    the sun/moon icon in the top bar.
                   </p>
                 </div>
               </div>

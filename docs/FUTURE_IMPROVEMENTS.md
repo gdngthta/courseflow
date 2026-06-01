@@ -12,9 +12,15 @@
 - Implement: add/delete project links from the Project Detail workspace
 
 ### Profile Avatar Upload
-- Settings avatar camera button is currently disabled
+- Settings → Profile currently shows initials only (the disabled camera button was removed in Phase 5A as part of the "no fake UI" pass)
 - Implement: upload avatar to Supabase Storage, save URL to `profiles.avatar_url`
 - Show avatar in Sidebar and Settings instead of initials
+- Add back the camera-overlay button on the avatar circle once the storage path is wired
+
+### Notifications — Cross-Device Persistence
+- Notification dismiss state is currently stored in `localStorage` under `courseflow:dismissed-notifications`, so dismissals don't carry across browsers/devices
+- Move dismiss state to a Supabase `notification_dismissals` table keyed by (user_id, notification_id, sent_date)
+- Same RLS pattern as `reminder_logs`
 
 ### Real-Time Collaboration
 - Live updates when a project member updates a task
