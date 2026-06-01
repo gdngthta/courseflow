@@ -25,8 +25,12 @@ $colorMap = [ordered]@{
   'placeholder:text-slate-600' = 'placeholder:text-slate-500'
 }
 
-# Variant prefixes we recognise so we can stamp them onto both halves.
-$variants = 'hover:|focus:|active:|disabled:|group-hover:|focus-within:|focus-visible:|peer-focus:|peer-checked:|sm:hover:|md:hover:|lg:hover:'
+# Variant prefix pattern. Matches zero or more `word:` tokens, EXCLUDING
+# `dark:` itself — otherwise the capture group eats the existing dark:
+# prefix on an already-converted class and the replacement injects
+# `dark:dark:`. Tailwind convention is that `dark:` is always the
+# outermost variant, so this is safe.
+$variants = '(?:(?!dark:)[a-z][a-z0-9-]*:)*'
 
 $files = Get-ChildItem -Recurse -Path 'src' -Include *.tsx,*.ts | Where-Object {
   $_.FullName -notmatch 'globals\.css' -and
@@ -43,9 +47,12 @@ foreach ($file in $files) {
   foreach ($darkClass in $colorMap.Keys) {
     $lightClass = $colorMap[$darkClass]
     $escaped = [regex]::Escape($darkClass)
-    # Match: optional variant prefix, the dark class, optional /opacity, with a non-word boundary that's
-    # NOT preceded by 'dark:' (idempotent).
-    $regex = "(?<!dark:)(?<![A-Za-z0-9_-])((?:$variants)?)$escaped(\/\d+)?(?![A-Za-z0-9_-])"
+    # Idempotency: skip classes that already sit inside a dark: chain,
+    # whether direct (dark:bg-slate-800) or via intermediate variants
+    # (dark:hover:bg-slate-800, dark:focus:text-slate-200, etc.).
+    # .NET regex supports variable-length lookbehind, so we walk back
+    # through any number of `word:` tokens checking for an upstream dark:.
+    $regex = "(?<!dark:(?:[a-z][a-z0-9-]*:)*)(?<![A-Za-z0-9_-])($variants)$escaped(\/\d+)?(?![A-Za-z0-9_-])"
     $content = [regex]::Replace($content, $regex, {
       param($m)
       $variant = $m.Groups[1].Value

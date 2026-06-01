@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import { Sun, Moon } from 'lucide-react'
 import { GlobalSearch } from '@/components/layout/GlobalSearch'
@@ -23,7 +23,7 @@ export function Topbar({ title }: TopbarProps) {
         <button
           onClick={toggle}
           title={isDark ? 'Switch to light theme' : 'Switch to dark theme'}
-          className="p-2 rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-100 dark:bg-slate-800 transition-colors"
+          className="p-2 rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
         >
           {isDark ? <Sun size={17} /> : <Moon size={17} />}
         </button>

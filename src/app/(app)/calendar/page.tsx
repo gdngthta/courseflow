@@ -201,7 +201,7 @@ export default function CalendarPage() {
               <div className="flex items-center gap-1.5">
                 <button
                   onClick={goToPrev}
-                  className="p-1.5 rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-900 dark:text-white hover:bg-slate-100 dark:hover:bg-slate-100 dark:bg-slate-800 transition-colors"
+                  className="p-1.5 rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
                 >
                   <ChevronLeft size={16} />
                 </button>
@@ -210,7 +210,7 @@ export default function CalendarPage() {
                 </span>
                 <button
                   onClick={goToNext}
-                  className="p-1.5 rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-900 dark:text-white hover:bg-slate-100 dark:hover:bg-slate-100 dark:bg-slate-800 transition-colors"
+                  className="p-1.5 rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
                 >
                   <ChevronRight size={16} />
                 </button>
@@ -231,7 +231,7 @@ export default function CalendarPage() {
                     className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${
                       filter === tab.id
                         ? 'bg-slate-200 dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm'
-                        : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-700 dark:text-slate-200'
+                        : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
                     }`}
                   >
                     {tab.label}
@@ -270,7 +270,7 @@ export default function CalendarPage() {
                         'min-h-[84px] p-2 cursor-pointer transition-colors',
                         idx % 7 !== 6 ? 'border-r border-slate-200 dark:border-slate-800' : '',
                         idx < 35 ? 'border-b border-slate-200 dark:border-slate-800' : '',
-                        isSelected ? 'bg-slate-100/60 dark:bg-slate-800/60' : 'hover:bg-slate-100/30 dark:hover:bg-slate-100/30 dark:bg-slate-800/30',
+                        isSelected ? 'bg-slate-100/60 dark:bg-slate-800/60' : 'hover:bg-slate-100/30 dark:hover:bg-slate-800/30',
                         !isThisMonth ? 'opacity-35' : '',
                       ].filter(Boolean).join(' ')}
                     >
@@ -360,7 +360,7 @@ export default function CalendarPage() {
                             className="flex items-start gap-2 text-left group w-full"
                           >
                             <span className={`w-1.5 h-1.5 rounded-full mt-[3px] flex-shrink-0 ${item.data.risk === 'critical' ? 'bg-red-400' : 'bg-indigo-400'}`} />
-                            <span className="text-xs text-slate-600 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-slate-900 dark:text-white transition-colors leading-relaxed">
+                            <span className="text-xs text-slate-600 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white transition-colors leading-relaxed">
                               {item.data.title}
                             </span>
                           </button>
@@ -382,7 +382,7 @@ export default function CalendarPage() {
                             className="flex items-start gap-2 text-left group w-full"
                           >
                             <span className={`w-1.5 h-1.5 rounded-full mt-[3px] flex-shrink-0 ${item.data.risk === 'critical' ? 'bg-red-400' : 'bg-violet-400'}`} />
-                            <span className="text-xs text-slate-600 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-slate-900 dark:text-white transition-colors leading-relaxed">
+                            <span className="text-xs text-slate-600 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white transition-colors leading-relaxed">
                               {item.data.title}
                             </span>
                           </button>
@@ -405,7 +405,7 @@ export default function CalendarPage() {
                           >
                             <span className="w-1.5 h-1.5 rounded-full mt-[3px] flex-shrink-0 bg-emerald-400" />
                             <div className="min-w-0">
-                              <p className="text-xs text-slate-600 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-slate-900 dark:text-white transition-colors leading-relaxed">
+                              <p className="text-xs text-slate-600 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white transition-colors leading-relaxed">
                                 {item.name}
                               </p>
                               <p className="text-[10px] text-slate-500">{item.courseCode}</p>
@@ -444,7 +444,7 @@ export default function CalendarPage() {
                           >
                             <span className={`w-1.5 h-1.5 rounded-full mt-[3px] flex-shrink-0 ${itemDotColor(item)}`} />
                             <div className="min-w-0">
-                              <p className="text-xs text-slate-600 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-slate-900 dark:text-white transition-colors leading-relaxed truncate">
+                              <p className="text-xs text-slate-600 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white transition-colors leading-relaxed truncate">
                                 {item.kind === 'task' ? item.data.title : item.name}
                               </p>
                               <p className="text-[10px] text-slate-500 truncate">

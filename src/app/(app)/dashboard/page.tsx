@@ -177,7 +177,7 @@ export default function DashboardPage() {
                       <div className="space-y-1.5 pl-4 border-l border-slate-200 dark:border-slate-800">
                         {tasks.map((t) => (
                           <button key={t.id} onClick={() => setSelectedTask(t)} className="w-full text-left">
-                            <p className="text-xs text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-900 dark:text-white transition-colors truncate">{t.title}</p>
+                            <p className="text-xs text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors truncate">{t.title}</p>
                             <p className="text-xs text-slate-500 truncate">{t.source_label}</p>
                           </button>
                         ))}
