@@ -78,6 +78,10 @@ export function toProjectDetail(
     due_date: t.due_date,
     source_label: project.name,
     project_id: project.id,
+    // Inherit the course from the parent project so course filters in
+    // My Tasks (list + board) match project tasks the same way they
+    // match personal tasks.
+    course_id: project.course_id || undefined,
     notes: t.notes,
     links: t.links,
     checklist: t.checklist,
@@ -121,6 +125,9 @@ export function toAssignedTaskCards(
         due_date: t.due_date,
         source_label: project.name,
         project_id: project.id,
+        // Inherit the parent project's course so the course filter on
+        // My Tasks matches assigned project tasks.
+        course_id: project.course_id || undefined,
         notes: t.notes,
         links: t.links,
         checklist: t.checklist,
