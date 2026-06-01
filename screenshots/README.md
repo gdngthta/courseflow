@@ -4,6 +4,8 @@ Screenshots of the CourseFlow app. To be captured from the running dev server.
 
 ## Checklist
 
+- [ ] Landing page — full scroll capture (hero, features, personal-vs-shared, workflow, CTA, footer)
+- [ ] Landing page — hero alone (showing floating cards + dashboard preview)
 - [ ] Login page
 - [ ] Signup page
 - [ ] Dashboard — greeting, summary cards, Today's Priority, Critical Risk, Upcoming Deadlines, Course Overview

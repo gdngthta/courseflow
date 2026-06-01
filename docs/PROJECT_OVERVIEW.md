@@ -28,6 +28,7 @@ When a project leader/admin assigns a group task to a member, that task appears 
 
 | Page | Purpose |
 |---|---|
+| `/` Landing | Public marketing page: hero, features, personal-vs-shared explainer, workflow stages, CTA. Accessible without auth. |
 | Dashboard | Overview of today's priority tasks, critical risks, upcoming deadlines, and course health |
 | My Tasks | All tasks assigned to the user (personal + group) |
 | Projects | List of all group project workspaces the user belongs to |

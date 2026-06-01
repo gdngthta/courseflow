@@ -64,7 +64,7 @@ Vercel Cron (08:00 UTC)
 ## Route Structure
 
 ```
-/                          → redirect to /dashboard
+/                          → public landing page (Phase 5B; no auth required)
 /(auth)/login              → login page
 /(auth)/signup             → signup page
 /(app)/dashboard           → dashboard (app shell)
@@ -74,7 +74,15 @@ Vercel Cron (08:00 UTC)
 /(app)/courses             → course management
 /(app)/calendar            → calendar view
 /(app)/settings            → settings
+
+/api/cron/send-reminders   → Vercel-cron Telegram dispatcher (Bearer CRON_SECRET)
+/api/telegram/test         → user-initiated test Telegram send
+/api/telegram/webhook      → Telegram bot webhook (X-Telegram-Bot-Api-Secret-Token)
 ```
+
+`/` lives at the app root and is NOT inside the (app) route group, so it
+does not mount AuthProvider/DataProvider. proxy.ts treats it as public —
+only the routes in PROTECTED_PATHS require an authenticated session.
 
 ## Component Structure
 

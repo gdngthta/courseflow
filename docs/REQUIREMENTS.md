@@ -55,6 +55,15 @@
 - FR-REM-8: Failed sends are logged with `status='failed'` and an error message; not retried within the same day
 - FR-REM-9: Telegram bot token and CRON secret are server-side only (no `NEXT_PUBLIC_` prefix)
 
+### Public Landing Page ✅ (Phase 5B)
+- FR-LANDING-1: `/` is a public route accessible without authentication; no redirect to `/dashboard`
+- FR-LANDING-2: Protected app routes (`/dashboard`, `/tasks`, `/projects`, `/courses`, `/calendar`, `/settings`) remain proxy-protected — unauthenticated requests are redirected to `/login`
+- FR-LANDING-3: Landing page composes a navbar, hero with floating decorative cards, features grid, personal-vs-shared explainer, workflow stages, final CTA, and footer
+- FR-LANDING-4: "Get Started" CTA links to `/signup`; "Login" links to `/login`; authenticated users hitting `/login` or `/signup` are redirected to `/dashboard` by the proxy
+- FR-LANDING-5: Animations are CSS-only (`@keyframes cf-fade-up`, `cf-float`); disabled automatically when `prefers-reduced-motion: reduce` is set
+- FR-LANDING-6: Landing page respects the user's dark/light theme via the same `ThemeContext` used by the app
+- FR-LANDING-7: Workflow section is honest: `Review` status is labelled "Coming with Kanban" since the underlying schema still only supports `not_started | in_progress | done`
+
 ### App Shell — Topbar / Search / Notifications / Theme ✅ (Phase 5A)
 - FR-SHELL-1: Global search in the topbar runs over personal tasks, assigned project tasks, projects, and courses with a grouped dropdown of results
 - FR-SHELL-2: Task search results open the Task Detail drawer; project results route to /projects/[id]; course results route to /courses

@@ -39,6 +39,7 @@ CourseFlow combines both into one place. When a group project task is assigned t
 | Global topbar search (tasks / projects / courses) | ✅ |
 | In-app notifications panel (derived, with localStorage dismiss) | ✅ |
 | Dark + light theme toggle (persists per browser) | ✅ |
+| Public landing page at `/` (hero, features, workflow, CTA) | ✅ |
 
 ---
 
