@@ -145,7 +145,11 @@ src/
 supabase/
   schema.sql               Full initial schema
   phase3c.sql              RLS fix migration (SECURITY DEFINER helpers + RPCs)
+  phase4.sql               Telegram fields + reminder_preferences + reminder_logs
+  phase5.sql               profiles_insert RLS + orphan backfill
+  phase5c.sql              Adds 'review' to task status check constraints
 docs/                      Project documentation
+scripts/                   One-off scripts (e.g. apply-theme.ps1 bulk converter)
 ```
 
 ---
@@ -242,3 +246,110 @@ curl -X POST "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/setWebhook" \
 **Optimistic updates.** All mutations (create/edit/delete/checklist/mark-done) update local React state immediately, then write to Supabase. On error, `refetch()` restores the correct server state.
 
 **Atomic project creation.** A `create_project` RPC atomically inserts both the project row and the creator's leader membership row, avoiding a race condition where the creator couldn't read their own project immediately after creation.
+
+---
+
+## Screenshots
+
+Screenshots live in [`screenshots/`](screenshots/) with a per-image
+checklist in [`screenshots/README.md`](screenshots/README.md). Recommended
+captures: landing page, dashboard, My Tasks (list + Kanban), task detail
+drawer, project detail, calendar, courses, Telegram Settings, and a real
+bot conversation.
+
+When capturing screens that may contain real data, redact the Telegram
+chat ID and any user emails before committing.
+
+---
+
+## Demo Flow (3–5 minutes)
+
+Use this script for a walkthrough demo:
+
+1. **Open `/`** — the public landing page. Highlight the hero
+   ("Manage personal tasks and group projects in one place"), the
+   floating task cards, and the Personal vs Shared / Workflow sections.
+2. **Click "Get Started"** → `/signup` → create an account (or
+   "Login" if you already have one). Get bounced into `/dashboard`.
+3. **Add a course** — Sidebar → Courses → "+ Add Course" (e.g.
+   `WIA1005 — Network Technology`).
+4. **Add a personal task** — Sidebar → My Tasks → "+ New Personal Task".
+   Set it due tomorrow, attach the course you just made, mark difficulty 4.
+5. **My Tasks** — the task shows on the **List view**. Toggle to
+   **Board** — the same task lives in the "Not Started" column.
+6. **Drag the task** from Not Started → In Progress on the Board.
+   Refresh. The task stays in In Progress.
+7. **Create a project** — Sidebar → Projects → "+ Create Project".
+   Pick the same course. Save.
+8. **Add a project task** on the Project Detail page and assign it to
+   yourself.
+9. **My Tasks again** — the assigned project task now appears in your
+   combined task list. It was NOT duplicated into `personal_tasks`.
+10. **Dashboard** — shows updated counts. "Today's Priority" and
+    "Critical Risk" reflect the current task set. Notifications bell
+    in the topbar shows a count.
+11. **Calendar** — both the personal task and the project deadline
+    appear on the correct dates.
+12. **Topbar Search** — type the task title; click the result; the
+    Task Detail drawer opens.
+13. **Telegram** — message [@CourseFlow_Schedule_Bot](https://t.me/CourseFlow_Schedule_Bot)
+    with `/closest` or `/critical`. The bot responds with live data
+    from this account (chat ID must be saved in Settings → Reminders first).
+14. **Scheduled reminders** — explain verbally: Vercel Cron calls
+    `/api/cron/send-reminders` daily at 08:00 UTC. Each user with
+    enabled preferences and qualifying tasks gets a Telegram DM;
+    duplicates are blocked by a unique key on `reminder_logs`.
+
+---
+
+## Limitations
+
+What the MVP intentionally does NOT do (full list in
+[`docs/PROJECT_OVERVIEW.md`](docs/PROJECT_OVERVIEW.md) and
+[`docs/FUTURE_IMPROVEMENTS.md`](docs/FUTURE_IMPROVEMENTS.md)):
+
+- **WhatsApp delivery** — not implemented. Telegram is the only
+  out-of-app delivery channel.
+- **n8n automation** — not used. The single Vercel Cron endpoint
+  is the entire reminder pipeline.
+- **Real-time sync** — data is fetched once on page load. Changes
+  made by another team member in a shared project require a refresh.
+- **Mobile layout** — targets desktop (1280px+). The sidebar
+  collapses on small screens but some grid layouts may overflow.
+- **Avatar upload** — initials only. Supabase Storage integration is
+  deferred.
+- **Project links CRUD** — the "Important Links" panel renders links
+  but add/delete UI is deferred.
+- **Custom per-task reminder send times** — the Settings dropdown is
+  display-only. The cron runs once daily at the configured
+  `vercel.json` schedule.
+- **Cross-device notification dismissal** — dismiss state is per
+  browser (`localStorage`). Persistent cross-device read state is
+  future work.
+- **Kanban drag for touch** — HTML5 native DnD is desktop-only.
+  Touch devices use the "Move to" status select on each card.
+- **Free-form LLM bot** — bot understands exact commands and a small
+  alias map only; no natural-language AI.
+
+---
+
+## Future Improvements
+
+See [`docs/FUTURE_IMPROVEMENTS.md`](docs/FUTURE_IMPROVEMENTS.md)
+for the full roadmap. Highlights:
+
+- Real-time updates via Supabase Realtime
+- Avatar upload to Supabase Storage
+- Project links add/delete CRUD
+- Multi-channel reminder delivery (WhatsApp via Cloud API; n8n as
+  a workflow router for Discord/Slack/email)
+- Library-backed Kanban DnD with touch + keyboard support
+- Per-project Kanban view on the Project Detail page
+- Cross-device notification dismissal table
+
+---
+
+## Author
+
+Built as a university coursework MVP by **gdngthta**
+([github.com/gdngthta](https://github.com/gdngthta)).
