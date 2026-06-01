@@ -62,7 +62,7 @@ export function CreateProjectModal({ open, onClose, onSubmit, courses }: CreateP
           error={errors.name}
         />
         <SelectInput
-          label="Course"
+          label="Course (Optional)"
           placeholder="Select a course..."
           options={courseOptions}
           value={form.course_id}

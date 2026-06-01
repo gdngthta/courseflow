@@ -10,18 +10,21 @@ export type NotificationType =
   | 'due_tomorrow'
   | 'project_deadline'
 
+export type NotificationEntity = 'personal_task' | 'project_task' | 'project'
+
 export interface AppNotification {
-  /** Stable id: `[type]-[entityType]-[entityId]-[dueDate]`. Used for dismiss state. */
+  /** Stable id: `[type]-[entity]-[entityId]-[dueDate]`. Used for dismiss state. */
   id: string
   type: NotificationType
+  /** Discriminator so the click handler knows where to look up the entity. */
+  entity: NotificationEntity
+  entityId: string
   title: string
   subtitle: string
   /** ISO date — used for sorting + cleanup of old dismissed entries. */
   due_date: string
-  /** Where to navigate when clicked. */
+  /** Where to navigate when clicked (used for project-deadline notifications). */
   href: string
-  /** Optional task object so the drawer can open instead of routing. */
-  task?: TaskCardData
   /** Lower = more urgent. Used for sort + per-task collapse. */
   priority: number
 }
@@ -93,15 +96,18 @@ export function deriveNotifications(
 
     if (!type) continue
 
-    const entityType = t.type === 'personal' ? 'personal' : 'project'
+    const entity: NotificationEntity = t.type === 'personal' ? 'personal_task' : 'project_task'
     out.push({
-      id: `${type}-${entityType}-${t.id}-${t.due_date}`,
+      id: `${type}-${entity}-${t.id}-${t.due_date}`,
       type,
+      entity,
+      entityId: t.id,
       title: t.title,
       subtitle: t.source_label,
       due_date: t.due_date,
+      // href only used as a fallback navigation target; the click handler
+      // re-looks up the task fresh from current data and opens the drawer.
       href: t.type === 'group' && t.project_id ? `/projects/${t.project_id}` : '/tasks',
-      task: t,
       priority: PRIORITY[type],
     })
   }
@@ -121,6 +127,8 @@ export function deriveNotifications(
     out.push({
       id: `project_deadline-project-${proj.id}-${proj.deadline}`,
       type: 'project_deadline',
+      entity: 'project',
+      entityId: proj.id,
       title: proj.name,
       subtitle: `Project deadline · ${days === 0 ? 'Today' : days === 1 ? 'Tomorrow' : `in ${days} days`}`,
       due_date: proj.deadline,

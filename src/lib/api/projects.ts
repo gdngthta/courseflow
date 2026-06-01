@@ -120,7 +120,8 @@ export async function getProjectsWithRelations(): Promise<ProjectWithRelations[]
 
 export interface CreateProjectInput {
   name: string
-  course_id: string
+  /** Optional. Empty string and missing are both normalised to null before insert. */
+  course_id?: string
   deadline: string
   description?: string
 }
@@ -128,9 +129,14 @@ export interface CreateProjectInput {
 /** Atomically create a project and add the creator as leader (via RPC). */
 export async function createProject(input: CreateProjectInput): Promise<string> {
   const supabase = createClient()
+  // Critical: never send '' to a uuid column. The course_id column is
+  // nullable in the schema (`uuid references courses(id) on delete set null`),
+  // but Postgres rejects '' before the nullability check even runs.
+  const courseId = input.course_id && input.course_id.trim() ? input.course_id : null
+
   const { data, error } = await supabase.rpc('create_project', {
     p_name: input.name,
-    p_course_id: input.course_id,
+    p_course_id: courseId,
     p_deadline: input.deadline,
     p_description: input.description ?? null,
   })

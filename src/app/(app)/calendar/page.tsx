@@ -50,10 +50,23 @@ function itemDotColor(item: CalendarItem): string {
 }
 
 function itemPillClass(item: CalendarItem): string {
-  if (item.kind === 'project') return 'bg-emerald-900/40 text-emerald-300 border border-emerald-800/40 hover:bg-emerald-900/60'
-  if (item.data.risk === 'critical') return 'bg-red-900/40 text-red-300 border border-red-800/40 hover:bg-red-900/60'
-  if (item.data.type === 'group') return 'bg-violet-900/40 text-violet-300 border border-violet-800/40 hover:bg-violet-900/60'
-  return 'bg-indigo-900/40 text-indigo-300 border border-indigo-800/40 hover:bg-indigo-900/60'
+  // Each pill has a LIGHT variant (light bg, dark text, soft border) plus the
+  // existing DARK variant. Previously dark-only — looked muddy on white in
+  // light mode. Keep contrast high in both themes.
+  if (item.kind === 'project') {
+    return 'bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 ' +
+      'dark:bg-emerald-900/40 dark:text-emerald-300 dark:border-emerald-800/40 dark:hover:bg-emerald-900/60'
+  }
+  if (item.data.risk === 'critical') {
+    return 'bg-red-50 text-red-700 border border-red-200 hover:bg-red-100 ' +
+      'dark:bg-red-900/40 dark:text-red-300 dark:border-red-800/40 dark:hover:bg-red-900/60'
+  }
+  if (item.data.type === 'group') {
+    return 'bg-violet-50 text-violet-700 border border-violet-200 hover:bg-violet-100 ' +
+      'dark:bg-violet-900/40 dark:text-violet-300 dark:border-violet-800/40 dark:hover:bg-violet-900/60'
+  }
+  return 'bg-indigo-50 text-indigo-700 border border-indigo-200 hover:bg-indigo-100 ' +
+    'dark:bg-indigo-900/40 dark:text-indigo-300 dark:border-indigo-800/40 dark:hover:bg-indigo-900/60'
 }
 
 export default function CalendarPage() {

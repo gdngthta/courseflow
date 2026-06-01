@@ -12,6 +12,8 @@ import {
   type AppNotification,
   type NotificationType,
 } from '@/lib/notifications'
+import { personalTaskToCard } from '@/lib/taskDerive'
+import { toAssignedTaskCards } from '@/lib/projectDerive'
 import { TaskDetailModal } from '@/components/tasks/TaskDetailModal'
 import type { TaskCardData, TaskChecklistItem } from '@/types'
 
@@ -45,13 +47,16 @@ export function NotificationsPanel() {
   const [open, setOpen] = useState(false)
   const [dismissedIds, setDismissedIds] = useState<Set<string>>(new Set())
   const [selectedTask, setSelectedTask] = useState<TaskCardData | null>(null)
+  const [clickError, setClickError] = useState('')
   const containerRef = useRef<HTMLDivElement | null>(null)
 
   // Load dismissed state once on mount + whenever the panel opens
-  // (cheap, picks up changes from other tabs).
+  // (cheap, picks up changes from other tabs). Also clear stale click
+  // errors so they don't persist across panel reopens.
   useEffect(() => {
     if (typeof window === 'undefined') return
     setDismissedIds(new Set(loadDismissed().map((e) => e.id)))
+    if (open) setClickError('')
   }, [open])
 
   // Derive notifications fresh on every render — cheap, pure function.
@@ -97,16 +102,53 @@ export function NotificationsPanel() {
     })
   }, [visible])
 
+  /**
+   * Re-look up the entity FRESH from current Supabase data and act on it.
+   *
+   * We deliberately do NOT use a cached task reference embedded in the
+   * notification — that reference can go stale if the data refetches
+   * between notification generation and click, which (per a user bug
+   * report) was making the drawer open empty.
+   */
   const handleClick = useCallback(
     (n: AppNotification) => {
-      if (n.task) {
-        setSelectedTask(n.task)
-      } else {
+      setClickError('')
+
+      if (n.entity === 'project') {
+        const exists = projects.some((p) => p.project.id === n.entityId)
+        if (!exists) {
+          setClickError('This project no longer exists.')
+          return
+        }
         router.push(n.href)
+        setOpen(false)
+        return
       }
-      setOpen(false)
+
+      if (n.entity === 'personal_task') {
+        const t = personalTasks.find((pt) => pt.id === n.entityId)
+        if (!t) {
+          setClickError('This task no longer exists. It may have been deleted or completed.')
+          return
+        }
+        setSelectedTask(personalTaskToCard(t, courses))
+        setOpen(false)
+        return
+      }
+
+      if (n.entity === 'project_task') {
+        const assignedCards = toAssignedTaskCards(projects, userId)
+        const card = assignedCards.find((c) => c.id === n.entityId)
+        if (!card) {
+          setClickError('This project task no longer exists or is no longer assigned to you.')
+          return
+        }
+        setSelectedTask(card)
+        setOpen(false)
+        return
+      }
     },
-    [router]
+    [router, projects, personalTasks, courses, userId]
   )
 
   const handleChecklistUpdate = (taskId: string, checklist: TaskChecklistItem[]) => {
@@ -149,6 +191,13 @@ export function NotificationsPanel() {
                 </button>
               )}
             </div>
+
+            {/* Click error (e.g. notification points at a deleted task) */}
+            {clickError && (
+              <div className="px-4 py-2 border-b border-red-300 dark:border-red-800/50 bg-red-50 dark:bg-red-900/20">
+                <p className="text-xs text-red-700 dark:text-red-400">{clickError}</p>
+              </div>
+            )}
 
             {/* Body */}
             <div className="flex-1 overflow-y-auto">
