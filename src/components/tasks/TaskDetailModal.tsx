@@ -1,6 +1,7 @@
 ﻿'use client'
 
 import { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { X, Calendar, User, ExternalLink, CheckSquare, Square, Pencil, Check, X as XClose } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { ConfirmModal } from '@/components/ui/ConfirmModal'
@@ -82,6 +83,10 @@ export function TaskDetailModal({
 
   if (!open) return null
   if (!task) return null
+  // Portal target requires the DOM, which doesn't exist during SSR.
+  // Modal is closed on first paint anyway, so this only blocks the
+  // unlikely case of a non-client render with open=true.
+  if (typeof document === 'undefined') return null
 
   const isGroupTask = task.type === 'group'
   const canEdit = !isGroupTask || userRole === 'leader' || userRole === 'admin'
@@ -112,7 +117,12 @@ export function TaskDetailModal({
     setEditingNotes(false)
   }
 
-  return (
+  // Portal to document.body so the modal escapes every ancestor stacking
+  // context. Without this, callers rendered inside Topbar (which uses
+  // backdrop-blur and therefore creates a stacking context that traps
+  // 'position: fixed' descendants) had their modal clipped to the topbar's
+  // 64px-tall bounds. See NotificationsPanel / GlobalSearch.
+  return createPortal(
     <>
       {/* Backdrop */}
       <div
@@ -338,6 +348,7 @@ export function TaskDetailModal({
         title="Delete Task"
         description={`Are you sure you want to delete "${task.title}"? This action cannot be undone.`}
       />
-    </>
+    </>,
+    document.body
   )
 }
