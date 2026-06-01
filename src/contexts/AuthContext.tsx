@@ -8,8 +8,20 @@ type AppSupabaseClient = SupabaseClient
 
 interface AuthContextValue {
   user: User | null
-  /** True while the initial session check is still in flight */
+  /**
+   * True while the initial session check + profile-existence check are still in flight.
+   * Stays true until BOTH the auth user is resolved AND a profiles row is confirmed,
+   * which prevents downstream code (DataContext, task creation, etc.) from running
+   * against a user_id that has no matching profile row.
+   */
   loading: boolean
+  /**
+   * If non-null, the app could not guarantee a profile row for the current user
+   * (e.g. RLS misconfiguration, network failure during ensureProfile). Surfaced to
+   * the UI so the user is told why the app isn't loading instead of silently
+   * letting them hit FK-violation errors on every task/course/project insert.
+   */
+  profileError: string | null
   /** Signs the current user out and navigates to /login */
   signOut: () => Promise<void>
 }
@@ -17,6 +29,7 @@ interface AuthContextValue {
 const AuthContext = createContext<AuthContextValue>({
   user: null,
   loading: true,
+  profileError: null,
   signOut: async () => {},
 })
 
@@ -24,34 +37,66 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter()
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
+  const [profileError, setProfileError] = useState<string | null>(null)
 
   // Store the client in a ref so we can reach it from signOut without
-  // re-running the effect. Using a ref also avoids the component body
-  // calling createClient() during SSR/static-prerender.
+  // re-running the effect.
   const supabaseRef = useRef<AppSupabaseClient | null>(null)
 
   useEffect(() => {
-    // createClient() is only called here — inside useEffect — so it
-    // never runs on the server during static pre-rendering.
-    import('@/lib/supabase').then(({ createClient }) => {
+    let cancelled = false
+
+    Promise.all([
+      import('@/lib/supabase'),
+      import('@/lib/api/profiles'),
+    ]).then(([{ createClient }, { ensureProfile }]) => {
       const supabase = createClient()
       supabaseRef.current = supabase
 
-      // Get the initial session
-      supabase.auth.getUser().then(({ data: { user: currentUser } }) => {
+      const bootstrap = async (currentUser: User | null) => {
+        if (cancelled) return
         setUser(currentUser)
-        setLoading(false)
+        if (!currentUser) {
+          // Logged out — no profile to ensure.
+          setProfileError(null)
+          setLoading(false)
+          return
+        }
+        try {
+          await ensureProfile()
+          if (cancelled) return
+          setProfileError(null)
+        } catch (err) {
+          if (cancelled) return
+          const msg = err instanceof Error ? err.message : 'Failed to load your profile.'
+          setProfileError(msg)
+          console.error('[AuthContext] ensureProfile failed', err)
+        } finally {
+          if (!cancelled) setLoading(false)
+        }
+      }
+
+      supabase.auth.getUser().then(({ data: { user: currentUser } }) => {
+        bootstrap(currentUser)
       })
 
-      // Keep user state in sync with Supabase auth events
       const { data: { subscription } } = supabase.auth.onAuthStateChange(
         (_event, session) => {
-          setUser(session?.user ?? null)
+          // Re-run the bootstrap on auth change so a fresh sign-in
+          // also guarantees a profile row before the app proceeds.
+          bootstrap(session?.user ?? null)
         }
       )
 
-      return () => subscription.unsubscribe()
+      return () => {
+        cancelled = true
+        subscription.unsubscribe()
+      }
     })
+
+    return () => {
+      cancelled = true
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -65,7 +110,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [router])
 
   return (
-    <AuthContext.Provider value={{ user, loading, signOut }}>
+    <AuthContext.Provider value={{ user, loading, profileError, signOut }}>
       {children}
     </AuthContext.Provider>
   )

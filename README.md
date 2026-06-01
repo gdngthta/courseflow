@@ -92,6 +92,7 @@ Open the Supabase SQL Editor and run, in order:
 1. `supabase/schema.sql` — creates all tables, triggers, indexes, and initial RLS policies
 2. `supabase/phase3c.sql` — applies SECURITY DEFINER helpers and RPCs to fix recursive RLS policies
 3. `supabase/phase4.sql` — adds Telegram fields on `profiles` plus `reminder_preferences` and `reminder_logs` tables
+4. `supabase/phase5.sql` — adds `profiles_insert` RLS policy + backfills profile rows for any auth users whose profile is missing (fixes FK-violation errors when creating tasks/courses/projects)
 
 ### 4. Run dev server
 
