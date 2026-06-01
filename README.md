@@ -167,10 +167,12 @@ docs/                      Project documentation
 CourseFlow can send a Telegram message when a deadline is around the corner or a task becomes high-risk.
 
 **Per-user setup:**
-1. Talk to [@BotFather](https://t.me/BotFather) on Telegram → `/newbot` → save the token in `TELEGRAM_BOT_TOKEN`.
-2. Start a chat with the bot, then forward any of its messages to [@userinfobot](https://t.me/userinfobot) to get your numeric chat ID.
+1. Open [@CourseFlow_Schedule_Bot](https://t.me/CourseFlow_Schedule_Bot) on Telegram and send it any message (this is the public bot for this deployment).
+2. Open [@userinfobot](https://t.me/userinfobot) and start a chat — it replies with your numeric chat ID.
 3. In CourseFlow → **Settings → Reminders**, paste the chat ID, enable Telegram reminders, choose your preferences, and click **Save**.
 4. Click **Send Test Reminder** to verify delivery.
+
+> Running your own deployment? Create your own bot with [@BotFather](https://t.me/BotFather) → `/newbot`, save the token in `TELEGRAM_BOT_TOKEN`, and point users at your bot's username instead of `@CourseFlow_Schedule_Bot`.
 
 **Scheduled sends (production):**
 - Deploy to Vercel. Set `TELEGRAM_BOT_TOKEN`, `CRON_SECRET`, and `SUPABASE_SERVICE_ROLE_KEY` in the Vercel project's env vars.
@@ -220,7 +222,7 @@ curl -X POST "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/setWebhook" \
   -d "secret_token=$TELEGRAM_WEBHOOK_SECRET"
 ```
 
-4. In Telegram, `/start` the bot, get your chat ID via [@userinfobot](https://t.me/userinfobot), paste into Settings → Reminders, enable, and try `/help`.
+4. In Telegram, `/start` the bot ([@CourseFlow_Schedule_Bot](https://t.me/CourseFlow_Schedule_Bot) for the public deployment, or your own bot if self-hosting), get your chat ID via [@userinfobot](https://t.me/userinfobot), paste into Settings → Reminders, enable, and try `/help`.
 
 **Local testing:** Telegram won't reach `localhost`. Use a tunnel like `ngrok http 3000` and point the webhook at `https://<ngrok-id>.ngrok.io/api/telegram/webhook`. The webhook secret check happens via the `X-Telegram-Bot-Api-Secret-Token` header — only Telegram (or someone with the secret) can hit it.
 

@@ -183,10 +183,25 @@ export function TelegramRemindersSection() {
               onChange={(e) => setChatId(e.target.value)}
             />
             <p className="text-xs text-slate-500 mt-1">
-              Open Telegram, message{' '}
-              <span className="text-slate-600 dark:text-slate-300">@CourseFlowBot</span> (or your configured bot), then
-              forward any of its messages to{' '}
-              <span className="text-slate-600 dark:text-slate-300">@userinfobot</span> to get your numeric chat ID.
+              Open Telegram, start a chat with{' '}
+              <a
+                href="https://t.me/CourseFlow_Schedule_Bot"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-indigo-600 dark:text-indigo-400 hover:underline"
+              >
+                @CourseFlow_Schedule_Bot
+              </a>
+              {' '}and send it any message. Then open{' '}
+              <a
+                href="https://t.me/userinfobot"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-indigo-600 dark:text-indigo-400 hover:underline"
+              >
+                @userinfobot
+              </a>
+              {' '}to get your numeric chat ID and paste it here.
             </p>
           </div>
 

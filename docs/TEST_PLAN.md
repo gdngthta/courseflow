@@ -205,7 +205,11 @@
 - [ ] Disabling `telegram_enabled` on the profile → bot replies "not connected" until re-enabled
 
 ### Telegram Reminders (Phase 4.5)
+> Public bot for this deployment: **@CourseFlow_Schedule_Bot** ([t.me/CourseFlow_Schedule_Bot](https://t.me/CourseFlow_Schedule_Bot)).
+> Get the chat ID via **@userinfobot** ([t.me/userinfobot](https://t.me/userinfobot)). The bot username is shown to users only — internally the app routes by `TELEGRAM_BOT_TOKEN` + numeric `telegram_chat_id`.
+
 - [ ] Settings → Reminders shows "Not connected" pill when chat ID is empty
+- [ ] Settings → Reminders helper text links to @CourseFlow_Schedule_Bot and @userinfobot
 - [ ] Saving a chat ID and toggling "Enable Telegram reminders" → "Telegram connected" pill turns green
 - [ ] Send Test Reminder → message arrives in Telegram chat with "🦉 CourseFlow Test" header
 - [ ] Send Test Reminder with no chat ID → 400 error displayed inline
