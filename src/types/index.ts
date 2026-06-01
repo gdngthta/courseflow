@@ -1,5 +1,5 @@
 export type TaskType = 'personal' | 'group'
-export type TaskStatus = 'not_started' | 'in_progress' | 'done'
+export type TaskStatus = 'not_started' | 'in_progress' | 'review' | 'done'
 export type RiskStatus = 'safe' | 'warning' | 'critical' | 'completed'
 export type ProjectRole = 'leader' | 'admin' | 'member'
 export type ProjectStatus = 'active' | 'completed'

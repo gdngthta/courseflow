@@ -53,7 +53,7 @@ RLS: Users can only CRUD their own courses.
 | user_id | uuid | FK → profiles.id |
 | course_id | uuid | FK → courses.id, nullable |
 | title | text | |
-| status | text | 'not_started' \| 'in_progress' \| 'done' |
+| status | text | 'not_started' \| 'in_progress' \| 'review' \| 'done' |
 | difficulty | int2 | 1–5 |
 | progress | int2 | 0–100 |
 | due_date | date | stored as YYYY-MM-DD |
@@ -114,7 +114,7 @@ UNIQUE: (project_id, user_id)
 | id | uuid | PK |
 | project_id | uuid | FK → projects.id |
 | title | text | |
-| status | text | 'not_started' \| 'in_progress' \| 'done' |
+| status | text | 'not_started' \| 'in_progress' \| 'review' \| 'done' |
 | difficulty | int2 | 1–5 |
 | progress | int2 | 0–100 |
 | due_date | date | stored as YYYY-MM-DD |
@@ -223,3 +223,5 @@ RLS:
 | `supabase/schema.sql` | Full initial schema — tables, triggers, indexes |
 | `supabase/phase3c.sql` | RLS fix: SECURITY DEFINER helpers, recreated policies, `create_project` + `invite_member` RPCs |
 | `supabase/phase4.sql` | Telegram reminders: profile columns, `reminder_preferences`, `reminder_logs` |
+| `supabase/phase5.sql` | Profile consistency: `profiles_insert` RLS policy + backfill of orphan auth users |
+| `supabase/phase5c.sql` | Adds `'review'` to the status check constraints on `personal_tasks` and `project_tasks` |

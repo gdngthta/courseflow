@@ -40,6 +40,7 @@ CourseFlow combines both into one place. When a group project task is assigned t
 | In-app notifications panel (derived, with localStorage dismiss) | ✅ |
 | Dark + light theme toggle (persists per browser) | ✅ |
 | Public landing page at `/` (hero, features, workflow, CTA) | ✅ |
+| My Tasks Kanban board view (drag-drop + status select fallback) | ✅ |
 
 ---
 
@@ -97,6 +98,7 @@ Open the Supabase SQL Editor and run, in order:
 2. `supabase/phase3c.sql` — applies SECURITY DEFINER helpers and RPCs to fix recursive RLS policies
 3. `supabase/phase4.sql` — adds Telegram fields on `profiles` plus `reminder_preferences` and `reminder_logs` tables
 4. `supabase/phase5.sql` — adds `profiles_insert` RLS policy + backfills profile rows for any auth users whose profile is missing (fixes FK-violation errors when creating tasks/courses/projects)
+5. `supabase/phase5c.sql` — adds `'review'` to the allowed task status values on both `personal_tasks` and `project_tasks` (powers the new Kanban Review column)
 
 ### 4. Run dev server
 

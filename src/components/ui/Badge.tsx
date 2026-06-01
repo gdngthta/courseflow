@@ -29,12 +29,14 @@ export function RiskBadge({ risk }: { risk: RiskStatus }) {
 const statusStyles: Record<TaskStatus, string> = {
   not_started: 'bg-slate-500/15 text-slate-500 dark:text-slate-400 border border-slate-500/30',
   in_progress: 'bg-blue-500/15 text-blue-400 border border-blue-500/30',
+  review: 'bg-amber-500/15 text-amber-400 border border-amber-500/30',
   done: 'bg-green-500/15 text-green-400 border border-green-500/30',
 }
 
 const statusLabels: Record<TaskStatus, string> = {
   not_started: 'Not Started',
   in_progress: 'In Progress',
+  review: 'Review',
   done: 'Done',
 }
 

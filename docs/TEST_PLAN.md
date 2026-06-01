@@ -143,6 +143,25 @@
 - [ ] Error from RPC (user not found, already a member) shows inline error
 - [ ] Modal resets to form when reopened
 
+### Kanban Board (Phase 5C)
+- [ ] My Tasks shows a List / Board toggle in the filter row
+- [ ] Default view is List; selecting Board shows 4 columns
+- [ ] Board has columns: Not Started, In Progress, Review, Done
+- [ ] Existing personal tasks appear in the correct column based on `status`
+- [ ] Existing assigned project tasks appear in the correct column based on `status`
+- [ ] Editing a task and choosing "Review" in the status dropdown persists, and the task moves to the Review column
+- [ ] Drag a personal task from Not Started → In Progress: column updates immediately, persists after refresh, dashboard "today" count updates if it was overdue/critical
+- [ ] Drag an assigned project task to Done: project progress on the project detail page increases, calendar pill is hidden (done tasks excluded), persists after refresh
+- [ ] "Move to" select on a card updates status without dragging (touch-friendly)
+- [ ] Active tab filters work on the board (Personal → only personal tasks visible across all 4 columns, etc.)
+- [ ] Course filter works on the board (only that course's tasks visible)
+- [ ] Search filter works on the board
+- [ ] Tasks under a completed project show a lock icon, no drag handle, no status select (read-only)
+- [ ] Clicking a kanban card opens the existing Task Detail drawer with full content
+- [ ] Empty columns show "No tasks here."
+- [ ] Board is readable in both dark and light themes
+- [ ] On screens narrower than 4 columns the board scrolls horizontally with snap-to-column
+
 ### App Shell — Topbar, Search, Notifications, Theme (Phase 5A)
 - [ ] Topbar search dropdown opens on focus / typing ≥ 2 chars
 - [ ] Search returns matches across Tasks, Projects, Courses sections; per-group cap of 5

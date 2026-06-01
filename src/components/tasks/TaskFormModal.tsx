@@ -39,6 +39,7 @@ const DIFFICULTY_OPTIONS = [
 const STATUS_OPTIONS = [
   { value: 'not_started', label: 'Not Started' },
   { value: 'in_progress', label: 'In Progress' },
+  { value: 'review', label: 'Review' },
   { value: 'done', label: 'Done' },
 ]
 

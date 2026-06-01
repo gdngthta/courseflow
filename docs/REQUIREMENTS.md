@@ -55,6 +55,18 @@
 - FR-REM-8: Failed sends are logged with `status='failed'` and an error message; not retried within the same day
 - FR-REM-9: Telegram bot token and CRON secret are server-side only (no `NEXT_PUBLIC_` prefix)
 
+### Kanban Board View ✅ (Phase 5C)
+- FR-KANBAN-1: My Tasks page has a List / Board view toggle in the filter row; defaults to List
+- FR-KANBAN-2: Board View shows the same combined task data (personal + assigned project tasks) — project tasks are NOT duplicated into `personal_tasks`
+- FR-KANBAN-3: Board has four columns: Not Started, In Progress, Review, Done
+- FR-KANBAN-4: `'review'` is a real persisted status (added by `supabase/phase5c.sql` to the check constraints on both `personal_tasks` and `project_tasks`; added to `TaskStatus` union, status badge, and TaskFormModal dropdown)
+- FR-KANBAN-5: Status changes from the board persist to Supabase via existing `updatePersonalTask` / `updateProjectTask` paths and update Dashboard / Calendar / project progress accordingly
+- FR-KANBAN-6: Two interaction modes — HTML5 native drag-and-drop on desktop, and a per-card "Move to" status select for touch / accessibility (no new npm dependency)
+- FR-KANBAN-7: Tasks under a completed project are rendered read-only (no drag handle, no status select, lock icon shown)
+- FR-KANBAN-8: Existing My Tasks filters (All / Personal / Assigned / Critical / Completed + course filter + search) apply unchanged to Board View
+- FR-KANBAN-9: Empty columns show "No tasks here."
+- FR-KANBAN-10: Clicking a Kanban card opens the existing Task Detail drawer (no separate drawer)
+
 ### Public Landing Page ✅ (Phase 5B)
 - FR-LANDING-1: `/` is a public route accessible without authentication; no redirect to `/dashboard`
 - FR-LANDING-2: Protected app routes (`/dashboard`, `/tasks`, `/projects`, `/courses`, `/calendar`, `/settings`) remain proxy-protected — unauthenticated requests are redirected to `/login`

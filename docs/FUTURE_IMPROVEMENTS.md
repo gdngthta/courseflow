@@ -34,6 +34,13 @@
 - Per-user preferences, test send, audit log, duplicate prevention
 - Telegram command bot (`/critical`, `/today`, `/upcoming`, `/closest`, `/projects`, `/help`) with plain-English aliases
 
+### Kanban Board — Polish
+Shipped in Phase 5C as a list/board toggle on My Tasks with HTML5 drag-drop + status-select fallback. Possible follow-ups:
+- Library-backed DnD (`@dnd-kit/core` or `dnd-kit`) for touch / keyboard support and animated card placement
+- Per-project Kanban view on the Project Detail page (currently only the My Tasks view has a board)
+- Manual within-column ordering (an explicit `position` int column on tasks); today columns sort by due date
+- Bulk multi-select drag (move several cards at once)
+
 **Bot — explicitly out of scope (kept simple on purpose):**
 - No LLM / no natural-language understanding — exact alias matching only
 - Bot is read-only — no commands to create, edit, complete, or delete tasks from chat

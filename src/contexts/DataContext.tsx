@@ -48,6 +48,7 @@ interface DataContextValue {
   updatePersonalTask: (id: string, input: tasksApi.PersonalTaskInput) => Promise<void>
   deletePersonalTask: (id: string) => Promise<void>
   markPersonalTaskDone: (id: string) => Promise<void>
+  updatePersonalTaskStatus: (id: string, status: tasksApi.PersonalTaskInput['status']) => Promise<void>
   updatePersonalTaskChecklist: (id: string, checklist: TaskChecklistItem[]) => Promise<void>
 
   // Project mutations
@@ -166,6 +167,35 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     setPersonalTasks((prev) => prev.map((t) => (t.id === id ? updated : t)))
   }, [])
 
+  /**
+   * Partial-status update used by the Kanban board. Optimistic — flips
+   * local state immediately, writes to Supabase in the background,
+   * refetches if the write fails. Mirrors the project-task helper but
+   * exists here because tasksApi.updatePersonalTask demands a full input
+   * shape and we only want to change the status field.
+   *
+   * When moving to 'done' we also stamp progress=100; when moving OUT
+   * of 'done' we leave progress alone so the user's manual number
+   * isn't clobbered.
+   */
+  const updatePersonalTaskStatus = useCallback(
+    async (id: string, status: tasksApi.PersonalTaskInput['status']) => {
+      const goingToDone = status === 'done'
+      setPersonalTasks((prev) =>
+        prev.map((t) =>
+          t.id === id ? { ...t, status, ...(goingToDone ? { progress: 100 } : {}) } : t
+        )
+      )
+      try {
+        await tasksApi.updatePersonalTask(id, goingToDone ? { status, progress: 100 } : { status })
+      } catch (e) {
+        console.error('[DataProvider] personal task status update failed, refetching', e)
+        refetch()
+      }
+    },
+    [refetch]
+  )
+
   const updatePersonalTaskChecklist = useCallback(
     async (id: string, checklist: TaskChecklistItem[]) => {
       setPersonalTasks((prev) => prev.map((t) => (t.id === id ? { ...t, checklist } : t)))
@@ -264,6 +294,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
         updatePersonalTask,
         deletePersonalTask,
         markPersonalTaskDone,
+        updatePersonalTaskStatus,
         updatePersonalTaskChecklist,
         createProject,
         completeProject,

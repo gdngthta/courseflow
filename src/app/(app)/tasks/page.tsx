@@ -1,11 +1,12 @@
 ﻿'use client'
 
 import { useState, useMemo } from 'react'
-import { Search, SlidersHorizontal } from 'lucide-react'
+import { Search, SlidersHorizontal, LayoutGrid, List } from 'lucide-react'
 import { Topbar } from '@/components/layout/Topbar'
 import { TaskCard } from '@/components/tasks/TaskCard'
 import { TaskDetailModal } from '@/components/tasks/TaskDetailModal'
 import { TaskFormModal, type TaskFormData } from '@/components/tasks/TaskFormModal'
+import { KanbanBoard } from '@/components/tasks/KanbanBoard'
 import { NoTasksEmpty } from '@/components/ui/EmptyState'
 import { useData } from '@/contexts/DataContext'
 import { toAllTaskCards } from '@/lib/taskDerive'
@@ -44,6 +45,7 @@ export default function TasksPage() {
   const [selectedTask, setSelectedTask] = useState<TaskCardData | null>(null)
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [editingTask, setEditingTask] = useState<TaskCardData | null>(null)
+  const [view, setView] = useState<'list' | 'board'>('list')
 
   // Combine personal tasks + assigned group tasks (both from Supabase).
   const allTasks = useMemo(
@@ -68,6 +70,18 @@ export default function TasksPage() {
 
     return result
   }, [allTasks, activeTab, selectedCourse, searchQuery])
+
+  // Task ids that should appear read-only on the Kanban board.
+  // Currently: project tasks under a project whose status is 'completed'.
+  // Personal tasks belong to one user and are always editable by them.
+  const readOnlyIds = useMemo(() => {
+    const ids = new Set<string>()
+    for (const p of projects) {
+      if (p.project.status !== 'completed') continue
+      for (const t of p.tasks) ids.add(t.id)
+    }
+    return ids
+  }, [projects])
 
   // Only non-archived courses for dropdowns
   const activeCourses = useMemo(() => courses.filter((c) => !c.is_archived), [courses])
@@ -165,8 +179,9 @@ export default function TasksPage() {
           ))}
         </div>
 
-        {/* Search + filter row */}
+        {/* Search + filter row + view toggle */}
         <div className="flex items-center gap-3 mb-6 flex-wrap">
+          <ViewToggle view={view} onChange={setView} />
           <div className="relative flex-1 min-w-48">
             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
             <input
@@ -199,9 +214,15 @@ export default function TasksPage() {
           </div>
         )}
 
-        {/* Task grid */}
+        {/* Task list / board */}
         {loading ? (
           <div className="flex items-center justify-center py-20 text-sm text-slate-500">Loading tasks…</div>
+        ) : view === 'board' ? (
+          filteredTasks.length > 0 ? (
+            <KanbanBoard tasks={filteredTasks} readOnlyIds={readOnlyIds} />
+          ) : (
+            <NoTasksEmpty onAdd={() => setShowCreateModal(true)} />
+          )
         ) : filteredTasks.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
             {filteredTasks.map((task) => (
@@ -238,5 +259,45 @@ export default function TasksPage() {
         editingTask={editingTask}
       />
     </>
+  )
+}
+
+// ── View toggle ──
+
+function ViewToggle({
+  view,
+  onChange,
+}: {
+  view: 'list' | 'board'
+  onChange: (v: 'list' | 'board') => void
+}) {
+  const baseBtn =
+    'flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-colors'
+  const activeCls =
+    'bg-indigo-600 text-white shadow-sm'
+  const inactiveCls =
+    'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
+  return (
+    <div
+      role="tablist"
+      className="inline-flex items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg"
+    >
+      <button
+        role="tab"
+        aria-selected={view === 'list'}
+        onClick={() => onChange('list')}
+        className={`${baseBtn} ${view === 'list' ? activeCls : inactiveCls}`}
+      >
+        <List size={12} /> List
+      </button>
+      <button
+        role="tab"
+        aria-selected={view === 'board'}
+        onClick={() => onChange('board')}
+        className={`${baseBtn} ${view === 'board' ? activeCls : inactiveCls}`}
+      >
+        <LayoutGrid size={12} /> Board
+      </button>
+    </div>
   )
 }
