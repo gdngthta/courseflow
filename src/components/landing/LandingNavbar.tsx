@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { OwlMascot } from '@/components/brand/OwlMascot'
+import { ThemeToggleButton } from '@/components/layout/ThemeToggleButton'
 
 const NAV_LINKS = [
   { href: '#features', label: 'Features' },
@@ -47,6 +48,7 @@ export function LandingNavbar() {
         </nav>
 
         <div className="flex items-center gap-2">
+          <ThemeToggleButton />
           <Link
             href="/login"
             className="hidden sm:inline-block px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-200 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
