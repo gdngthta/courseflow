@@ -2,7 +2,6 @@
 
 import { GlobalSearch } from '@/components/layout/GlobalSearch'
 import { NotificationsPanel } from '@/components/layout/NotificationsPanel'
-import { ThemeToggleButton } from '@/components/layout/ThemeToggleButton'
 
 interface TopbarProps {
   title: string
@@ -15,7 +14,6 @@ export function Topbar({ title }: TopbarProps) {
 
       <div className="flex items-center gap-3">
         <GlobalSearch />
-        <ThemeToggleButton />
         <NotificationsPanel />
       </div>
     </header>

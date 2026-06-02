@@ -8,20 +8,11 @@ export const metadata: Metadata = {
 }
 
 /**
- * Inline script that runs BEFORE React hydrates. Reads the user's
- * saved theme from localStorage and adds the `dark` class to <html>
- * if needed, so the first paint matches the chosen theme (no flash
- * of wrong-theme content).
- *
- * Kept tiny so it doesn't bloat the document head.
+ * CourseFlow is dark-only (Phase 5G). The inline script just stamps
+ * the `dark` class on <html> before React hydrates so there's no
+ * flash of an un-themed body.
  */
-const themeInitScript = `
-(function(){try{
-  var t = localStorage.getItem('courseflow:theme');
-  var dark = (t === 'dark') || (t !== 'light' && (!t || t === 'system') && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
-  if (dark || !t) document.documentElement.classList.add('dark');
-}catch(e){document.documentElement.classList.add('dark');}})();
-`.trim()
+const themeInitScript = `document.documentElement.classList.add('dark');`
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (

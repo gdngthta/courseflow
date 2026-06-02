@@ -112,7 +112,14 @@ export async function ensureProfile(): Promise<Profile> {
   return rowToProfile(inserted as ProfileRow)
 }
 
-/** Update the signed-in user's profile name / avatar / Telegram fields. */
+/**
+ * Update the signed-in user's profile name / avatar / Telegram fields.
+ *
+ * Defensive: strips `undefined` entries before sending so we never
+ * accidentally null-out a column the caller didn't intend to touch.
+ * Also trims `full_name` so leading/trailing whitespace doesn't poison
+ * the `auth.users.raw_user_meta_data` mirror that gets copied alongside.
+ */
 export async function updateMyProfile(input: {
   full_name?: string
   avatar_url?: string
@@ -125,9 +132,26 @@ export async function updateMyProfile(input: {
   } = await supabase.auth.getUser()
   if (!user) throw new Error('Not authenticated')
 
+  const payload: Record<string, unknown> = {}
+  if (input.full_name !== undefined) payload.full_name = input.full_name.trim()
+  if (input.avatar_url !== undefined) payload.avatar_url = input.avatar_url || null
+  if (input.telegram_chat_id !== undefined) {
+    const cleaned = typeof input.telegram_chat_id === 'string' ? input.telegram_chat_id.trim() : input.telegram_chat_id
+    payload.telegram_chat_id = cleaned || null
+  }
+  if (input.telegram_enabled !== undefined) payload.telegram_enabled = !!input.telegram_enabled
+
+  if (Object.keys(payload).length === 0) {
+    // Nothing to update — short-circuit with current row to avoid a no-op
+    // round-trip that some PostgREST versions reject with an empty body.
+    const current = await getMyProfile()
+    if (!current) throw new Error('Profile not found')
+    return current
+  }
+
   const { data, error } = await supabase
     .from('profiles')
-    .update(input)
+    .update(payload)
     .eq('id', user.id)
     .select('*')
     .single()

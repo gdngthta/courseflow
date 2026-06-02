@@ -4,32 +4,23 @@ import { useState } from 'react'
 import { LogOut } from 'lucide-react'
 import { Topbar } from '@/components/layout/Topbar'
 import { Input } from '@/components/ui/Input'
-import { SelectInput } from '@/components/ui/SelectInput'
 import { Button } from '@/components/ui/Button'
 import { useAuthUser } from '@/contexts/AuthContext'
-import { useTheme, type Theme } from '@/contexts/ThemeContext'
 import { updateMyProfile } from '@/lib/api/profiles'
 import { createClient } from '@/lib/supabase'
+import { validateNameInput } from '@/lib/validators'
 import { TelegramRemindersSection } from '@/components/settings/TelegramRemindersSection'
 
-type Section = 'profile' | 'reminders' | 'preferences' | 'account'
+type Section = 'profile' | 'reminders' | 'account'
 
 const SECTIONS: { id: Section; label: string }[] = [
   { id: 'profile', label: 'Profile' },
   { id: 'reminders', label: 'Reminders' },
-  { id: 'preferences', label: 'Preferences' },
   { id: 'account', label: 'Account' },
-]
-
-const THEME_OPTIONS = [
-  { value: 'system', label: 'System Default' },
-  { value: 'dark', label: 'Dark' },
-  { value: 'light', label: 'Light' },
 ]
 
 export default function SettingsPage() {
   const { user, loading: authLoading, signOut } = useAuthUser()
-  const { theme, setTheme } = useTheme()
 
   // Derive display name from Supabase user metadata
   const fullName: string = user?.user_metadata?.full_name ?? ''
@@ -50,15 +41,27 @@ export default function SettingsPage() {
 
   const handleSave = async () => {
     const fullName = `${firstName} ${lastName}`.trim()
-    if (!fullName) return
+    if (!fullName) {
+      setSaveError('Full name is required.')
+      return
+    }
+    const nameErr = validateNameInput(fullName)
+    if (nameErr) {
+      setSaveError(nameErr)
+      return
+    }
     setSaving(true)
     setSaveError('')
     try {
       // 1. Update profiles table (visible to project co-members)
       await updateMyProfile({ full_name: fullName })
-      // 2. Update auth user_metadata so greeting + sidebar reflect change immediately
+      // 2. Mirror to auth.user_metadata so greeting + sidebar reflect change immediately.
+      // Surface its error explicitly — previously this was awaited without checking,
+      // so any failure here silently corrupted the displayed name and could later
+      // surface as a confusing JSON error elsewhere in the session.
       const supabase = createClient()
-      await supabase.auth.updateUser({ data: { full_name: fullName } })
+      const { error: authErr } = await supabase.auth.updateUser({ data: { full_name: fullName } })
+      if (authErr) throw new Error(`Failed to save profile name: ${authErr.message}`)
       setSaved(true)
       setTimeout(() => setSaved(false), 2500)
     } catch (err) {
@@ -166,24 +169,6 @@ export default function SettingsPage() {
             )}
 
             {activeSection === 'reminders' && <TelegramRemindersSection />}
-
-            {activeSection === 'preferences' && (
-              <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-6">
-                <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-5">Preferences</h3>
-                <div className="max-w-xs">
-                  <SelectInput
-                    label="Theme"
-                    options={THEME_OPTIONS}
-                    value={theme}
-                    onChange={(e) => setTheme(e.target.value as Theme)}
-                  />
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
-                    Saved in this browser. You can also toggle dark/light from
-                    the sun/moon icon in the top bar.
-                  </p>
-                </div>
-              </div>
-            )}
 
             {activeSection === 'account' && (
               <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-6">

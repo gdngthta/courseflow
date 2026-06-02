@@ -17,9 +17,14 @@ export default function SignupPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!fullName.trim()) { setError('Full name is required.'); return }
-    if (!email.trim()) { setError('Email is required.'); return }
-    if (password.length < 6) { setError('Password must be at least 6 characters.'); return }
+    const { validateNameInput, validateEmailInput, validatePasswordInput } =
+      await import('@/lib/validators')
+    const nameErr = validateNameInput(fullName)
+    if (nameErr) { setError(nameErr); return }
+    const emailErr = validateEmailInput(email)
+    if (emailErr) { setError(emailErr); return }
+    const pwErr = validatePasswordInput(password)
+    if (pwErr) { setError(pwErr); return }
 
     setError('')
     setLoading(true)
@@ -28,10 +33,10 @@ export default function SignupPage() {
     const supabase = createClient()
 
     const { error } = await supabase.auth.signUp({
-      email,
+      email: email.trim(),
       password,
       options: {
-        data: { full_name: fullName },
+        data: { full_name: fullName.trim() },
       },
     })
 

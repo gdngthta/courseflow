@@ -17,10 +17,11 @@ function LoginForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!email.trim() || !password.trim()) {
-      setError('Email and password are required.')
-      return
-    }
+    const { validateEmailInput, validatePasswordInput } = await import('@/lib/validators')
+    const emailErr = validateEmailInput(email)
+    if (emailErr) { setError(emailErr); return }
+    const pwErr = validatePasswordInput(password)
+    if (pwErr) { setError(pwErr); return }
 
     setError('')
     setLoading(true)
@@ -29,7 +30,7 @@ function LoginForm() {
     const { createClient } = await import('@/lib/supabase')
     const supabase = createClient()
 
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
+    const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password })
 
     if (error) {
       setError(error.message)
