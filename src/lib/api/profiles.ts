@@ -32,12 +32,27 @@ function rowToProfile(row: ProfileRow): Profile {
   }
 }
 
-/** Fetch the signed-in user's profile (RLS restricts to own row). */
+/**
+ * Fetch the signed-in user's profile.
+ *
+ * IMPORTANT: must explicitly filter by `id = user.id`. RLS lets the user
+ * see profiles of every project co-member (via the `shares_project_with`
+ * helper in phase3c.sql), so an unfiltered query returns multiple rows
+ * and `.maybeSingle()` errors with "JSON object requested, multiple
+ * (or no) rows returned." This was the source of the Settings → Reminders
+ * "Failed to load profile" error.
+ */
 export async function getMyProfile(): Promise<Profile | null> {
   const supabase = createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) return null
+
   const { data, error } = await supabase
     .from('profiles')
     .select('*')
+    .eq('id', user.id)
     .maybeSingle()
 
   if (error) throw new Error(`Failed to load profile: ${error.message}`)
