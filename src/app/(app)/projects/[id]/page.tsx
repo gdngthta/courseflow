@@ -24,9 +24,10 @@ export default function ProjectDetailPage() {
   const {
     userId, projects, projectsLoading, error,
     addProjectTask, updateProjectTaskNotes, deleteProjectTask,
-    markProjectTaskDone, completeProject, updateProjectTaskChecklist,
+    markProjectTaskDone, completeProject, reopenProject, updateProjectTaskChecklist,
     inviteMember,
   } = useData()
+  const [reopening, setReopening] = useState(false)
 
   const [selectedTask, setSelectedTask] = useState<TaskCardData | null>(null)
   const [showAddTask, setShowAddTask] = useState(false)
@@ -151,10 +152,30 @@ export default function ProjectDetailPage() {
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Completed on {formatFullDate(completedAt)}</p>
               )}
             </div>
-            <div className="flex items-center gap-1.5 text-xs text-slate-500">
-              <Lock size={11} />
-              Read-only
-            </div>
+            {userRole === 'leader' ? (
+              <button
+                onClick={async () => {
+                  setReopening(true)
+                  setMutationError('')
+                  try {
+                    await reopenProject(project.id)
+                  } catch (err) {
+                    setMutationError(err instanceof Error ? err.message : 'Failed to reopen project.')
+                  } finally {
+                    setReopening(false)
+                  }
+                }}
+                disabled={reopening}
+                className="px-3 py-1.5 text-xs font-medium rounded-md bg-emerald-700 hover:bg-emerald-600 text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                {reopening ? 'Reopening…' : 'Reopen project'}
+              </button>
+            ) : (
+              <div className="flex items-center gap-1.5 text-xs text-slate-500">
+                <Lock size={11} />
+                Read-only
+              </div>
+            )}
           </div>
         )}
 
@@ -230,7 +251,16 @@ export default function ProjectDetailPage() {
             {tasks.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {tasks.map((task) => (
-                  <TaskCard key={task.id} task={task} onClick={setSelectedTask} />
+                  <TaskCard
+                    key={task.id}
+                    task={task}
+                    onClick={setSelectedTask}
+                    assigneeName={
+                      task.assigned_to
+                        ? members.find((m) => m.user_id === task.assigned_to)?.name
+                        : undefined
+                    }
+                  />
                 ))}
               </div>
             ) : (

@@ -34,6 +34,23 @@
 - Per-user preferences, test send, audit log, duplicate prevention
 - Telegram command bot (`/critical`, `/today`, `/upcoming`, `/closest`, `/projects`, `/help`) with plain-English aliases
 
+### Per-Member Project Personalisation
+The current model treats a project's `course_id` as the leader's
+choice; co-members from a different course see the project under
+"Project course from leader" naming. A future `project_member_preferences`
+table (user_id, project_id, display_name, course_id) would let each
+member map a shared project to one of their own courses or rename
+the display label. RLS scoped to `user_id = auth.uid()`.
+
+### Light Theme (deferred — currently dark-only)
+Phase 5G removed light theme support after we couldn't reach an
+acceptable contrast/polish bar across all pages. A future re-attempt
+would need:
+- A design pass on the indigo accent against white backgrounds
+- A pass on every translucent overlay (calendar pills, badges, etc.)
+- Auditing every `dark:` modifier for a matching light variant
+- Re-introducing the ThemeContext toggle + Settings dropdown
+
 ### Kanban Board — Polish
 Shipped in Phase 5C as a list/board toggle on My Tasks with HTML5 drag-drop + status-select fallback. Possible follow-ups:
 - Library-backed DnD (`@dnd-kit/core` or `dnd-kit`) for touch / keyboard support and animated card placement

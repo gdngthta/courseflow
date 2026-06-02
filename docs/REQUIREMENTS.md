@@ -55,6 +55,29 @@
 - FR-REM-8: Failed sends are logged with `status='failed'` and an error message; not retried within the same day
 - FR-REM-9: Telegram bot token and CRON secret are server-side only (no `NEXT_PUBLIC_` prefix)
 
+### Phase 5G — Product Logic + UX Correction
+- FR-5G-1: Today's Priority on Dashboard includes overdue tasks, Critical-risk tasks (any due date), due-today, due-tomorrow, ≤3 days with progress<50%, and difficulty 4–5 ≤7 days. Heading has a tooltip explaining the rules.
+- FR-5G-2: When a task has a checklist, its `progress` is automatically derived (completed items ÷ total items × 100) and persisted to Supabase whenever a checklist item is toggled. Manual progress slider only applies to tasks without a checklist.
+- FR-5G-3: Difficulty helper text shown under the Difficulty select on TaskFormModal and AddProjectTaskModal: "Difficulty increases risk when progress is low and the deadline is close."
+- FR-5G-4: Dashboard task click opens the same Task Detail drawer used on My Tasks (no extra navigation).
+- FR-5G-5: Kanban card click anywhere opens the Task Detail drawer; the GripVertical icon signals draggability; HTML5 native drag still works.
+- FR-5G-6: Task status can be reverted from Done back to Review / In Progress / Not Started via the Task Detail status dropdown OR the Kanban "Move to" select.
+- FR-5G-7: Project leader can reopen a completed project. `status` flips back to `active` and `completed_at` is cleared. Only the leader sees the button.
+- FR-5G-8: Project roles are displayed as Leader / Editor / Viewer in the UI. The database still stores `leader / admin / member` because RLS helpers depend on those exact strings.
+- FR-5G-9: New project tasks require an `assigned_to` value before submission.
+- FR-5G-10: Project task cards in Project Detail show "Assigned to: {name}".
+- FR-5G-11: Course cards show task totals: incomplete / total / completed, plus an "X due this week" amber callout. Counts personal tasks + project tasks assigned to the viewer.
+- FR-5G-12: Project cards show 3-stat strip (Total / Done / To do) plus an "N assigned to you" line.
+- FR-5G-13: Archived course does not delete its tasks and does not auto-complete them. Tasks remain accessible.
+- FR-5G-14: Completed project does not auto-change task statuses. Tasks become read-only on the Kanban (lock icon).
+- FR-5G-15: A user can be invited to a project whose course they don't have; the shared project remains accessible. Per-member course personalisation is future work.
+- FR-5G-16: Calendar has month and year quick-jump selects in the controls row (in addition to prev/next/Today).
+- FR-5G-17: Password validation rejects whitespace anywhere ("Password cannot contain spaces."). Consistent across Signup, Login, and (eventually) password-change flows.
+- FR-5G-18: Full-name validation allows letters / spaces / apostrophes / hyphens only; must start with a letter. Applied at Signup and Settings.
+- FR-5G-19: `updateMyProfile` strips undefined fields and trims string inputs; `handleSave` in Settings explicitly checks the `auth.updateUser` return for errors (previously swallowed).
+- FR-5G-20: In-app notifications are derived live from current Supabase data on every render: overdue, critical, due_today, due_tomorrow, project_deadline ≤7 days. Notification id encodes type+entity+date so dismissal is per-occurrence; localStorage carries dismiss state per browser.
+- FR-5G-21: App is dark-only. ThemeProvider is a stub that always sets `dark` on `<html>`; the topbar/landing toggle and Settings theme dropdown are removed.
+
 ### Kanban Board View ✅ (Phase 5C)
 - FR-KANBAN-1: My Tasks page has a List / Board view toggle in the filter row; defaults to List
 - FR-KANBAN-2: Board View shows the same combined task data (personal + assigned project tasks) — project tasks are NOT duplicated into `personal_tasks`

@@ -41,7 +41,7 @@ const EMPTY_FORM: AddProjectTaskData = {
 
 export function AddProjectTaskModal({ open, onClose, onSubmit, members }: AddProjectTaskModalProps) {
   const [form, setForm] = useState<AddProjectTaskData>(EMPTY_FORM)
-  const [errors, setErrors] = useState<Partial<Record<'title' | 'due_date' | 'links', string>>>({})
+  const [errors, setErrors] = useState<Partial<Record<'title' | 'due_date' | 'links' | 'assigned_to', string>>>({})
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState('')
 
@@ -66,6 +66,9 @@ export function AddProjectTaskModal({ open, onClose, onSubmit, members }: AddPro
     const e: typeof errors = {}
     if (!form.title.trim()) e.title = 'Task title is required'
     if (!form.due_date) e.due_date = 'Due date is required'
+    // Phase 5G #9: every project task must have an assignee — keeps
+    // accountability clear and prevents 'orphan' tasks no one owns.
+    if (!form.assigned_to) e.assigned_to = 'Please assign this task to a member.'
     const badLink = form.links.find(
       (l) => l.url.trim() && !l.url.trim().match(/^https?:\/\/.+/)
     )
@@ -104,7 +107,11 @@ export function AddProjectTaskModal({ open, onClose, onSubmit, members }: AddPro
           placeholder="Select a member..."
           options={memberOptions}
           value={form.assigned_to}
-          onChange={(e) => setForm({ ...form, assigned_to: e.target.value })}
+          onChange={(e) => {
+            setForm({ ...form, assigned_to: e.target.value })
+            setErrors((prev) => ({ ...prev, assigned_to: undefined }))
+          }}
+          error={errors.assigned_to}
         />
         <div className="grid grid-cols-2 gap-3">
           <Input

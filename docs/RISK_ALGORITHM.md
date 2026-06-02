@@ -38,6 +38,31 @@ OTHERWISE
   → safe
 ```
 
+### How difficulty affects risk
+
+Difficulty (1–5) does not by itself promote a task to critical, but it
+makes earlier rules more aggressive in two ways:
+
+1. **Difficulty 5 with low progress** is automatically `warning` even
+   if the deadline is comfortably far out — high-difficulty tasks
+   need lead time to ramp up.
+2. **Difficulty 4–5** is included in the Dashboard's "Today's
+   Priority" rollup when the task is due within 7 days, regardless
+   of risk class, so it surfaces sooner than a low-difficulty task
+   with the same deadline.
+
+UI helper text on TaskFormModal / AddProjectTaskModal mirrors this:
+*"Difficulty increases risk when progress is low and the deadline is close."*
+
+### How progress is computed
+
+- **Task progress**: if the task has a checklist, progress is
+  derived = completed items ÷ total items × 100, and persisted to
+  Supabase whenever a checklist item is toggled. Manual progress
+  slider only applies when there is no checklist.
+- **Project progress**: completed project tasks ÷ total project
+  tasks × 100. Recomputed on every render; never stored.
+
 ## Implementation
 
 Located at `src/lib/risk.ts`.

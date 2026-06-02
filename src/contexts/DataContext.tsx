@@ -54,6 +54,7 @@ interface DataContextValue {
   // Project mutations
   createProject: (input: projectsApi.CreateProjectInput) => Promise<string>
   completeProject: (id: string) => Promise<void>
+  reopenProject: (id: string) => Promise<void>
   addProjectTask: (input: projectTasksApi.ProjectTaskInput) => Promise<void>
   updateProjectTask: (id: string, update: projectTasksApi.ProjectTaskUpdate) => Promise<void>
   deleteProjectTask: (id: string) => Promise<void>
@@ -198,9 +199,26 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
 
   const updatePersonalTaskChecklist = useCallback(
     async (id: string, checklist: TaskChecklistItem[]) => {
-      setPersonalTasks((prev) => prev.map((t) => (t.id === id ? { ...t, checklist } : t)))
+      // Phase 5G #2: when a checklist exists, progress is derived from it
+      // (completed items / total × 100). The manual progress slider only
+      // applies when there's no checklist. We persist both fields so
+      // downstream risk calculations stay consistent with what the user sees.
+      const derivedProgress = checklist.length > 0
+        ? Math.round((checklist.filter((i) => i.done).length / checklist.length) * 100)
+        : undefined
+
+      setPersonalTasks((prev) =>
+        prev.map((t) =>
+          t.id === id
+            ? { ...t, checklist, ...(derivedProgress !== undefined ? { progress: derivedProgress } : {}) }
+            : t
+        )
+      )
       try {
         await tasksApi.updatePersonalTaskChecklist(id, checklist)
+        if (derivedProgress !== undefined) {
+          await tasksApi.updatePersonalTask(id, { progress: derivedProgress })
+        }
       } catch (e) {
         console.error('[DataProvider] checklist update failed, refetching', e)
         refetch()
@@ -219,6 +237,11 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   const completeProject = useCallback(async (id: string) => {
     const today = new Date().toISOString().split('T')[0]
     await projectsApi.completeProject(id, today)
+    await refetchProjects()
+  }, [refetchProjects])
+
+  const reopenProject = useCallback(async (id: string) => {
+    await projectsApi.reopenProject(id)
     await refetchProjects()
   }, [refetchProjects])
 
@@ -250,14 +273,28 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   // Optimistic patch of a single task's checklist within the nested structure
   const updateProjectTaskChecklist = useCallback(
     async (id: string, checklist: TaskChecklistItem[]) => {
+      // Phase 5G #2: derive progress from checklist when one exists,
+      // so the project progress bar and task risk match what the user
+      // toggled. Mirrors the personal-task path.
+      const derivedProgress = checklist.length > 0
+        ? Math.round((checklist.filter((i) => i.done).length / checklist.length) * 100)
+        : undefined
+
       setProjects((prev) =>
         prev.map((pd) => ({
           ...pd,
-          tasks: pd.tasks.map((t) => (t.id === id ? { ...t, checklist } : t)),
+          tasks: pd.tasks.map((t) =>
+            t.id === id
+              ? { ...t, checklist, ...(derivedProgress !== undefined ? { progress: derivedProgress } : {}) }
+              : t
+          ),
         }))
       )
       try {
         await projectTasksApi.updateProjectTaskChecklist(id, checklist)
+        if (derivedProgress !== undefined) {
+          await projectTasksApi.updateProjectTask(id, { progress: derivedProgress })
+        }
       } catch (e) {
         console.error('[DataProvider] project checklist update failed, refetching', e)
         refetchProjects()
@@ -298,6 +335,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
         updatePersonalTaskChecklist,
         createProject,
         completeProject,
+        reopenProject,
         addProjectTask,
         updateProjectTask,
         deleteProjectTask,

@@ -143,6 +143,29 @@
 - [ ] Error from RPC (user not found, already a member) shows inline error
 - [ ] Modal resets to form when reopened
 
+### Phase 5G — Product Logic + UX Correction
+- [ ] Dashboard → Today's Priority shows an overdue task, a critical task with a far-future due date, a due-today task, a due-tomorrow task, a task ≤3 days out with <50% progress, and a difficulty-5 task ≤7 days out
+- [ ] Dashboard Today's Priority heading ⓘ tooltip explains the rule set
+- [ ] Toggling a checklist item updates the task progress visually AND persists (refresh, progress unchanged from derived value)
+- [ ] Creating a task with no checklist still lets you set progress manually
+- [ ] Marking a task Done via Task Detail → revert it back to Review / In Progress / Not Started via the same dropdown
+- [ ] Same revert works via the Kanban "Move to" select
+- [ ] Project leader sees a "Reopen project" button on the green completed banner; clicking it moves the project back to Active, clears completed_at
+- [ ] Non-leaders do NOT see the reopen button
+- [ ] Project Detail shows roles as Leader / Editor / Viewer (not Leader/Admin/Member)
+- [ ] Invite Member modal role dropdown reads Viewer / Editor
+- [ ] Add Project Task modal blocks submit when no assignee selected with error "Please assign this task to a member."
+- [ ] Project Detail task cards show "Assigned to {name}" line
+- [ ] Course card shows X to do / X/Y stats and (when applicable) "N due this week" amber callout
+- [ ] Project card shows Total / Done / To do stats and "N assigned to you" line
+- [ ] Calendar has Month + Year selects above the grid; selecting jumps the view
+- [ ] Signup with a password containing a space → "Password cannot contain spaces."
+- [ ] Login with a password containing a space → same error (consistent)
+- [ ] Signup with name "123 Smith" or "Smith42" → "Name can only contain letters, spaces, apostrophes, and hyphens."
+- [ ] Settings → Profile name save with invalid name → same error inline; valid name saves with no JSON / parsing error
+- [ ] Topbar Sun/Moon toggle is gone; Settings tabs are only Profile / Reminders / Account
+- [ ] Hard refresh on any page → no flash of light theme
+
 ### Kanban Board (Phase 5C)
 - [ ] My Tasks shows a List / Board toggle in the filter row
 - [ ] Default view is List; selecting Board shows 4 columns

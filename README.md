@@ -41,6 +41,9 @@ CourseFlow combines both into one place. When a group project task is assigned t
 | Dark + light theme toggle (persists per browser) | ✅ |
 | Public landing page at `/` (hero, features, workflow, CTA) | ✅ |
 | My Tasks Kanban board view (drag-drop + status select fallback) | ✅ |
+| Dark-only UI (Phase 5G — light mode removed) | ✅ |
+| Reopen completed project (leader only) | ✅ |
+| Auto-derived task progress from checklist when present | ✅ |
 
 ---
 
@@ -323,6 +326,13 @@ What the MVP intentionally does NOT do (full list in
 - **Custom per-task reminder send times** — the Settings dropdown is
   display-only. The cron runs once daily at the configured
   `vercel.json` schedule.
+- **Light theme** — CourseFlow is intentionally dark-only as of
+  Phase 5G. Light mode never reached an acceptable polish bar.
+- **Personal project naming per member** — when User A creates a
+  project under a course that User B doesn't have, User B sees the
+  project under "Project course from leader" rather than mapped to
+  one of their own courses. Per-member project preferences
+  (`project_member_preferences`) is on the roadmap.
 - **Cross-device notification dismissal** — dismiss state is per
   browser (`localStorage`). Persistent cross-device read state is
   future work.

@@ -153,3 +153,18 @@ export async function completeProject(id: string, completedAt: string): Promise<
     .eq('id', id)
   if (error) throw new Error(`Failed to complete project: ${error.message}`)
 }
+
+/**
+ * Re-open a previously completed project. RLS only allows the
+ * project leader to update the row (see projects_update policy
+ * in phase3c.sql backed by is_project_leader). completed_at is
+ * cleared so the History UI no longer shows it as completed.
+ */
+export async function reopenProject(id: string): Promise<void> {
+  const supabase = createClient()
+  const { error } = await supabase
+    .from('projects')
+    .update({ status: 'active', completed_at: null })
+    .eq('id', id)
+  if (error) throw new Error(`Failed to reopen project: ${error.message}`)
+}

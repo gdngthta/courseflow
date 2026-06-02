@@ -218,9 +218,27 @@ export default function CalendarPage() {
                 >
                   <ChevronLeft size={16} />
                 </button>
-                <span className="text-base font-semibold text-slate-900 dark:text-white w-44 text-center select-none">
-                  {MONTH_NAMES[month]} {year}
-                </span>
+                {/* Month + year quick jump (Phase 5G #16) */}
+                <select
+                  value={month}
+                  onChange={(e) => setMonth(Number(e.target.value))}
+                  aria-label="Jump to month"
+                  className="text-sm font-semibold bg-transparent text-slate-900 dark:text-white border border-slate-300 dark:border-slate-700 rounded-md px-2 py-1 focus:outline-none focus:border-indigo-500"
+                >
+                  {MONTH_NAMES.map((name, i) => (
+                    <option key={name} value={i} className="bg-white dark:bg-slate-900">{name}</option>
+                  ))}
+                </select>
+                <select
+                  value={year}
+                  onChange={(e) => setYear(Number(e.target.value))}
+                  aria-label="Jump to year"
+                  className="text-sm font-semibold bg-transparent text-slate-900 dark:text-white border border-slate-300 dark:border-slate-700 rounded-md px-2 py-1 focus:outline-none focus:border-indigo-500"
+                >
+                  {Array.from({ length: 11 }, (_, i) => now.getFullYear() - 5 + i).map((y) => (
+                    <option key={y} value={y} className="bg-white dark:bg-slate-900">{y}</option>
+                  ))}
+                </select>
                 <button
                   onClick={goToNext}
                   className="p-1.5 rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
