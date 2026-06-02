@@ -1,32 +1,41 @@
 ﻿'use client'
 
-import { useState, useMemo } from 'react'
+import { useMemo } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { Calendar, ArrowRight } from 'lucide-react'
 import { Topbar } from '@/components/layout/Topbar'
 import { TaskCard } from '@/components/tasks/TaskCard'
-import { TaskDetailModal } from '@/components/tasks/TaskDetailModal'
 import { RiskBadge } from '@/components/ui/Badge'
 import { NoCriticalEmpty } from '@/components/ui/EmptyState'
 import { OwlMascot } from '@/components/brand/OwlMascot'
 import { useData } from '@/contexts/DataContext'
 import { useAuthUser } from '@/contexts/AuthContext'
-import { toAllTaskCards, buildMemberNameMap } from '@/lib/taskDerive'
+import { toAllTaskCards } from '@/lib/taskDerive'
 import { toProjectCards } from '@/lib/projectDerive'
 import { formatDueDate } from '@/lib/utils'
-import type { TaskCardData, TaskChecklistItem } from '@/types'
+import type { TaskCardData } from '@/types'
 
 export default function DashboardPage() {
-  const { userId, courses, personalTasks, projects, loading, updatePersonalTaskChecklist, updateProjectTaskChecklist } = useData()
+  const router = useRouter()
+  const { userId, courses, personalTasks, projects, loading } = useData()
   const { user } = useAuthUser()
-  const [selectedTask, setSelectedTask] = useState<TaskCardData | null>(null)
+
+  /**
+   * Dashboard task cards used to open a TaskDetailModal in-place here,
+   * but that meant the user couldn't drill into a task's edit / mark-done
+   * actions without an extra step. We now navigate to /tasks?task=<id>,
+   * and the Tasks page auto-opens the drawer for that id on mount.
+   */
+  const openTaskInMyTasks = (task: TaskCardData) => {
+    router.push(`/tasks?task=${encodeURIComponent(task.id)}`)
+  }
 
   const allTasks = useMemo(
     () => toAllTaskCards(personalTasks, courses, projects, userId),
     [personalTasks, courses, projects, userId]
   )
   const allProjects = useMemo(() => toProjectCards(projects, userId), [projects, userId])
-  const memberNames = useMemo(() => buildMemberNameMap(projects), [projects])
   const activeCourses = useMemo(() => courses.filter((c) => !c.is_archived), [courses])
   const activeProjects = useMemo(() => allProjects.filter((p) => p.status === 'active'), [allProjects])
 
@@ -92,21 +101,12 @@ export default function DashboardPage() {
     { label: 'Active Courses', value: activeCourses.length, sub: 'This semester' },
   ]
 
-  const getAssigneeName = (task: TaskCardData) =>
-    task.assigned_to ? (memberNames[task.assigned_to] ?? undefined) : undefined
-
   // Group upcoming by date
   const upcomingByDate: Record<string, TaskCardData[]> = {}
   upcomingTasks.forEach((t) => {
     if (!upcomingByDate[t.due_date]) upcomingByDate[t.due_date] = []
     upcomingByDate[t.due_date].push(t)
   })
-
-  const handleChecklistUpdate = (taskId: string, checklist: TaskChecklistItem[]) => {
-    const isPersonal = personalTasks.some((t) => t.id === taskId)
-    if (isPersonal) updatePersonalTaskChecklist(taskId, checklist)
-    else updateProjectTaskChecklist(taskId, checklist)
-  }
 
   if (loading) {
     return (
@@ -175,7 +175,7 @@ export default function DashboardPage() {
               {todayTasks.length > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {todayTasks.map((task) => (
-                    <TaskCard key={task.id} task={task} onClick={setSelectedTask} />
+                    <TaskCard key={task.id} task={task} onClick={openTaskInMyTasks} />
                   ))}
                 </div>
               ) : (
@@ -195,7 +195,7 @@ export default function DashboardPage() {
               {criticalTasks.length > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {criticalTasks.map((task) => (
-                    <TaskCard key={task.id} task={task} onClick={setSelectedTask} />
+                    <TaskCard key={task.id} task={task} onClick={openTaskInMyTasks} />
                   ))}
                 </div>
               ) : (
@@ -227,7 +227,7 @@ export default function DashboardPage() {
                       </div>
                       <div className="space-y-1.5 pl-4 border-l border-slate-200 dark:border-slate-800">
                         {tasks.map((t) => (
-                          <button key={t.id} onClick={() => setSelectedTask(t)} className="w-full text-left">
+                          <button key={t.id} onClick={() => openTaskInMyTasks(t)} className="w-full text-left">
                             <p className="text-xs text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors truncate">{t.title}</p>
                             <p className="text-xs text-slate-500 truncate">{t.source_label}</p>
                           </button>
@@ -290,13 +290,6 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      <TaskDetailModal
-        task={selectedTask}
-        open={!!selectedTask}
-        onClose={() => setSelectedTask(null)}
-        onChecklistUpdate={handleChecklistUpdate}
-        assigneeName={selectedTask ? getAssigneeName(selectedTask) : undefined}
-      />
     </>
   )
 }

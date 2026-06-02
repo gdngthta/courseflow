@@ -1,6 +1,6 @@
 ﻿'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { Search, SlidersHorizontal, LayoutGrid, List } from 'lucide-react'
 import { Topbar } from '@/components/layout/Topbar'
 import { TaskCard } from '@/components/tasks/TaskCard'
@@ -52,6 +52,30 @@ export default function TasksPage() {
     () => toAllTaskCards(personalTasks, courses, projects, userId),
     [personalTasks, courses, projects, userId]
   )
+
+  /**
+   * Deep-link support: if the URL contains `?task=<id>` (e.g. coming
+   * from a Dashboard click), find that task once data has loaded and
+   * open the detail drawer. Strip the query param afterwards so a
+   * page refresh doesn't keep reopening the drawer.
+   *
+   * We read from `window.location.search` directly instead of
+   * useSearchParams() to avoid the Next.js prerender-vs-Suspense
+   * requirement on client components.
+   */
+  useEffect(() => {
+    if (loading || typeof window === 'undefined') return
+    const params = new URLSearchParams(window.location.search)
+    const requestedTaskId = params.get('task')
+    if (!requestedTaskId) return
+    const match = allTasks.find((t) => t.id === requestedTaskId)
+    if (match) {
+      setSelectedTask(match)
+      // Strip the query param so a refresh doesn't keep reopening.
+      window.history.replaceState({}, '', window.location.pathname)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading, allTasks])
 
   const filteredTasks = useMemo(() => {
     let result = allTasks
