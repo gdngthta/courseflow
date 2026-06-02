@@ -36,7 +36,49 @@ export default function DashboardPage() {
   const timeGreeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening'
 
   const today = new Date().toISOString().split('T')[0]
-  const todayTasks = allTasks.filter((t) => t.status !== 'done' && t.due_date <= today)
+  // ── Today Priority ────────────────────────────────────────────
+  // Spec (Phase 5G #1): include every task that demands focus today,
+  // not just ones due today/overdue:
+  //   • overdue incomplete tasks
+  //   • Critical-risk tasks (any due date)
+  //   • due today
+  //   • due tomorrow
+  //   • due within 3 days AND progress < 50%
+  //   • difficulty 4–5 AND due within 7 days
+  // Deduplicate by task id since several rules can match.
+  const inDays = (n: number) => {
+    const d = new Date()
+    d.setDate(d.getDate() + n)
+    return d.toISOString().split('T')[0]
+  }
+  const tomorrowISO = inDays(1)
+  const in3ISO = inDays(3)
+  const in7ISO = inDays(7)
+
+  const todayPriorityMap = new Map<string, TaskCardData>()
+  for (const t of allTasks) {
+    if (t.status === 'done') continue
+    const isOverdue = t.due_date < today
+    const isCritical = t.risk === 'critical'
+    const isDueToday = t.due_date === today
+    const isDueTomorrow = t.due_date === tomorrowISO
+    const isClose3LowProgress = t.due_date <= in3ISO && t.progress < 50
+    const isHardSoon = t.difficulty >= 4 && t.due_date <= in7ISO
+    if (isOverdue || isCritical || isDueToday || isDueTomorrow || isClose3LowProgress || isHardSoon) {
+      todayPriorityMap.set(t.id, t)
+    }
+  }
+  const todayTasks = Array.from(todayPriorityMap.values()).sort((a, b) => {
+    // Most urgent first: overdue → critical → nearest due_date
+    const aOverdue = a.due_date < today ? 0 : 1
+    const bOverdue = b.due_date < today ? 0 : 1
+    if (aOverdue !== bOverdue) return aOverdue - bOverdue
+    const aCrit = a.risk === 'critical' ? 0 : 1
+    const bCrit = b.risk === 'critical' ? 0 : 1
+    if (aCrit !== bCrit) return aCrit - bCrit
+    return a.due_date.localeCompare(b.due_date)
+  })
+
   const criticalTasks = allTasks.filter((t) => t.risk === 'critical')
   const upcomingTasks = allTasks
     .filter((t) => t.status !== 'done' && t.due_date > today)
@@ -116,7 +158,16 @@ export default function DashboardPage() {
           <div className="lg:col-span-2 flex flex-col gap-6">
             <section>
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-sm font-semibold text-slate-900 dark:text-white">Today&apos;s Priority</h3>
+                <h3 className="text-sm font-semibold text-slate-900 dark:text-white inline-flex items-center gap-1.5">
+                  Today&apos;s Priority
+                  <span
+                    title="Today's Priority is based on overdue tasks, critical risk, deadline proximity, progress, and difficulty."
+                    className="text-slate-400 cursor-help text-xs"
+                    aria-label="How Today's Priority is computed"
+                  >
+                    ⓘ
+                  </span>
+                </h3>
                 <Link href="/tasks" className="text-xs text-indigo-400 hover:text-indigo-300 flex items-center gap-1 transition-colors">
                   View all <ArrowRight size={12} />
                 </Link>

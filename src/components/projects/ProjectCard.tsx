@@ -54,10 +54,26 @@ export function ProjectCard({ project, onClick }: ProjectCardProps) {
         </span>
       </div>
 
+      {/* Task totals */}
+      <div className="grid grid-cols-3 gap-2 text-xs">
+        <Stat label="Total" value={project.total_tasks} />
+        <Stat label="Done" value={project.completed_tasks} accent="emerald" />
+        <Stat label="To do" value={project.incomplete_tasks} accent={project.incomplete_tasks > 0 ? 'indigo' : undefined} />
+      </div>
+      {project.assigned_to_me > 0 && !isCompleted && (
+        <p className="text-xs text-slate-500 dark:text-slate-400 -mt-2">
+          <span className="text-indigo-600 dark:text-indigo-400 font-medium">{project.assigned_to_me}</span>
+          {' '}assigned to you
+        </p>
+      )}
+
       {/* Progress */}
       <div>
         <div className="flex justify-between items-center mb-1.5">
-          <span className="text-xs text-slate-500 dark:text-slate-400">Project Progress</span>
+          <span className="text-xs text-slate-500 dark:text-slate-400">
+            Project Progress{' '}
+            <span className="text-slate-400" title="Project progress = completed project tasks ÷ total project tasks × 100.">ⓘ</span>
+          </span>
           <span className="text-xs font-semibold text-slate-900 dark:text-white">{project.progress}%</span>
         </div>
         <ProgressBar value={project.progress} />
@@ -75,6 +91,29 @@ export function ProjectCard({ project, onClick }: ProjectCardProps) {
         {isCompleted ? 'View History' : 'Open Project'}
         <ArrowRight size={14} />
       </button>
+    </div>
+  )
+}
+
+function Stat({
+  label,
+  value,
+  accent,
+}: {
+  label: string
+  value: number
+  accent?: 'emerald' | 'indigo'
+}) {
+  const accentCls =
+    accent === 'emerald'
+      ? 'text-emerald-600 dark:text-emerald-400'
+      : accent === 'indigo'
+        ? 'text-indigo-600 dark:text-indigo-400'
+        : 'text-slate-900 dark:text-white'
+  return (
+    <div className="bg-slate-100 dark:bg-slate-800 rounded-lg px-2.5 py-2 flex flex-col items-start">
+      <span className="text-[10px] uppercase tracking-wide text-slate-500 dark:text-slate-400">{label}</span>
+      <span className={`text-sm font-semibold ${accentCls}`}>{value}</span>
     </div>
   )
 }

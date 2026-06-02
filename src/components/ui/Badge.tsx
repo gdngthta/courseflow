@@ -76,10 +76,14 @@ const roleStyles: Record<ProjectRole, string> = {
   member: 'bg-slate-500/15 text-slate-500 dark:text-slate-400 border border-slate-500/30',
 }
 
+// Phase 5G: display labels reflect intent (who can do what) instead of
+// raw DB values. The DB still stores leader/admin/member because the
+// SECURITY DEFINER RLS helpers (is_project_manager etc.) depend on
+// those exact strings.
 const roleLabels: Record<ProjectRole, string> = {
   leader: 'Leader',
-  admin: 'Admin',
-  member: 'Member',
+  admin: 'Editor',
+  member: 'Viewer',
 }
 
 export function RoleBadge({ role }: { role: ProjectRole }) {

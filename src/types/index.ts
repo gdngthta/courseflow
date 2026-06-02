@@ -153,4 +153,12 @@ export interface ProjectCardData {
   risk: RiskStatus
   status: ProjectStatus
   completed_at?: string
+  /** Total project tasks (all members). */
+  total_tasks: number
+  /** Tasks where status='done'. */
+  completed_tasks: number
+  /** Tasks where status!='done'. Equals total_tasks - completed_tasks. */
+  incomplete_tasks: number
+  /** Incomplete project tasks assigned to the current viewer. */
+  assigned_to_me: number
 }

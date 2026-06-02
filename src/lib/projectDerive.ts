@@ -23,6 +23,10 @@ export function toProjectCards(
   return data.map(({ project, course, members, tasks }) => {
     const userMember = members.find((m) => m.user_id === userId)
     const progress = calcProjectProgress(tasks)
+    const completed = tasks.filter((t) => t.status === 'done').length
+    const assignedToMe = tasks.filter(
+      (t) => t.assigned_to === userId && t.status !== 'done'
+    ).length
     return {
       id: project.id,
       name: project.name,
@@ -35,6 +39,10 @@ export function toProjectCards(
       risk: calculateProjectRisk(tasks),
       status: project.status,
       completed_at: project.completed_at,
+      total_tasks: tasks.length,
+      completed_tasks: completed,
+      incomplete_tasks: tasks.length - completed,
+      assigned_to_me: assignedToMe,
     }
   })
 }

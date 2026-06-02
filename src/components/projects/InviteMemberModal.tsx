@@ -20,8 +20,11 @@ interface InviteMemberModalProps {
 }
 
 const ROLE_OPTIONS = [
-  { value: 'member', label: 'Member' },
-  { value: 'admin', label: 'Admin' },
+  // DB still stores 'member' / 'admin'; labels match the new naming
+  // convention (Viewer = read + own-task update only, Editor = full
+  // task/member/resource management).
+  { value: 'member', label: 'Viewer' },
+  { value: 'admin', label: 'Editor' },
 ]
 
 export function InviteMemberModal({ open, onClose, onSubmit }: InviteMemberModalProps) {

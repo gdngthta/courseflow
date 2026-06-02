@@ -46,6 +46,15 @@ export function KanbanCard({
   return (
     <div
       draggable={!readOnly}
+      role="button"
+      tabIndex={0}
+      onClick={onOpen}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          onOpen()
+        }
+      }}
       onDragStart={(e) => {
         if (readOnly) {
           e.preventDefault()
@@ -56,27 +65,24 @@ export function KanbanCard({
         onDragStart()
       }}
       onDragEnd={onDragEnd}
-      className={`group bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-3 transition-all ${
+      title={readOnly ? 'Read-only — project is completed' : 'Click to view details · drag to move'}
+      className={`group bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-3 transition-all cursor-pointer ${
         isDragging ? 'opacity-50 scale-95' : 'opacity-100'
-      } ${readOnly ? 'cursor-default' : 'cursor-grab active:cursor-grabbing hover:border-indigo-300 dark:hover:border-indigo-700 hover:shadow-sm'}`}
+      } ${readOnly ? '' : 'hover:border-indigo-300 dark:hover:border-indigo-700 hover:shadow-sm'}`}
     >
-      {/* Header: title row with grip handle */}
+      {/* Header: grip handle + title — clicking anywhere on the card opens
+          the detail drawer; the grip is a visual cue that the card is draggable. */}
       <div className="flex items-start gap-2 mb-2">
         {!readOnly && (
           <GripVertical
             size={13}
-            className="text-slate-300 dark:text-slate-600 flex-shrink-0 mt-0.5 group-hover:text-slate-400 dark:group-hover:text-slate-500 transition-colors"
+            className="text-slate-300 dark:text-slate-600 flex-shrink-0 mt-0.5 group-hover:text-slate-400 dark:group-hover:text-slate-500 transition-colors cursor-grab active:cursor-grabbing"
             aria-hidden
           />
         )}
-        <button
-          onClick={onOpen}
-          className="flex-1 text-left min-w-0"
-        >
-          <p className="text-sm font-medium text-slate-900 dark:text-white leading-snug line-clamp-2">
-            {task.title}
-          </p>
-        </button>
+        <p className="flex-1 text-sm font-medium text-slate-900 dark:text-white leading-snug line-clamp-2 min-w-0">
+          {task.title}
+        </p>
         {readOnly && (
           <Lock size={11} className="text-slate-400 flex-shrink-0 mt-1" />
         )}

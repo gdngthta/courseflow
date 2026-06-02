@@ -1,12 +1,22 @@
 ﻿'use client'
 
-import { Pencil, Archive, ArchiveRestore, CheckSquare, FolderKanban, Calendar } from 'lucide-react'
+import { Pencil, Archive, ArchiveRestore, FolderKanban, Calendar } from 'lucide-react'
 import { formatDueDate } from '@/lib/utils'
 import type { Course } from '@/types'
 
+export interface CourseStats {
+  /** Total tasks linked to this course — personal tasks owned by the
+   *  viewer + project tasks assigned to the viewer in this course's projects. */
+  total: number
+  completed: number
+  incomplete: number
+  /** Incomplete tasks with due_date within the next 7 days. */
+  upcoming7: number
+}
+
 interface CourseCardProps {
   course: Course
-  taskCount: number
+  stats: CourseStats
   projectCount: number
   nextDeadline?: string
   onEdit: (course: Course) => void
@@ -14,7 +24,7 @@ interface CourseCardProps {
   onUnarchive: (course: Course) => void
 }
 
-export function CourseCard({ course, taskCount, projectCount, nextDeadline, onEdit, onArchive, onUnarchive }: CourseCardProps) {
+export function CourseCard({ course, stats, projectCount, nextDeadline, onEdit, onArchive, onUnarchive }: CourseCardProps) {
   const isArchived = course.is_archived
 
   return (
@@ -66,14 +76,22 @@ export function CourseCard({ course, taskCount, projectCount, nextDeadline, onEd
         </div>
       </div>
 
-      {/* Stats */}
+      {/* Task totals + project count */}
       <div className="grid grid-cols-2 gap-3">
         <div className="bg-slate-100 dark:bg-slate-800 rounded-lg p-3">
-          <div className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400 mb-1">
-            <CheckSquare size={12} />
-            <span className="text-xs">{isArchived ? 'Tasks' : 'Active Tasks'}</span>
+          <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 mb-1">
+            <span className="text-xs">Tasks</span>
+            <span className="text-[10px] uppercase tracking-wide">{stats.completed}/{stats.total}</span>
           </div>
-          <p className="text-lg font-bold text-slate-900 dark:text-white">{taskCount}</p>
+          <p className="text-lg font-bold text-slate-900 dark:text-white">
+            {stats.incomplete}
+            <span className="text-xs text-slate-500 dark:text-slate-400 ml-1 font-normal">to do</span>
+          </p>
+          {!isArchived && stats.upcoming7 > 0 && (
+            <p className="text-[10px] text-amber-600 dark:text-amber-400 mt-0.5">
+              {stats.upcoming7} due this week
+            </p>
+          )}
         </div>
         <div className="bg-slate-100 dark:bg-slate-800 rounded-lg p-3">
           <div className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400 mb-1">

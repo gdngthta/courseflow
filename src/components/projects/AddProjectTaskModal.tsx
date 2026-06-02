@@ -121,6 +121,9 @@ export function AddProjectTaskModal({ open, onClose, onSubmit, members }: AddPro
             onChange={(e) => setForm({ ...form, difficulty: Number(e.target.value) as Difficulty })}
           />
         </div>
+        <p className="text-xs text-slate-500 dark:text-slate-400 -mt-2">
+          Difficulty increases risk when progress is low and the deadline is close.
+        </p>
 
         {/* Notes */}
         <div className="flex flex-col gap-1.5">

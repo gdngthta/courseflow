@@ -11,7 +11,7 @@ import { useData } from '@/contexts/DataContext'
 import type { Course } from '@/types'
 
 export default function CoursesPage() {
-  const { courses, personalTasks, projects, loading, error, addCourse, updateCourse, setCourseArchived } = useData()
+  const { userId, courses, personalTasks, projects, loading, error, addCourse, updateCourse, setCourseArchived } = useData()
 
   const [activeTab, setActiveTab] = useState<'active' | 'archived'>('active')
   const [searchQuery, setSearchQuery] = useState('')
@@ -28,8 +28,32 @@ export default function CoursesPage() {
     return result
   }, [courses, activeTab, searchQuery])
 
-  const getTaskCount = (courseId: string) =>
-    personalTasks.filter((t) => t.course_id === courseId && t.status !== 'done').length
+  /**
+   * Per-course stats covering BOTH personal tasks (owned by the
+   * current user) AND project tasks assigned to the current user
+   * inside any of that course's projects. This is the user-relevant
+   * lens — other members' project tasks aren't counted toward the
+   * viewer's "what's on my plate for this course?" feeling.
+   */
+  const getCourseStats = (courseId: string) => {
+    const today = new Date().toISOString().split('T')[0]
+    const weekOut = new Date()
+    weekOut.setDate(weekOut.getDate() + 7)
+    const weekOutISO = weekOut.toISOString().split('T')[0]
+
+    const personalForCourse = personalTasks.filter((t) => t.course_id === courseId)
+    const assignedProjectForCourse = projects
+      .filter((p) => p.project.course_id === courseId)
+      .flatMap((p) => p.tasks.filter((t) => t.assigned_to === userId))
+
+    const all = [...personalForCourse, ...assignedProjectForCourse]
+    const completed = all.filter((t) => t.status === 'done').length
+    const incomplete = all.length - completed
+    const upcoming7 = all.filter(
+      (t) => t.status !== 'done' && t.due_date >= today && t.due_date <= weekOutISO
+    ).length
+    return { total: all.length, completed, incomplete, upcoming7 }
+  }
 
   const getProjectCount = (courseId: string) =>
     projects.filter((pd) => pd.project.course_id === courseId).length
@@ -135,7 +159,7 @@ export default function CoursesPage() {
               <CourseCard
                 key={course.id}
                 course={course}
-                taskCount={getTaskCount(course.id)}
+                stats={getCourseStats(course.id)}
                 projectCount={getProjectCount(course.id)}
                 nextDeadline={getNextDeadline(course.id)}
                 onEdit={(c) => setEditingCourse(c)}
