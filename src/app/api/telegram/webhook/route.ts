@@ -7,6 +7,7 @@ import {
 } from '@/lib/telegramBotData'
 import {
   parseCommand,
+  formatStart,
   formatHelp,
   formatCritical,
   formatToday,
@@ -103,6 +104,11 @@ export async function POST(req: NextRequest) {
   let reply: string
   try {
     switch (command) {
+      case 'start': {
+        reply = formatStart(profile.full_name || undefined)
+        break
+      }
+
       case 'help': {
         reply = formatHelp()
         break

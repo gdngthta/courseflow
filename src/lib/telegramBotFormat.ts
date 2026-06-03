@@ -4,6 +4,7 @@ import type { RiskStatus } from '@/types'
 // ── Command identity ────────────────────────────────────────
 
 export type BotCommand =
+  | 'start'
   | 'help'
   | 'critical'
   | 'today'
@@ -13,6 +14,7 @@ export type BotCommand =
   | 'unknown'
 
 const ALIASES: Record<Exclude<BotCommand, 'unknown'>, string[]> = {
+  start: ['/start'],
   help: ['/help', 'help'],
   critical: [
     '/critical',
@@ -129,6 +131,27 @@ function renderTaskBlock(t: BotTaskItem, index: number, today: Date): string {
     `Due: ${formatDueLabel(t.due_date, today)}`,
     `Risk: ${riskLabel(t.risk)}`,
     `Progress: ${t.progress}%`,
+  ].join('\n')
+}
+
+// ── /start ──────────────────────────────────────────────────
+
+export function formatStart(name?: string): string {
+  const greeting = name ? `Hi ${name}!` : 'Hi!'
+  return [
+    '🦉 Welcome to CourseFlow Bot',
+    '',
+    greeting,
+    "I'm your CourseFlow study assistant. Here's what I can help you with:",
+    '',
+    '/critical — tasks that need your immediate attention',
+    '/today — tasks and deadlines due today',
+    '/upcoming — all deadlines in the next 7 days',
+    '/closest — your single nearest upcoming deadline',
+    '/projects — active group projects',
+    '/help — show this help message',
+    '',
+    "You'll also receive automatic scheduled reminders based on your preferences in CourseFlow Settings.",
   ].join('\n')
 }
 

@@ -1,7 +1,14 @@
-﻿'use client'
+'use client'
 
 import { useEffect, useState } from 'react'
-import { Send, CheckCircle2, AlertCircle, Clock } from 'lucide-react'
+import {
+  Send,
+  CheckCircle2,
+  AlertCircle,
+  Clock,
+  BotMessageSquare,
+  Info,
+} from 'lucide-react'
 import { Input } from '@/components/ui/Input'
 import { SelectInput } from '@/components/ui/SelectInput'
 import { Button } from '@/components/ui/Button'
@@ -18,6 +25,16 @@ const DAYS_BEFORE_OPTIONS = [
   { value: '1', label: '1 day before' },
   { value: '3', label: '3 days before' },
   { value: '7', label: '7 days before' },
+]
+
+const BOT_COMMANDS = [
+  { cmd: '/start', desc: 'greet the bot and see all commands' },
+  { cmd: '/critical', desc: 'tasks that need immediate attention' },
+  { cmd: '/today', desc: "today's tasks and urgent items" },
+  { cmd: '/upcoming', desc: 'all deadlines in the next 7 days' },
+  { cmd: '/closest', desc: 'your single nearest upcoming deadline' },
+  { cmd: '/projects', desc: 'active group projects' },
+  { cmd: '/help', desc: 'show the full command list' },
 ]
 
 export function TelegramRemindersSection() {
@@ -69,7 +86,10 @@ export function TelegramRemindersSection() {
         }
         setLogs(recentLogs)
       } catch (e) {
-        if (!cancelled) setLoadError(e instanceof Error ? e.message : 'Failed to load reminder settings.')
+        if (!cancelled)
+          setLoadError(
+            e instanceof Error ? e.message : 'Failed to load reminder settings.'
+          )
       } finally {
         if (!cancelled) setLoading(false)
       }
@@ -97,7 +117,7 @@ export function TelegramRemindersSection() {
         days_before: daysBefore,
         send_time: sendTime,
       })
-      setSaveMsg('Saved.')
+      setSaveMsg('Settings saved.')
       setTimeout(() => setSaveMsg(''), 2500)
     } catch (e) {
       setSaveError(e instanceof Error ? e.message : 'Failed to save.')
@@ -114,10 +134,12 @@ export function TelegramRemindersSection() {
       const res = await fetch('/api/telegram/test', { method: 'POST' })
       const data = (await res.json()) as { ok: boolean; error?: string }
       if (!data.ok) throw new Error(data.error || 'Telegram send failed.')
-      setTestMsg('Test message sent. Check your Telegram chat.')
+      setTestMsg('Test message sent! Check your Telegram.')
       setTimeout(() => setTestMsg(''), 4000)
     } catch (e) {
-      setTestError(e instanceof Error ? e.message : 'Failed to send test message.')
+      setTestError(
+        e instanceof Error ? e.message : 'Failed to send test message.'
+      )
     } finally {
       setTesting(false)
     }
@@ -125,7 +147,7 @@ export function TelegramRemindersSection() {
 
   if (loading) {
     return (
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-6">
+      <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
         <p className="text-sm text-slate-500">Loading reminder settings…</p>
       </div>
     )
@@ -134,14 +156,33 @@ export function TelegramRemindersSection() {
   const isConnected = chatId.trim().length > 0 && telegramEnabled
   const scheduleActive = isConnected && enabled
 
+  // Most-recent successfully sent log entry.
+  const lastSent = logs.find((l) => l.status === 'sent')
+
   return (
     <div className="flex flex-col gap-5">
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-6">
-        <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-1">Telegram Integration</h3>
-        <p className="text-xs text-slate-500 dark:text-slate-400 mb-5">
-          Connect your Telegram account to receive scheduled reminders and ask the CourseFlow bot
-          about your tasks on demand.
-        </p>
+
+      {/* ── Card 1: Telegram Integration ── */}
+      <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
+        <div className="flex items-start gap-3 mb-5">
+          <BotMessageSquare size={18} className="text-indigo-400 flex-shrink-0 mt-0.5" />
+          <div>
+            <h3 className="text-sm font-semibold text-white">Telegram Integration</h3>
+            <p className="text-xs text-slate-400 mt-0.5">
+              Connect your Telegram account to receive scheduled reminders and query
+              your tasks on demand via{' '}
+              <a
+                href="https://t.me/CourseFlow_Schedule_Bot"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-indigo-400 hover:underline font-medium"
+              >
+                @CourseFlow_Schedule_Bot
+              </a>
+              .
+            </p>
+          </div>
+        </div>
 
         {loadError && (
           <p className="text-xs text-red-400 mb-4 bg-red-900/20 border border-red-800/30 rounded-lg px-3 py-2">
@@ -151,114 +192,144 @@ export function TelegramRemindersSection() {
 
         {/* Status pills */}
         <div className="flex flex-wrap gap-2 mb-5">
-          <span
-            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${
-              isConnected
-                ? 'bg-emerald-900/30 text-emerald-400 border-emerald-800/50'
-                : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-300 dark:border-slate-700'
-            }`}
-          >
-            <CheckCircle2 size={11} />
-            {isConnected ? 'Telegram connected' : 'Not connected'}
-          </span>
-          <span
-            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${
-              scheduleActive
-                ? 'bg-indigo-900/30 text-indigo-400 border-indigo-800/50'
-                : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-300 dark:border-slate-700'
-            }`}
-          >
-            <Clock size={11} />
-            {scheduleActive ? 'Scheduled reminders enabled' : 'Scheduled reminders off'}
-          </span>
+          <StatusPill
+            active={isConnected}
+            activeLabel="Telegram connected"
+            inactiveLabel="Not connected"
+          />
+          <StatusPill
+            active={scheduleActive}
+            activeLabel="Scheduled reminders on"
+            inactiveLabel="Scheduled reminders off"
+            icon={<Clock size={11} />}
+          />
         </div>
 
-        {/* Chat ID + connection toggle */}
-        <div className="flex flex-col gap-4">
-          <div>
-            <Input
-              label="Telegram Chat ID"
-              placeholder="e.g., 123456789"
-              value={chatId}
-              onChange={(e) => setChatId(e.target.value)}
-            />
-            <p className="text-xs text-slate-500 mt-1">
-              Open Telegram, start a chat with{' '}
+        {/* How to connect — numbered steps */}
+        <div className="mb-5 bg-slate-800/60 border border-slate-700 rounded-lg px-4 py-3">
+          <p className="text-xs font-semibold text-slate-300 mb-2.5">How to connect</p>
+          <ol className="flex flex-col gap-2.5">
+            <Step n={1}>
+              Open Telegram and search for{' '}
               <a
                 href="https://t.me/CourseFlow_Schedule_Bot"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-indigo-600 dark:text-indigo-400 hover:underline"
+                className="text-indigo-400 hover:underline"
               >
                 @CourseFlow_Schedule_Bot
               </a>
-              {' '}and send it any message. Then open{' '}
+            </Step>
+            <Step n={2}>
+              Send{' '}
+              <code className="text-indigo-300 bg-slate-700 px-1 rounded text-[11px]">
+                /start
+              </code>{' '}
+              to the bot — it will greet you and list available commands
+            </Step>
+            <Step n={3}>
+              Get your numeric chat ID from{' '}
               <a
                 href="https://t.me/userinfobot"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-indigo-600 dark:text-indigo-400 hover:underline"
+                className="text-indigo-400 hover:underline"
               >
                 @userinfobot
-              </a>
-              {' '}to get your numeric chat ID and paste it here.
-            </p>
-          </div>
+              </a>{' '}
+              (send it any message and copy the <em>Id</em> number)
+            </Step>
+            <Step n={4}>
+              Paste the ID below, enable the toggle, then click{' '}
+              <strong className="text-slate-200">Save Reminder Settings</strong>
+            </Step>
+          </ol>
+        </div>
 
+        {/* Chat ID input + toggle */}
+        <div className="flex flex-col gap-4">
+          <Input
+            label="Telegram Chat ID"
+            placeholder="e.g., 123456789"
+            value={chatId}
+            onChange={(e) => setChatId(e.target.value)}
+          />
           <ToggleRow
             label="Enable Telegram integration"
-            description="Master switch. Required for scheduled reminders AND for the bot to respond to your commands."
+            description="Master switch — required for scheduled reminders and bot command responses."
             checked={telegramEnabled}
             onChange={setTelegramEnabled}
           />
         </div>
       </div>
 
-      {/* Bot commands reference */}
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-6">
-        <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-1">Bot Commands</h3>
-        <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">
-          Once connected, message your bot in Telegram with any of these:
+      {/* ── Card 2: Bot Commands ── */}
+      <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
+        <h3 className="text-sm font-semibold text-white mb-1">Bot Commands</h3>
+        <p className="text-xs text-slate-400 mb-4">
+          Once connected, send any of these to the bot in Telegram.
+          Natural-language phrases work too — e.g.{' '}
+          <span className="text-slate-300 italic">&quot;what should I do today&quot;</span>.
         </p>
-        <ul className="flex flex-col gap-1.5 text-xs">
-          <li><span className="text-indigo-400 font-mono">/critical</span> <span className="text-slate-500 dark:text-slate-400">— show critical tasks</span></li>
-          <li><span className="text-indigo-400 font-mono">/today</span> <span className="text-slate-500 dark:text-slate-400">— show today&apos;s tasks</span></li>
-          <li><span className="text-indigo-400 font-mono">/upcoming</span> <span className="text-slate-500 dark:text-slate-400">— show upcoming deadlines</span></li>
-          <li><span className="text-indigo-400 font-mono">/closest</span> <span className="text-slate-500 dark:text-slate-400">— show your closest deadline</span></li>
-          <li><span className="text-indigo-400 font-mono">/projects</span> <span className="text-slate-500 dark:text-slate-400">— show active projects</span></li>
-          <li><span className="text-indigo-400 font-mono">/help</span> <span className="text-slate-500 dark:text-slate-400">— show command list</span></li>
+        <ul className="flex flex-col gap-2">
+          {BOT_COMMANDS.map(({ cmd, desc }) => (
+            <li key={cmd} className="flex items-baseline gap-2 text-xs">
+              <code className="text-indigo-400 font-mono w-24 flex-shrink-0">{cmd}</code>
+              <span className="text-slate-400">{desc}</span>
+            </li>
+          ))}
         </ul>
-        <p className="text-xs text-slate-500 mt-3">
-          Natural-language aliases work too (e.g. &quot;what should i do today&quot;, &quot;closest deadline&quot;).
-        </p>
       </div>
 
-      {/* Preferences card */}
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-6">
-        <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-4">Reminder Preferences</h3>
+      {/* ── Card 3: Reminder Preferences ── */}
+      <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
+        <h3 className="text-sm font-semibold text-white mb-3">Reminder Preferences</h3>
 
-        <div className="flex flex-col gap-3">
+        {/* Reminder logic helper */}
+        <div className="flex items-start gap-2 bg-indigo-950/40 border border-indigo-800/40 rounded-lg px-3 py-2.5 mb-5">
+          <Info size={13} className="text-indigo-400 flex-shrink-0 mt-0.5" />
+          <p className="text-xs text-slate-400">
+            Scheduled reminders are sent for{' '}
+            <span className="text-slate-200 font-medium">high-risk tasks</span> and{' '}
+            <span className="text-slate-200 font-medium">deadlines around the corner</span>.
+            The daily cron runs at <strong className="text-slate-200">08:00 UTC</strong> and
+            sends at most one message per task per day.
+          </p>
+        </div>
+
+        {/* Last reminder sent */}
+        {lastSent && (
+          <div className="flex items-center gap-2 mb-4 text-xs text-slate-500">
+            <CheckCircle2 size={12} className="text-emerald-400 flex-shrink-0" />
+            Last reminder sent:{' '}
+            <span className="text-slate-300">
+              {new Date(lastSent.sent_at).toLocaleString()}
+            </span>
+          </div>
+        )}
+
+        <div className="flex flex-col gap-3 mb-5">
           <ToggleRow
-            label="Scheduled reminders"
-            description="Run the daily check and send messages based on the toggles below."
+            label="Enable scheduled reminders"
+            description="Run the daily check and send messages for matching tasks."
             checked={enabled}
             onChange={setEnabled}
           />
           <ToggleRow
             label="Around-the-corner deadlines"
-            description="Notify before a task's due date, based on the window selected below."
+            description="Notify before a task's due date, based on the window you choose below."
             checked={aroundDeadline}
             onChange={setAroundDeadline}
           />
           <ToggleRow
             label="High-risk tasks"
-            description="Notify when a task is calculated as critical (overdue, or low progress with little time left)."
+            description="Notify when a task is critical — overdue, or low progress with little time left."
             checked={highRisk}
             onChange={setHighRisk}
           />
         </div>
 
-        <div className="grid grid-cols-2 gap-3 mt-5">
+        <div className="grid grid-cols-2 gap-3 mb-5">
           <SelectInput
             label="Days before deadline"
             options={DAYS_BEFORE_OPTIONS}
@@ -266,35 +337,40 @@ export function TelegramRemindersSection() {
             onChange={(e) => setDaysBefore(Number(e.target.value) as ReminderDaysBefore)}
           />
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-medium text-slate-600 dark:text-slate-300">Preferred send time</label>
+            <label className="text-xs font-medium text-slate-300">Send time</label>
             <input
               type="time"
               value={sendTime}
               disabled
-              className="w-full px-3 py-2.5 bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-sm text-slate-500 dark:text-slate-400 cursor-not-allowed"
+              className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-sm text-slate-500 cursor-not-allowed"
             />
             <p className="text-xs text-slate-500">
-              The MVP cron runs once daily (08:00 UTC). Exact custom send times are not implemented.
+              Fixed at 08:00 UTC in the MVP. Custom send times are a planned future feature.
             </p>
           </div>
         </div>
 
         {saveError && (
-          <p className="text-xs text-red-400 mt-4 bg-red-900/20 border border-red-800/30 rounded-lg px-3 py-2">
+          <p className="text-xs text-red-400 mb-4 bg-red-900/20 border border-red-800/30 rounded-lg px-3 py-2">
             {saveError}
           </p>
         )}
-        {saveMsg && <p className="text-xs text-emerald-400 mt-4">{saveMsg}</p>}
+        {saveMsg && <p className="text-xs text-emerald-400 mb-4">{saveMsg}</p>}
 
-        <div className="flex flex-wrap gap-3 mt-5">
+        <div className="flex flex-wrap gap-3">
           <Button variant="primary" onClick={handleSave} disabled={saving}>
             {saving ? 'Saving…' : 'Save Reminder Settings'}
           </Button>
-          <Button variant="secondary" onClick={handleSendTest} disabled={testing || !isConnected}>
+          <Button
+            variant="secondary"
+            onClick={handleSendTest}
+            disabled={testing || !isConnected}
+          >
             <Send size={13} />
-            {testing ? 'Sending…' : 'Send Test Reminder'}
+            {testing ? 'Sending…' : 'Send Test Message'}
           </Button>
         </div>
+
         {testMsg && <p className="text-xs text-emerald-400 mt-3">{testMsg}</p>}
         {testError && (
           <p className="text-xs text-red-400 mt-3 bg-red-900/20 border border-red-800/30 rounded-lg px-3 py-2">
@@ -303,16 +379,16 @@ export function TelegramRemindersSection() {
         )}
         {!isConnected && (
           <p className="text-xs text-slate-500 mt-3">
-            Save a chat ID and enable Telegram reminders to send a test message.
+            Connect Telegram and save settings before sending a test message.
           </p>
         )}
       </div>
 
-      {/* Recent logs */}
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-6">
-        <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-1">Recent Reminders</h3>
-        <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">
-          The 5 most recent reminders sent on your behalf. Updated after each cron run.
+      {/* ── Card 4: Recent Reminder Logs ── */}
+      <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
+        <h3 className="text-sm font-semibold text-white mb-1">Recent Reminders Sent</h3>
+        <p className="text-xs text-slate-400 mb-4">
+          Up to 5 most recent reminders. Updated after each cron run (daily at 08:00 UTC).
         </p>
         {logs.length === 0 ? (
           <p className="text-xs text-slate-500">No reminders sent yet.</p>
@@ -321,7 +397,7 @@ export function TelegramRemindersSection() {
             {logs.map((log) => (
               <li
                 key={log.id}
-                className="flex items-start gap-3 text-xs px-3 py-2 bg-slate-100/50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-lg"
+                className="flex items-start gap-3 text-xs px-3 py-2.5 bg-slate-800/60 border border-slate-700/60 rounded-lg"
               >
                 {log.status === 'sent' ? (
                   <CheckCircle2 size={13} className="text-emerald-400 flex-shrink-0 mt-0.5" />
@@ -329,24 +405,71 @@ export function TelegramRemindersSection() {
                   <AlertCircle size={13} className="text-red-400 flex-shrink-0 mt-0.5" />
                 )}
                 <div className="flex-1 min-w-0">
-                  <p className="text-slate-700 dark:text-slate-200">
-                    {log.reminder_type === 'around_deadline' ? 'Around-deadline' : 'High-risk'}{' '}
-                    reminder
-                    <span className="text-slate-500"> · {log.task_type} task</span>
+                  <p className="text-slate-200">
+                    {log.reminder_type === 'around_deadline'
+                      ? 'Around-deadline reminder'
+                      : 'High-risk reminder'}
+                    <span className="text-slate-500 ml-1.5">
+                      · {log.task_type === 'personal' ? 'Personal task' : 'Project task'}
+                    </span>
                   </p>
-                  <p className="text-slate-500">
+                  <p className="text-slate-500 mt-0.5">
                     {new Date(log.sent_at).toLocaleString()}
                     {log.status === 'failed' && log.error_message && (
-                      <span className="text-red-400"> — {log.error_message}</span>
+                      <span className="text-red-400 ml-1.5">— {log.error_message}</span>
                     )}
                   </p>
                 </div>
+                <span
+                  className={`flex-shrink-0 px-1.5 py-0.5 rounded text-[10px] font-medium border ${
+                    log.status === 'sent'
+                      ? 'bg-emerald-900/30 text-emerald-400 border-emerald-800/50'
+                      : 'bg-red-900/30 text-red-400 border-red-800/50'
+                  }`}
+                >
+                  {log.status}
+                </span>
               </li>
             ))}
           </ul>
         )}
       </div>
     </div>
+  )
+}
+
+// ── Helpers ──
+
+interface StatusPillProps {
+  active: boolean
+  activeLabel: string
+  inactiveLabel: string
+  icon?: React.ReactNode
+}
+
+function StatusPill({ active, activeLabel, inactiveLabel, icon }: StatusPillProps) {
+  return (
+    <span
+      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${
+        active
+          ? 'bg-emerald-900/30 text-emerald-400 border-emerald-800/50'
+          : 'bg-slate-800 text-slate-400 border-slate-700'
+      }`}
+    >
+      {icon ?? <CheckCircle2 size={11} />}
+      {active ? activeLabel : inactiveLabel}
+    </span>
+  )
+}
+
+function Step({ n, children }: { n: number; children: React.ReactNode }) {
+  return (
+    <li className="flex items-start gap-2.5 text-xs text-slate-400">
+      <span className="flex-shrink-0 w-5 h-5 rounded-full bg-indigo-900/60 border border-indigo-700/50 text-indigo-300 flex items-center justify-center text-[10px] font-bold mt-0.5">
+        {n}
+      </span>
+      <span className="leading-relaxed">{children}</span>
+    </li>
   )
 }
 
@@ -361,7 +484,7 @@ function ToggleRow({ label, description, checked, onChange }: ToggleRowProps) {
   return (
     <div className="flex items-start justify-between gap-4 py-1">
       <div className="flex-1 min-w-0">
-        <p className="text-sm text-slate-700 dark:text-slate-200">{label}</p>
+        <p className="text-sm text-slate-200">{label}</p>
         <p className="text-xs text-slate-500">{description}</p>
       </div>
       <button
@@ -370,7 +493,7 @@ function ToggleRow({ label, description, checked, onChange }: ToggleRowProps) {
         role="switch"
         aria-checked={checked}
         className={`relative inline-flex h-5 w-9 flex-shrink-0 items-center rounded-full transition-colors mt-1 ${
-          checked ? 'bg-indigo-600' : 'bg-slate-200 dark:bg-slate-700'
+          checked ? 'bg-indigo-600' : 'bg-slate-700'
         }`}
       >
         <span

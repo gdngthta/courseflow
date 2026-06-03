@@ -92,8 +92,8 @@ export default function SettingsPage() {
       <Topbar title="Settings" />
       <div className="p-6">
         <div className="mb-6">
-          <h2 className="text-xl font-semibold text-slate-900 dark:text-white">Settings</h2>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">Manage your account and preferences.</p>
+          <h2 className="text-xl font-semibold text-white">Settings</h2>
+          <p className="text-sm text-slate-400 mt-0.5">Manage your account and preferences.</p>
         </div>
 
         <div className="flex gap-6 max-w-3xl">
@@ -107,7 +107,7 @@ export default function SettingsPage() {
                   className={`text-left px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${
                     activeSection === s.id
                       ? 'bg-indigo-600/20 text-indigo-400'
-                      : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-700 dark:hover:text-slate-200'
+                      : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'
                   }`}
                 >
                   {s.label}
@@ -119,8 +119,8 @@ export default function SettingsPage() {
           {/* Content */}
           <div className="flex-1">
             {activeSection === 'profile' && (
-              <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-6">
-                <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-5">Profile Information</h3>
+              <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
+                <h3 className="text-sm font-semibold text-white mb-5">Profile Information</h3>
 
                 {/* Avatar */}
                 <div className="flex items-center gap-4 mb-6">
@@ -128,10 +128,10 @@ export default function SettingsPage() {
                     <span className="text-white text-xl font-bold">{initials}</span>
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-slate-900 dark:text-white">
+                    <p className="text-sm font-medium text-white">
                       {firstName || lastName ? `${firstName} ${lastName}`.trim() : email}
                     </p>
-                    <p className="text-xs text-slate-500 dark:text-slate-400">Student</p>
+                    <p className="text-xs text-slate-400">Student</p>
                   </div>
                 </div>
 
@@ -159,6 +159,7 @@ export default function SettingsPage() {
                   </p>
                 </div>
 
+
                 {saveError && (
                   <p className="text-xs text-red-400 mb-3">{saveError}</p>
                 )}
@@ -171,9 +172,9 @@ export default function SettingsPage() {
             {activeSection === 'reminders' && <TelegramRemindersSection />}
 
             {activeSection === 'account' && (
-              <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-6">
-                <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-2">Account</h3>
-                <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">Signed in as <span className="text-slate-600 dark:text-slate-300">{email}</span></p>
+              <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
+                <h3 className="text-sm font-semibold text-white mb-2">Account</h3>
+                <p className="text-sm text-slate-400 mb-6">Signed in as <span className="text-slate-300">{email}</span></p>
                 <Button
                   variant="destructive"
                   onClick={handleSignOut}
