@@ -1,15 +1,19 @@
-﻿'use client'
+'use client'
 
 import { useState, useMemo, useEffect } from 'react'
-import { Search, SlidersHorizontal, LayoutGrid, List } from 'lucide-react'
+import { Search, LayoutGrid, List } from 'lucide-react'
 import { Topbar } from '@/components/layout/Topbar'
 import { TaskCard } from '@/components/tasks/TaskCard'
 import { TaskDetailModal } from '@/components/tasks/TaskDetailModal'
 import { TaskFormModal, type TaskFormData } from '@/components/tasks/TaskFormModal'
 import { KanbanBoard } from '@/components/tasks/KanbanBoard'
+import { CourseSelectorStrip } from '@/components/tasks/CourseSelectorStrip'
+import { CourseDetailHeader } from '@/components/tasks/CourseDetailHeader'
+import { UpcomingDeadlineSummary } from '@/components/tasks/UpcomingDeadlineSummary'
 import { NoTasksEmpty } from '@/components/ui/EmptyState'
 import { useData } from '@/contexts/DataContext'
 import { toAllTaskCards } from '@/lib/taskDerive'
+import { toCourseStats, getDeadlineSummary } from '@/lib/courseDerive'
 import type { TaskCardData, TaskChecklistItem } from '@/types'
 
 type Tab = 'all' | 'personal' | 'assigned' | 'critical' | 'completed'
@@ -40,24 +44,31 @@ export default function TasksPage() {
   } = useData()
 
   const [activeTab, setActiveTab] = useState<Tab>('all')
-  const [selectedCourse, setSelectedCourse] = useState('all')
+  /** null = "All Courses" view */
+  const [selectedCourseId, setSelectedCourseId] = useState<string | null>(null)
+  const [showArchived, setShowArchived] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedTask, setSelectedTask] = useState<TaskCardData | null>(null)
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [editingTask, setEditingTask] = useState<TaskCardData | null>(null)
   const [view, setView] = useState<'list' | 'board'>('list')
 
-  // Combine personal tasks + assigned group tasks (both from Supabase).
+  // Combine personal tasks + assigned group tasks (no duplication).
   const allTasks = useMemo(
     () => toAllTaskCards(personalTasks, courses, projects, userId),
     [personalTasks, courses, projects, userId]
   )
 
+  // Per-course statistics for the course selector strip.
+  const courseStats = useMemo(
+    () => toCourseStats(courses, allTasks, projects),
+    [courses, allTasks, projects]
+  )
+
   /**
    * Deep-link support: if the URL contains `?task=<id>` (e.g. coming
    * from a Dashboard click), find that task once data has loaded and
-   * open the detail drawer. Strip the query param afterwards so a
-   * page refresh doesn't keep reopening the drawer.
+   * open the detail drawer. Strip the query param afterwards.
    *
    * We read from `window.location.search` directly instead of
    * useSearchParams() to avoid the Next.js prerender-vs-Suspense
@@ -71,33 +82,57 @@ export default function TasksPage() {
     const match = allTasks.find((t) => t.id === requestedTaskId)
     if (match) {
       setSelectedTask(match)
-      // Strip the query param so a refresh doesn't keep reopening.
       window.history.replaceState({}, '', window.location.pathname)
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loading, allTasks])
 
+  // Archived course ids — used to filter tasks in "All Courses" view.
+  const archivedCourseIds = useMemo(
+    () => new Set(courses.filter((c) => c.is_archived).map((c) => c.id)),
+    [courses]
+  )
+
   const filteredTasks = useMemo(() => {
     let result = allTasks
 
+    // When a specific course is selected, show only its tasks.
+    if (selectedCourseId !== null) {
+      result = result.filter((t) => t.course_id === selectedCourseId)
+    } else if (!showArchived) {
+      // "All Courses" view: hide tasks from archived courses by default.
+      result = result.filter((t) => !t.course_id || !archivedCourseIds.has(t.course_id))
+    }
+
+    // Tab filter.
     if (activeTab === 'personal') result = result.filter((t) => t.type === 'personal')
     else if (activeTab === 'assigned') result = result.filter((t) => t.type === 'group')
     else if (activeTab === 'critical') result = result.filter((t) => t.risk === 'critical')
     else if (activeTab === 'completed') result = result.filter((t) => t.status === 'done')
 
-    if (selectedCourse !== 'all') result = result.filter((t) => t.course_id === selectedCourse)
-
+    // Search.
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase()
-      result = result.filter((t) => t.title.toLowerCase().includes(q) || t.source_label.toLowerCase().includes(q))
+      result = result.filter(
+        (t) =>
+          t.title.toLowerCase().includes(q) ||
+          t.source_label.toLowerCase().includes(q)
+      )
     }
 
     return result
-  }, [allTasks, activeTab, selectedCourse, searchQuery])
+  }, [allTasks, activeTab, selectedCourseId, showArchived, archivedCourseIds, searchQuery])
 
-  // Task ids that should appear read-only on the Kanban board.
-  // Currently: project tasks under a project whose status is 'completed'.
-  // Personal tasks belong to one user and are always editable by them.
+  // Today ISO — stable reference for deadline summary.
+  const todayISO = useMemo(() => new Date().toISOString().split('T')[0], [])
+
+  // Upcoming deadline summary for the filtered task set.
+  const deadlineSummary = useMemo(
+    () => getDeadlineSummary(filteredTasks, todayISO),
+    [filteredTasks, todayISO]
+  )
+
+  // Task ids that are read-only on Kanban (completed project tasks).
   const readOnlyIds = useMemo(() => {
     const ids = new Set<string>()
     for (const p of projects) {
@@ -107,13 +142,28 @@ export default function TasksPage() {
     return ids
   }, [projects])
 
-  // Only non-archived courses for dropdowns
+  // Only non-archived courses for the "New Task" form's course picker.
   const activeCourses = useMemo(() => courses.filter((c) => !c.is_archived), [courses])
 
-  const courseFilterOptions = [
-    { value: 'all', label: 'All Courses' },
-    ...activeCourses.map((c) => ({ value: c.id, label: `${c.code} — ${c.name}` })),
-  ]
+  // Stats for the "All Courses" card.
+  const allStats = useMemo(() => {
+    const visibleTasks = showArchived
+      ? allTasks
+      : allTasks.filter((t) => !t.course_id || !archivedCourseIds.has(t.course_id))
+    return {
+      total_tasks: visibleTasks.length,
+      incomplete_tasks: visibleTasks.filter((t) => t.status !== 'done').length,
+    }
+  }, [allTasks, showArchived, archivedCourseIds])
+
+  // The CourseStats entry for the currently selected course.
+  const selectedCourseStats = useMemo(
+    () =>
+      selectedCourseId !== null
+        ? courseStats.find((c) => c.id === selectedCourseId) ?? null
+        : null,
+    [courseStats, selectedCourseId]
+  )
 
   // ── Handlers ──
 
@@ -131,8 +181,6 @@ export default function TasksPage() {
     })
   }
 
-  // Edit/Delete only apply to personal tasks. For assigned group tasks the
-  // TaskDetailModal hides those actions (no userRole passed → not leader/admin).
   const handleEdit = (task: TaskCardData) => {
     if (task.type === 'personal') setEditingTask(task)
   }
@@ -168,26 +216,52 @@ export default function TasksPage() {
     else updateProjectTaskChecklist(taskId, checklist)
   }
 
+  const handleCourseSelect = (courseId: string | null) => {
+    setSelectedCourseId(courseId)
+    // Reset tab to "all" when switching courses so users don't get confused.
+    setActiveTab('all')
+    setSearchQuery('')
+  }
+
   return (
     <>
       <Topbar title="My Tasks" />
       <div className="p-6">
         {/* Page header */}
-        <div className="flex items-start justify-between gap-4 mb-6">
+        <div className="flex items-start justify-between gap-4 mb-5">
           <div>
-            <h2 className="text-xl font-semibold text-slate-900 dark:text-white">My Tasks</h2>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">Manage your personal coursework and assigned group tasks.</p>
+            <h2 className="text-xl font-semibold text-white">My Tasks</h2>
+            <p className="text-sm text-slate-400 mt-0.5">
+              Manage your personal coursework and assigned group tasks.
+            </p>
           </div>
           <button
             onClick={() => setShowCreateModal(true)}
-            className="flex-shrink-0 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-slate-900 dark:text-white text-sm font-medium rounded-lg transition-colors"
+            className="flex-shrink-0 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-lg transition-colors"
           >
             + New Personal Task
           </button>
         </div>
 
+        {/* ── Course selector strip ── */}
+        {!loading && (
+          <CourseSelectorStrip
+            courseStats={courseStats}
+            selectedCourseId={selectedCourseId}
+            onSelect={handleCourseSelect}
+            showArchived={showArchived}
+            onToggleArchived={() => setShowArchived((v) => !v)}
+            allStats={allStats}
+          />
+        )}
+
+        {/* ── Course detail header (shown when a specific course is selected) ── */}
+        {!loading && selectedCourseStats && (
+          <CourseDetailHeader stats={selectedCourseStats} projects={projects} />
+        )}
+
         {/* Tabs */}
-        <div className="flex items-center gap-1 mb-4 border-b border-slate-200 dark:border-slate-800 overflow-x-auto">
+        <div className="flex items-center gap-1 mb-4 border-b border-slate-800 overflow-x-auto">
           {TABS.map((tab) => (
             <button
               key={tab.id}
@@ -195,7 +269,7 @@ export default function TasksPage() {
               className={`px-4 py-2.5 text-sm font-medium whitespace-nowrap transition-colors border-b-2 -mb-px ${
                 activeTab === tab.id
                   ? 'text-indigo-400 border-indigo-400'
-                  : 'text-slate-500 dark:text-slate-400 border-transparent hover:text-slate-700 dark:hover:text-slate-200'
+                  : 'text-slate-400 border-transparent hover:text-slate-200'
               }`}
             >
               {tab.label}
@@ -203,34 +277,26 @@ export default function TasksPage() {
           ))}
         </div>
 
-        {/* Search + filter row + view toggle */}
-        <div className="flex items-center gap-3 mb-6 flex-wrap">
+        {/* Search + view toggle */}
+        <div className="flex items-center gap-3 mb-4 flex-wrap">
           <ViewToggle view={view} onChange={setView} />
           <div className="relative flex-1 min-w-48">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
+            <Search
+              size={14}
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none"
+            />
             <input
               type="text"
-              placeholder="Search tasks..."
+              placeholder="Search tasks…"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-sm text-slate-700 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition"
+              className="w-full pl-9 pr-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm text-slate-200 placeholder:text-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition"
             />
           </div>
-          <div className="relative">
-            <select
-              value={selectedCourse}
-              onChange={(e) => setSelectedCourse(e.target.value)}
-              className="appearance-none pl-3 pr-8 py-2 bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-sm text-slate-700 dark:text-slate-200 focus:outline-none focus:border-indigo-500 transition"
-            >
-              {courseFilterOptions.map((opt) => (
-                <option key={opt.value} value={opt.value} className="bg-slate-100 dark:bg-slate-800">
-                  {opt.label}
-                </option>
-              ))}
-            </select>
-            <SlidersHorizontal size={13} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400 pointer-events-none" />
-          </div>
         </div>
+
+        {/* Upcoming deadline summary */}
+        {!loading && <UpcomingDeadlineSummary summary={deadlineSummary} />}
 
         {error && (
           <div className="mb-4 px-4 py-3 bg-red-900/20 border border-red-800/40 rounded-lg text-sm text-red-400">
@@ -240,7 +306,9 @@ export default function TasksPage() {
 
         {/* Task list / board */}
         {loading ? (
-          <div className="flex items-center justify-center py-20 text-sm text-slate-500">Loading tasks…</div>
+          <div className="flex items-center justify-center py-20 text-sm text-slate-500">
+            Loading tasks…
+          </div>
         ) : view === 'board' ? (
           filteredTasks.length > 0 ? (
             <KanbanBoard tasks={filteredTasks} readOnlyIds={readOnlyIds} />
@@ -295,16 +363,13 @@ function ViewToggle({
   view: 'list' | 'board'
   onChange: (v: 'list' | 'board') => void
 }) {
-  const baseBtn =
-    'flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-colors'
-  const activeCls =
-    'bg-indigo-600 text-white shadow-sm'
-  const inactiveCls =
-    'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
+  const baseBtn = 'flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-colors'
+  const activeCls = 'bg-indigo-600 text-white shadow-sm'
+  const inactiveCls = 'text-slate-400 hover:text-slate-200'
   return (
     <div
       role="tablist"
-      className="inline-flex items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg"
+      className="inline-flex items-center gap-1 p-1 bg-slate-800 border border-slate-700 rounded-lg"
     >
       <button
         role="tab"
