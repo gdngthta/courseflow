@@ -27,6 +27,12 @@ export function toProjectCards(
     const assignedToMe = tasks.filter(
       (t) => t.assigned_to === userId && t.status !== 'done'
     ).length
+    // Nearest due date among incomplete tasks — shown on the project card.
+    const incompleteTasks = tasks.filter((t) => t.status !== 'done')
+    const nearestTaskDue = incompleteTasks.reduce<string | null>(
+      (min, t) => (t.due_date && (!min || t.due_date < min) ? t.due_date : min),
+      null
+    )
     return {
       id: project.id,
       name: project.name,
@@ -43,13 +49,14 @@ export function toProjectCards(
       completed_tasks: completed,
       incomplete_tasks: tasks.length - completed,
       assigned_to_me: assignedToMe,
+      nearest_task_due: nearestTaskDue,
     }
   })
 }
 
 export interface ProjectDetailView {
   project: Project
-  course?: { code: string; name: string }
+  course?: { id: string; code: string; name: string }
   members: ProjectMemberWithProfile[]
   tasks: TaskCardData[]
   links: ProjectLink[]
@@ -98,7 +105,7 @@ export function toProjectDetail(
 
   return {
     project,
-    course: course ? { code: course.code, name: course.name } : undefined,
+    course: course ? { id: course.id, code: course.code, name: course.name } : undefined,
     members,
     tasks: taskCards,
     links,

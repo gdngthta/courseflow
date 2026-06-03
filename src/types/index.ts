@@ -161,4 +161,6 @@ export interface ProjectCardData {
   incomplete_tasks: number
   /** Incomplete project tasks assigned to the current viewer. */
   assigned_to_me: number
+  /** ISO date of the nearest incomplete task due date, or null if no tasks. */
+  nearest_task_due: string | null
 }

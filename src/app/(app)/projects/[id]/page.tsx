@@ -3,7 +3,7 @@
 import { useState, useMemo } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
-import { ExternalLink, Plus, UserPlus, CheckCircle2, Lock } from 'lucide-react'
+import { ExternalLink, Plus, UserPlus, CheckCircle2, Lock, Info } from 'lucide-react'
 import { Topbar } from '@/components/layout/Topbar'
 import { TaskCard } from '@/components/tasks/TaskCard'
 import { TaskDetailModal } from '@/components/tasks/TaskDetailModal'
@@ -17,12 +17,19 @@ import { toProjectDetail } from '@/lib/projectDerive'
 import { formatFullDate } from '@/lib/utils'
 import type { TaskCardData, TaskChecklistItem, ProjectRole } from '@/types'
 
+// Friendly display labels for the three DB roles.
+const ROLE_DISPLAY: Record<ProjectRole, string> = {
+  leader: 'Leader',
+  admin: 'Editor',
+  member: 'Viewer',
+}
+
 export default function ProjectDetailPage() {
   const params = useParams()
   const projectId = params?.id as string
 
   const {
-    userId, projects, projectsLoading, error,
+    userId, courses, projects, projectsLoading, error,
     addProjectTask, updateProjectTaskNotes, deleteProjectTask,
     markProjectTaskDone, completeProject, reopenProject, updateProjectTaskChecklist,
     inviteMember,
@@ -74,6 +81,12 @@ export default function ProjectDetailPage() {
   const progress = tasks.length > 0 ? Math.round((completedCount / tasks.length) * 100) : 0
   const canManage = userRole === 'leader' || userRole === 'admin'
   const unfinishedTasks = tasks.filter((t) => t.status !== 'done')
+
+  // Detect whether the project's course belongs to this user or to another
+  // user (shared project context). A shared course means the user was added
+  // to the project by someone else whose course we don't own.
+  const ownCourseIds = new Set(courses.map((c) => c.id))
+  const isSharedCourse = course ? !ownCourseIds.has(course.id) : false
 
   const memberOptions = members.map((m) => ({ id: m.user_id, name: m.name }))
   const assigneeName = selectedTask?.assigned_to
@@ -142,6 +155,23 @@ export default function ProjectDetailPage() {
           </div>
         )}
 
+        {/* Shared course context callout */}
+        {isSharedCourse && course && (
+          <div className="flex items-start gap-3 bg-indigo-950/40 border border-indigo-800/40 rounded-xl px-5 py-3 mb-4">
+            <Info size={15} className="text-indigo-400 flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="text-sm font-medium text-indigo-300">Shared project</p>
+              <p className="text-xs text-slate-400 mt-0.5">
+                This project is linked to{' '}
+                <span className="text-slate-200 font-medium">{course.code} — {course.name}</span>,
+                a course owned by another team member. Tasks assigned to you appear in{' '}
+                <span className="text-slate-200">My Tasks</span> under that course context.
+                You can personalize your view by filtering courses in My Tasks.
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Completed banner */}
         {isCompleted && (
           <div className="flex items-center gap-3 bg-emerald-900/20 border border-emerald-800/40 rounded-xl px-5 py-3 mb-6">
@@ -193,7 +223,18 @@ export default function ProjectDetailPage() {
                 <RiskBadge risk={detail.risk} />
               )}
             </div>
-            <p className="text-sm text-slate-500 dark:text-slate-400">{course?.code} — {course?.name}</p>
+            <div className="flex items-center gap-2 mt-0.5">
+              {isSharedCourse ? (
+                <span className="text-sm text-slate-400">
+                  Shared project course:{' '}
+                  <span className="text-slate-200 font-medium">
+                    {course?.code} — {course?.name}
+                  </span>
+                </span>
+              ) : (
+                <p className="text-sm text-slate-400">{course?.code} — {course?.name}</p>
+              )}
+            </div>
             <div className="flex items-center gap-4 mt-2 text-xs text-slate-500 dark:text-slate-400">
               {isCompleted && completedAt ? (
                 <span>Completed: {formatFullDate(completedAt)}</span>
@@ -201,7 +242,7 @@ export default function ProjectDetailPage() {
                 <span>Due: {formatFullDate(project.deadline)}</span>
               )}
               <span>Team: {members.length} member{members.length !== 1 ? 's' : ''}</span>
-              <span>Your Role: <span className="text-slate-700 dark:text-slate-200 font-medium capitalize">{userRole}</span></span>
+              <span>Your Role: <span className="text-slate-200 font-medium">{ROLE_DISPLAY[userRole]}</span></span>
             </div>
           </div>
 
