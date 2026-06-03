@@ -113,11 +113,14 @@ export function deriveNotifications(
   }
 
   // ── Project deadline notifications ──
+  // Phase 6A #10: window is 3 days, not 7 — only the very-soon project
+  // deadlines belong in the notifications panel. Anything further out
+  // is visible in Calendar / Projects already.
   for (const p of data.projects) {
     const proj = p.project
     if (proj.status !== 'active') continue
     const days = daysUntil(proj.deadline, today)
-    if (days < 0 || days > 7) continue
+    if (days < 0 || days > 3) continue
 
     // If all tasks done (progress 100%), skip — same logic as the bot.
     const taskCount = p.tasks.length

@@ -15,6 +15,11 @@ interface AddProjectTaskModalProps {
   onClose: () => void
   onSubmit: (data: AddProjectTaskData) => Promise<void>
   members: Member[]
+  /** ISO date (YYYY-MM-DD) of the parent project's deadline.
+   *  Used both as an HTML `max` constraint on the date input and as
+   *  a server-side-style guard in validate() so a task can never be
+   *  scheduled after the project itself is due. */
+  projectDeadline: string
 }
 
 export interface AddProjectTaskData {
@@ -39,7 +44,7 @@ const EMPTY_FORM: AddProjectTaskData = {
   title: '', assigned_to: '', due_date: '', difficulty: 3, notes: '', links: [], checklist: [],
 }
 
-export function AddProjectTaskModal({ open, onClose, onSubmit, members }: AddProjectTaskModalProps) {
+export function AddProjectTaskModal({ open, onClose, onSubmit, members, projectDeadline }: AddProjectTaskModalProps) {
   const [form, setForm] = useState<AddProjectTaskData>(EMPTY_FORM)
   const [errors, setErrors] = useState<Partial<Record<'title' | 'due_date' | 'links' | 'assigned_to', string>>>({})
   const [submitting, setSubmitting] = useState(false)
@@ -65,7 +70,14 @@ export function AddProjectTaskModal({ open, onClose, onSubmit, members }: AddPro
   const validate = () => {
     const e: typeof errors = {}
     if (!form.title.trim()) e.title = 'Task title is required'
-    if (!form.due_date) e.due_date = 'Due date is required'
+    if (!form.due_date) {
+      e.due_date = 'Due date is required'
+    } else if (projectDeadline && form.due_date > projectDeadline) {
+      // Phase 6A #7: a task's due_date may not fall after the parent
+      // project's deadline — otherwise the project could "finish" with
+      // unfinishable tasks still scheduled in the future.
+      e.due_date = 'Task due date cannot be later than the project deadline.'
+    }
     // Phase 5G #9: every project task must have an assignee — keeps
     // accountability clear and prevents 'orphan' tasks no one owns.
     if (!form.assigned_to) e.assigned_to = 'Please assign this task to a member.'
@@ -118,7 +130,11 @@ export function AddProjectTaskModal({ open, onClose, onSubmit, members }: AddPro
             label="Due Date"
             type="date"
             value={form.due_date}
-            onChange={(e) => setForm({ ...form, due_date: e.target.value })}
+            max={projectDeadline || undefined}
+            onChange={(e) => {
+              setForm({ ...form, due_date: e.target.value })
+              setErrors((prev) => ({ ...prev, due_date: undefined }))
+            }}
             error={errors.due_date}
           />
           <SelectInput

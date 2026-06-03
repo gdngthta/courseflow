@@ -358,6 +358,7 @@ export default function ProjectDetailPage() {
             onClose={() => setShowAddTask(false)}
             onSubmit={handleAddTask}
             members={memberOptions}
+            projectDeadline={project.deadline}
           />
 
           <InviteMemberModal
