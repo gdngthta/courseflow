@@ -522,8 +522,11 @@ $$;
 grant execute on function public.mark_all_notifications_read() to authenticated;
 
 -- ── 12. Updated RPCs from phase6c2.sql (adds notifications) ─
--- These replace the earlier versions so role-change and remove
--- now create in-app notifications for the affected member.
+-- DROP first to avoid "cannot change return type of existing function" errors
+-- when Postgres sees a signature difference from the phase6c2 definitions.
+drop function if exists public.update_project_member_role(uuid, uuid, text);
+drop function if exists public.remove_project_member(uuid, uuid);
+drop function if exists public.leave_project(uuid);
 
 create or replace function public.update_project_member_role(
   p_project_id      uuid,
