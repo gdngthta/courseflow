@@ -47,6 +47,24 @@ CourseFlow combines both into one place. When a group project task is assigned t
 | Dark-only UI (Phase 5G — light mode removed) | ✅ |
 | Reopen completed project (leader only) | ✅ |
 | Auto-derived task progress from checklist when present | ✅ |
+| Full mobile responsive support (Phase 6H) | ✅ |
+
+---
+
+## Responsive Support
+
+CourseFlow runs on mobile, tablet, and desktop:
+
+| Viewport | Navigation | Notes |
+|---|---|---|
+| Mobile (360–430px) | Hamburger → slide-in drawer | Full-screen task drawer, bottom-sheet modals, search overlay |
+| Tablet (768px) | Hamburger → slide-in drawer | Wider content area |
+| Desktop (1366px+) | Fixed left sidebar | Classic two/three-column layouts |
+
+- **Kanban board** — horizontal scroll on mobile; "Move to" status dropdown works on touch
+- **Calendar** — compact grid (dot indicators) on mobile + agenda panel below
+- **Search** — icon on mobile opens full-screen overlay
+- **No horizontal overflow** — `overflow-x: hidden` on html/body; intentional scrollers use `overflow-x-auto`
 
 ---
 
@@ -54,7 +72,7 @@ CourseFlow combines both into one place. When a group project task is assigned t
 
 - **Framework**: Next.js 16 (App Router)
 - **Language**: TypeScript
-- **Styling**: Tailwind CSS v4
+- **Styling**: Tailwind CSS v4 (mobile-first responsive utilities)
 - **Backend/Auth/DB**: Supabase (PostgreSQL + Auth + RLS)
 - **Icons**: lucide-react
 

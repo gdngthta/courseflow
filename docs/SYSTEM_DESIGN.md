@@ -91,25 +91,61 @@ receives at most one reminder per day.
 does not mount AuthProvider/DataProvider. proxy.ts treats it as public —
 only the routes in PROTECTED_PATHS require an authenticated session.
 
+## Responsive Layout (Phase 6H)
+
+CourseFlow supports mobile (360–430px), tablet (768px), and desktop (1366px+).
+Tailwind breakpoints: base = mobile-first, `sm` = 640px, `lg` = 1024px.
+
+### Mobile Navigation
+
+```
+Mobile (<lg):
+  Topbar — full-width (left-0), hamburger button on left
+  Sidebar — hidden off-screen, slides in from left as a drawer
+             Overlay backdrop closes it on tap
+  MobileSidebarContext — shared open/close state (Topbar ↔ Sidebar)
+
+Desktop (lg+):
+  Topbar — left-60 (sidebar offset)
+  Sidebar — always visible, fixed left-0 w-60
+  Main content — pl-60
+```
+
+### Mobile UI Patterns
+
+| Component | Mobile | Desktop |
+|---|---|---|
+| Sidebar | Slide-in drawer (translate-x) | Always visible fixed |
+| TaskDetailModal | Full-screen (inset-0) | Right-side panel (w-600px) |
+| Modal (base) | Bottom sheet (rounded-t-2xl) | Centred dialog |
+| GlobalSearch | Icon → full-screen overlay | Persistent input in topbar |
+| NotificationsPanel | Full-width panel | 22rem dropdown |
+| Calendar | Stacked column (lg: side-by-side) | Two-column layout |
+| Calendar cells | Dot indicators only | Full event pills |
+| Settings nav | Horizontal tab row | Vertical left nav |
+| Landing navbar | Hamburger → dropdown sheet | Horizontal nav |
+
 ## Component Structure
 
 ```
 components/
   layout/
-    Sidebar.tsx            Fixed left nav (240px) — reads user from AuthContext
-    Topbar.tsx             Fixed top bar with page title
+    Sidebar.tsx            Fixed left nav (lg+) / slide-in drawer (mobile)
+    Topbar.tsx             Fixed top bar — hamburger on mobile, left-60 on lg+
+    GlobalSearch.tsx       Persistent input (sm+) / icon+overlay (mobile)
+    NotificationsPanel.tsx Bell + dropdown — full-width on mobile
   ui/
     Badge.tsx              RiskBadge, StatusBadge, TypeBadge, RoleBadge
     Button.tsx             Primary, Secondary, Destructive, Ghost
     ProgressBar.tsx        Visual progress indicator
-    Modal.tsx              Reusable modal wrapper
+    Modal.tsx              Bottom sheet (mobile) / centred dialog (sm+)
     EmptyState.tsx         Empty state placeholders
     Input.tsx              Styled input + label
     SelectInput.tsx        Styled select + label
     ConfirmModal.tsx       Generic confirmation modal
   tasks/
     TaskCard.tsx           Task card (Dashboard, My Tasks, Calendar)
-    TaskDetailModal.tsx    Task detail drawer
+    TaskDetailModal.tsx    Full-screen drawer (mobile) / right-panel (sm+)
     TaskFormModal.tsx      Create/edit personal task
   projects/
     ProjectCard.tsx        Project card (Projects list)
@@ -119,6 +155,8 @@ components/
     CourseFormModal.tsx    Add/edit course
   brand/
     OwlMascot.tsx          Owl SVG mascot (Dashboard tip card)
+contexts/
+  MobileSidebarContext.tsx Shared open/close state for mobile sidebar drawer
 ```
 
 ## Data Flow — Auth & Session

@@ -165,12 +165,29 @@
 - FR-SET-2: User can toggle light/dark theme (UI only — dark mode always on in MVP)
 - FR-SET-3: User can log out (redirected to /login)
 
+### Mobile Responsive Support ✅ (Phase 6H)
+- FR-MOB-1: App is usable on mobile (360–430px), tablet (768px), and desktop (1366px+)
+- FR-MOB-2: Sidebar collapses into a slide-in drawer on mobile; hamburger button in Topbar toggles it
+- FR-MOB-3: Overlay backdrop closes the mobile drawer; nav item taps also close it
+- FR-MOB-4: Topbar is full-width on mobile (left-0) and sidebar-offset on lg+ (left-60)
+- FR-MOB-5: Global search is an icon on mobile that opens a full-screen search overlay
+- FR-MOB-6: Notifications panel is full-width on mobile, 22rem dropdown on sm+
+- FR-MOB-7: Task Detail drawer is full-screen on mobile (inset-0), right-side panel on sm+
+- FR-MOB-8: Modal base component is a bottom sheet on mobile, centred dialog on sm+
+- FR-MOB-9: Calendar stacks to single-column on mobile; calendar cells show dots only on mobile, full pills on sm+
+- FR-MOB-10: Settings section nav is a horizontal tab strip on mobile, vertical nav on sm+
+- FR-MOB-11: Landing navbar shows hamburger on mobile with full-width dropdown sheet
+- FR-MOB-12: Kanban uses horizontal scroll with fixed-width (w-72) columns; "Move to" status dropdown works on touch
+- FR-MOB-13: All pages use p-4 sm:p-6 padding; no accidental horizontal overflow
+- FR-MOB-14: Course selector strip is horizontally scrollable on mobile with scrollbar-none
+- FR-MOB-15: html/body overflow-x: hidden prevents accidental horizontal page scroll
+
 ---
 
 ## Non-Functional Requirements
 
 - NFR-1: App should load initial page in under 3 seconds on standard connection
-- NFR-2: UI must work on desktop (1280px+); mobile is stretch goal
+- NFR-2: UI works on mobile (360px+), tablet (768px), and desktop (1280px+)
 - NFR-3: All data queries must be scoped to the authenticated user
 - NFR-4: No user can view or modify another user's personal tasks
 - NFR-5: Project members can only see and act within projects they belong to
