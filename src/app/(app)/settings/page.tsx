@@ -90,21 +90,23 @@ export default function SettingsPage() {
   return (
     <>
       <Topbar title="Settings" />
-      <div className="p-6">
-        <div className="mb-6">
+      <div className="p-4 sm:p-6">
+        <div className="mb-4 sm:mb-6">
           <h2 className="text-xl font-semibold text-white">Settings</h2>
-          <p className="text-sm text-slate-400 mt-0.5">Manage your account and preferences.</p>
+          <p className="text-sm text-slate-400 mt-0.5 hidden sm:block">Manage your account and preferences.</p>
         </div>
 
-        <div className="flex gap-6 max-w-3xl">
-          {/* Left nav */}
-          <div className="w-44 flex-shrink-0">
-            <nav className="flex flex-col gap-1">
+        {/* Tabs on mobile, vertical nav on sm+ */}
+        <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 max-w-3xl">
+          {/* Section nav */}
+          <div className="sm:w-44 sm:flex-shrink-0">
+            {/* Mobile: horizontal tabs */}
+            <nav className="flex sm:flex-col gap-1 border-b border-slate-800 sm:border-b-0 pb-3 sm:pb-0 overflow-x-auto">
               {SECTIONS.map((s) => (
                 <button
                   key={s.id}
                   onClick={() => setActiveSection(s.id)}
-                  className={`text-left px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                  className={`text-left px-4 py-2 sm:py-2.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${
                     activeSection === s.id
                       ? 'bg-indigo-600/20 text-indigo-400'
                       : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'
@@ -117,9 +119,9 @@ export default function SettingsPage() {
           </div>
 
           {/* Content */}
-          <div className="flex-1">
+          <div className="flex-1 min-w-0">
             {activeSection === 'profile' && (
-              <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
+              <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 sm:p-6">
                 <h3 className="text-sm font-semibold text-white mb-5">Profile Information</h3>
 
                 {/* Avatar */}
@@ -127,15 +129,15 @@ export default function SettingsPage() {
                   <div className="w-16 h-16 rounded-full bg-indigo-700 flex items-center justify-center flex-shrink-0">
                     <span className="text-white text-xl font-bold">{initials}</span>
                   </div>
-                  <div>
-                    <p className="text-sm font-medium text-white">
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-white truncate">
                       {firstName || lastName ? `${firstName} ${lastName}`.trim() : email}
                     </p>
                     <p className="text-xs text-slate-400">Student</p>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4 mb-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                   <Input
                     label="First Name"
                     value={firstName}
@@ -172,7 +174,7 @@ export default function SettingsPage() {
             {activeSection === 'reminders' && <TelegramRemindersSection />}
 
             {activeSection === 'account' && (
-              <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
+              <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 sm:p-6">
                 <h3 className="text-sm font-semibold text-white mb-2">Account</h3>
                 <p className="text-sm text-slate-400 mb-6">Signed in as <span className="text-slate-300">{email}</span></p>
                 <Button

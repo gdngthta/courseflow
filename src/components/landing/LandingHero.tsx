@@ -19,7 +19,7 @@ export function LandingHero() {
         className="absolute top-40 right-0 w-72 h-72 rounded-full bg-violet-400/10 dark:bg-violet-600/10 blur-3xl pointer-events-none"
       />
 
-      <div className="max-w-6xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center relative">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center relative">
         {/* Left: copy + CTAs */}
         <div className="cf-fade-up">
           <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-50 dark:bg-indigo-900/30 border border-indigo-200 dark:border-indigo-800/50 text-xs font-medium text-indigo-700 dark:text-indigo-300 mb-6">

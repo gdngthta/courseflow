@@ -185,21 +185,21 @@ export default function CalendarPage() {
   return (
     <>
       <Topbar title="Calendar" />
-      <div className="p-6">
+      <div className="p-4 sm:p-6">
         {/* Page header */}
         <div className="mb-6">
           <h2 className="text-xl font-semibold text-white">Calendar</h2>
           <p className="text-sm text-slate-400 mt-0.5">View your tasks and deadlines by date.</p>
         </div>
 
-        {/* Two-column layout */}
-        <div className="flex gap-6 items-start">
+        {/* Layout: stacks on mobile, side-by-side on lg+ */}
+        <div className="flex flex-col lg:flex-row gap-4 sm:gap-6 items-start">
 
           {/* ── Calendar column ── */}
           <div className="flex-1 min-w-0">
 
             {/* Controls row */}
-            <div className="flex items-center justify-between mb-4 gap-4 flex-wrap">
+            <div className="flex flex-wrap items-center justify-between mb-4 gap-2 sm:gap-4">
               {/* Month nav */}
               <div className="flex items-center gap-1.5">
                 <button
@@ -288,7 +288,7 @@ export default function CalendarPage() {
                       key={key}
                       onClick={() => setSelectedDate(key)}
                       className={[
-                        'min-h-[84px] p-2 cursor-pointer transition-colors',
+                        'min-h-[56px] sm:min-h-[84px] p-1 sm:p-2 cursor-pointer transition-colors',
                         idx % 7 !== 6 ? 'border-r border-slate-800' : '',
                         idx < 35 ? 'border-b border-slate-800' : '',
                         isSelected ? 'bg-slate-800/60' : 'hover:bg-slate-800/30',
@@ -311,27 +311,44 @@ export default function CalendarPage() {
                         </span>
                       </div>
 
-                      {/* Item pills */}
+                      {/* Item pills — full on sm+, dots only on mobile */}
                       <div className="flex flex-col gap-0.5">
-                        {visible.map((item, i) => (
-                          <div
-                            key={i}
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              if (item.kind === 'task') setSelectedTask(item.data)
-                              else router.push(`/projects/${item.id}`)
-                            }}
-                            className={`flex items-center gap-1 px-1 py-0.5 rounded text-[10px] font-medium truncate transition-colors ${itemPillClass(item)}`}
-                          >
-                            <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${itemDotColor(item)}`} />
-                            <span className="truncate leading-tight">
-                              {item.kind === 'task' ? item.data.title : item.name}
-                            </span>
+                        {/* Mobile: just dots */}
+                        {items.length > 0 && (
+                          <div className="flex sm:hidden flex-wrap gap-0.5 mt-0.5">
+                            {items.slice(0, 4).map((item, i) => (
+                              <span
+                                key={i}
+                                className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${itemDotColor(item)}`}
+                              />
+                            ))}
+                            {items.length > 4 && (
+                              <span className="text-[8px] text-slate-500">+{items.length - 4}</span>
+                            )}
                           </div>
-                        ))}
-                        {extra > 0 && (
-                          <span className="text-[10px] text-slate-500 pl-1 leading-tight">+{extra} more</span>
                         )}
+                        {/* Desktop: full pills */}
+                        <div className="hidden sm:flex flex-col gap-0.5">
+                          {visible.map((item, i) => (
+                            <div
+                              key={i}
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                if (item.kind === 'task') setSelectedTask(item.data)
+                                else router.push(`/projects/${item.id}`)
+                              }}
+                              className={`flex items-center gap-1 px-1 py-0.5 rounded text-[10px] font-medium truncate transition-colors ${itemPillClass(item)}`}
+                            >
+                              <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${itemDotColor(item)}`} />
+                              <span className="truncate leading-tight">
+                                {item.kind === 'task' ? item.data.title : item.name}
+                              </span>
+                            </div>
+                          ))}
+                          {extra > 0 && (
+                            <span className="text-[10px] text-slate-500 pl-1 leading-tight">+{extra} more</span>
+                          )}
+                        </div>
                       </div>
                     </div>
                   )
@@ -355,8 +372,8 @@ export default function CalendarPage() {
             </div>
           </div>
 
-          {/* ── Right sidebar ── */}
-          <div className="w-72 flex-shrink-0 flex flex-col gap-4">
+          {/* ── Right sidebar / bottom panel ── */}
+          <div className="w-full lg:w-72 lg:flex-shrink-0 flex flex-col gap-4">
 
             {/* Selected date details */}
             <div className="bg-slate-900 border border-slate-800 rounded-xl p-4">

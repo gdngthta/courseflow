@@ -242,7 +242,7 @@ export function NotificationsPanel() {
         </button>
 
         {open && (
-          <div className="absolute top-full right-0 mt-2 w-[22rem] max-h-[32rem] bg-slate-900 border border-slate-700 rounded-xl shadow-xl z-50 flex flex-col">
+          <div className="absolute top-full right-0 mt-2 w-[calc(100vw-2rem)] sm:w-[22rem] max-h-[80vh] sm:max-h-[32rem] bg-slate-900 border border-slate-700 rounded-xl shadow-xl z-50 flex flex-col">
             {/* Header */}
             <div className="flex items-center justify-between px-4 py-3 border-b border-slate-800">
               <p className="text-sm font-semibold text-white">

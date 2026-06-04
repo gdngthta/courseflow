@@ -164,7 +164,7 @@ export function TelegramRemindersSection() {
     <div className="flex flex-col gap-5">
 
       {/* ── Card 1: Telegram Integration ── */}
-      <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
+      <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 sm:p-6">
         <div className="flex items-start gap-3 mb-5">
           <BotMessageSquare size={18} className="text-indigo-400 flex-shrink-0 mt-0.5" />
           <div>

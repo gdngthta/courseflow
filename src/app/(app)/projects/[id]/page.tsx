@@ -143,7 +143,7 @@ export default function ProjectDetailPage() {
   return (
     <>
       <Topbar title="Projects" />
-      <div className="p-6 max-w-[1200px]">
+      <div className="p-4 sm:p-6 max-w-[1200px]">
         {/* Back */}
         <Link href="/projects" className="text-sm text-slate-400 hover:text-slate-200 transition-colors mb-5 inline-flex items-center gap-1">
           ← Back to Projects
@@ -211,7 +211,7 @@ export default function ProjectDetailPage() {
         )}
 
         {/* Project header */}
-        <div className="flex items-start justify-between gap-4 mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4 mb-4 sm:mb-6">
           <div>
             <div className="flex items-center gap-2 mb-1">
               <h2 className="text-xl font-semibold text-white">{effectiveName}</h2>
@@ -251,16 +251,16 @@ export default function ProjectDetailPage() {
           {!isCompleted && userRole === 'leader' && (
             <button
               onClick={() => setShowCompleteModal(true)}
-              className="flex-shrink-0 flex items-center gap-2 px-4 py-2 bg-emerald-700 hover:bg-emerald-600 text-white text-sm font-medium rounded-lg transition-colors"
+              className="flex-shrink-0 self-start flex items-center gap-2 px-4 py-2 bg-emerald-700 hover:bg-emerald-600 text-white text-sm font-medium rounded-lg transition-colors"
             >
               <CheckCircle2 size={15} />
-              Mark as Completed
+              <span className="hidden xs:inline">Mark as </span>Completed
             </button>
           )}
         </div>
 
         {/* Overall progress */}
-        <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 mb-6">
+        <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 sm:p-5 mb-4 sm:mb-6">
           <div className="flex items-center justify-between mb-3">
             <div>
               <p className="text-sm font-semibold text-white">Overall Progress</p>

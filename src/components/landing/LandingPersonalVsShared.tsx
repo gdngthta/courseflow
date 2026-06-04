@@ -8,7 +8,7 @@ import { User, Users, ArrowDown } from 'lucide-react'
 export function LandingPersonalVsShared() {
   return (
     <section id="about" className="py-20">
-      <div className="max-w-6xl mx-auto px-6">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6">
         <div className="max-w-2xl mb-10">
           <p className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider mb-3">
             Personal &amp; Shared, side by side

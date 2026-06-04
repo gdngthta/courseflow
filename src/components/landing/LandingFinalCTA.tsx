@@ -5,8 +5,8 @@ import { OwlMascot } from '@/components/brand/OwlMascot'
 export function LandingFinalCTA() {
   return (
     <section className="py-20">
-      <div className="max-w-3xl mx-auto px-6">
-        <div className="relative bg-gradient-to-br from-indigo-600 to-violet-600 rounded-3xl p-10 md:p-14 text-center overflow-hidden">
+      <div className="max-w-3xl mx-auto px-4 sm:px-6">
+        <div className="relative bg-gradient-to-br from-indigo-600 to-violet-600 rounded-3xl p-6 sm:p-10 md:p-14 text-center overflow-hidden">
           {/* Subtle decorative circles */}
           <div aria-hidden className="absolute -top-12 -right-12 w-48 h-48 rounded-full bg-white/10 blur-2xl" />
           <div aria-hidden className="absolute -bottom-16 -left-12 w-56 h-56 rounded-full bg-white/10 blur-2xl" />

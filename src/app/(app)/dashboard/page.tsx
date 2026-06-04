@@ -126,9 +126,9 @@ export default function DashboardPage() {
   return (
     <>
       <Topbar title="Dashboard" />
-      <div className="p-6 max-w-[1400px]">
+      <div className="p-4 sm:p-6 max-w-[1400px]">
         {/* Greeting */}
-        <div className="mb-6">
+        <div className="mb-4 sm:mb-6">
           <h2 className="text-xl font-semibold text-white">
             {timeGreeting}, {firstName} 👋
           </h2>
@@ -167,25 +167,25 @@ export default function DashboardPage() {
         )}
 
         {/* Summary cards */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
           {summaryCards.map((card) => (
             <div
               key={card.label}
-              className={`bg-slate-900 border rounded-xl p-4 ${card.accent ? 'border-red-500/30' : 'border-slate-800'}`}
+              className={`bg-slate-900 border rounded-xl p-3 sm:p-4 ${card.accent ? 'border-red-500/30' : 'border-slate-800'}`}
             >
-              <p className="text-xs text-slate-400">{card.label}</p>
-              <p className={`text-3xl font-bold mt-1 ${card.accent && card.value > 0 ? 'text-red-400' : 'text-white'}`}>
+              <p className="text-xs text-slate-400 leading-tight">{card.label}</p>
+              <p className={`text-2xl sm:text-3xl font-bold mt-1 ${card.accent && card.value > 0 ? 'text-red-400' : 'text-white'}`}>
                 {card.value}
               </p>
-              <p className="text-xs text-slate-500 mt-0.5">{card.sub}</p>
+              <p className="text-xs text-slate-500 mt-0.5 leading-tight">{card.sub}</p>
             </div>
           ))}
         </div>
 
         {/* Main content grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
           {/* Left col: Today's Priority + Critical Risk */}
-          <div className="lg:col-span-2 flex flex-col gap-6">
+          <div className="lg:col-span-2 flex flex-col gap-4 sm:gap-6">
             <section>
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-sm font-semibold text-white inline-flex items-center gap-1.5">

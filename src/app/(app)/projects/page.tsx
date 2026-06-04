@@ -60,18 +60,18 @@ export default function ProjectsPage() {
   return (
     <>
       <Topbar title="Projects" />
-      <div className="p-6">
-        <div className="flex items-start justify-between gap-4 mb-6">
-          <div>
+      <div className="p-4 sm:p-6">
+        <div className="flex items-start justify-between gap-3 mb-4 sm:mb-6">
+          <div className="min-w-0">
             <h2 className="text-xl font-semibold text-white">Projects</h2>
-            <p className="text-sm text-slate-400 mt-0.5">Shared workspaces for group assignments and projects.</p>
+            <p className="text-sm text-slate-400 mt-0.5 hidden sm:block">Shared workspaces for group assignments and projects.</p>
           </div>
           {activeTab === 'active' && (
             <button
               onClick={() => setShowCreateModal(true)}
-              className="flex-shrink-0 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-lg transition-colors"
+              className="flex-shrink-0 px-3 sm:px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-lg transition-colors whitespace-nowrap"
             >
-              + Create Project
+              + Create
             </button>
           )}
         </div>
@@ -104,7 +104,7 @@ export default function ProjectsPage() {
         )}
 
         {/* Tabs */}
-        <div className="flex items-center justify-between gap-4 mb-6 flex-wrap">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 mb-4 sm:mb-6">
           <div className="flex items-center gap-1 border border-slate-800 rounded-lg p-1 bg-slate-900">
             <button
               onClick={() => setActiveTab('active')}
@@ -131,8 +131,8 @@ export default function ProjectsPage() {
           </div>
 
           {/* Search + filter */}
-          <div className="flex items-center gap-3 flex-wrap">
-            <div className="relative min-w-48">
+          <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
+            <div className="relative flex-1 sm:flex-none sm:min-w-48">
               <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
               <input
                 type="text"

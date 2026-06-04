@@ -131,14 +131,16 @@ export function TaskDetailModal({
         aria-hidden="true"
       />
 
-      {/* Drawer panel */}
+      {/* Drawer panel — full-screen on mobile, right-side panel on sm+ */}
       <div
-        className={`fixed inset-y-0 right-0 z-50 flex flex-col w-[600px] max-w-[92vw] bg-slate-900 border-l border-slate-800 shadow-2xl transition-transform duration-300 ease-out ${isEntered ? 'translate-x-0' : 'translate-x-full'}`}
+        className={`fixed z-50 flex flex-col bg-slate-900 shadow-2xl transition-transform duration-300 ease-out
+          inset-0 sm:inset-y-0 sm:left-auto sm:right-0 sm:w-[600px] sm:max-w-[92vw] sm:border-l sm:border-slate-800
+          ${isEntered ? 'translate-x-0' : 'translate-x-full'}`}
         role="dialog"
         aria-modal="true"
       >
         {/* ── Sticky header ── */}
-        <div className="flex-shrink-0 flex items-center justify-between px-6 py-4 border-b border-slate-800 bg-slate-900">
+        <div className="flex-shrink-0 flex items-center justify-between px-4 sm:px-6 py-4 border-b border-slate-800 bg-slate-900">
           <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Task Details</p>
           <button
             onClick={onClose}
@@ -151,7 +153,7 @@ export function TaskDetailModal({
 
         {/* ── Scrollable content ── */}
         <div className="flex-1 overflow-y-auto overscroll-contain">
-          <div className="px-6 py-5 space-y-6">
+          <div className="px-4 sm:px-6 py-5 space-y-6">
 
             {/* Title + source */}
             <div>
@@ -316,7 +318,7 @@ export function TaskDetailModal({
 
         {/* ── Sticky footer (actions) ── */}
         {hasActions && (
-          <div className="flex-shrink-0 flex items-center justify-between px-6 py-4 border-t border-slate-800 bg-slate-900">
+          <div className="flex-shrink-0 flex items-center justify-between px-4 sm:px-6 py-4 border-t border-slate-800 bg-slate-900">
             <div>
               {canDelete && onDelete && (
                 <Button variant="destructive" size="sm" onClick={() => setShowConfirm(true)}>

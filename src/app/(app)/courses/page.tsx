@@ -104,23 +104,23 @@ export default function CoursesPage() {
   return (
     <>
       <Topbar title="Courses" />
-      <div className="p-6">
-        <div className="flex items-start justify-between gap-4 mb-6">
-          <div>
+      <div className="p-4 sm:p-6">
+        <div className="flex items-start justify-between gap-3 mb-4 sm:mb-6">
+          <div className="min-w-0">
             <h2 className="text-xl font-semibold text-white">My Courses</h2>
-            <p className="text-sm text-slate-400 mt-0.5">Manage the courses you are taking this semester.</p>
+            <p className="text-sm text-slate-400 mt-0.5 hidden sm:block">Manage the courses you are taking this semester.</p>
           </div>
           <button
             onClick={() => setShowAddModal(true)}
-            className="flex-shrink-0 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-lg transition-colors"
+            className="flex-shrink-0 px-3 sm:px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-lg transition-colors whitespace-nowrap"
           >
             + Add Course
           </button>
         </div>
 
         {/* Tabs + search */}
-        <div className="flex items-center justify-between gap-4 mb-6 flex-wrap">
-          <div className="flex items-center gap-1 border border-slate-800 rounded-lg p-1 bg-slate-900">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 mb-4 sm:mb-6">
+          <div className="flex items-center gap-1 border border-slate-800 rounded-lg p-1 bg-slate-900 self-start">
             {(['active', 'archived'] as const).map((tab) => (
               <button
                 key={tab}
@@ -133,7 +133,7 @@ export default function CoursesPage() {
               </button>
             ))}
           </div>
-          <div className="relative flex-1 min-w-48 max-w-xs">
+          <div className="relative flex-1 sm:min-w-48 sm:max-w-xs">
             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
             <input
               type="text"

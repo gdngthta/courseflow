@@ -61,7 +61,7 @@ const FEATURES: Feature[] = [
 export function LandingFeatures() {
   return (
     <section id="features" className="py-20 bg-slate-50/60 dark:bg-slate-950/40 border-y border-slate-200 dark:border-slate-800">
-      <div className="max-w-6xl mx-auto px-6">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6">
         <div className="max-w-2xl mb-12">
           <p className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider mb-3">
             Why CourseFlow
