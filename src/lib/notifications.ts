@@ -9,6 +9,7 @@ export type NotificationType =
   | 'due_today'
   | 'due_tomorrow'
   | 'project_deadline'
+  | 'member_added'
 
 export type NotificationEntity = 'personal_task' | 'project_task' | 'project'
 
@@ -35,6 +36,13 @@ const PRIORITY: Record<NotificationType, number> = {
   due_today: 2,
   due_tomorrow: 3,
   project_deadline: 4,
+  member_added: 5,
+}
+
+const ROLE_LABEL: Record<string, string> = {
+  leader: 'Leader',
+  admin: 'Editor',
+  member: 'Viewer',
 }
 
 function todayISO(today: Date = new Date()): string {
@@ -137,6 +145,33 @@ export function deriveNotifications(
       due_date: proj.deadline,
       href: `/projects/${proj.id}`,
       priority: PRIORITY.project_deadline,
+    })
+  }
+
+  // ── Project membership notifications (recently added) ──
+  // Show a one-time informational notification when the current user
+  // was added to a project within the last 7 days (and didn't create it).
+  for (const p of data.projects) {
+    const proj = p.project
+    // Skip if user created this project (they're the original leader)
+    if (proj.created_by === data.userId) continue
+    const myMembership = p.members.find((m) => m.user_id === data.userId)
+    if (!myMembership) continue
+    const joinedDateISO = myMembership.joined_at.split('T')[0]
+    // daysUntil returns negative for past dates; -7..0 means "within last 7 days"
+    const daysSinceJoined = daysUntil(joinedDateISO, today)
+    if (daysSinceJoined < -7 || daysSinceJoined > 0) continue
+    const roleLabel = ROLE_LABEL[myMembership.role] ?? 'member'
+    out.push({
+      id: `member_added-project-${proj.id}-${joinedDateISO}`,
+      type: 'member_added',
+      entity: 'project',
+      entityId: proj.id,
+      title: `Added to "${proj.name}"`,
+      subtitle: `You joined as ${roleLabel}`,
+      due_date: joinedDateISO,
+      href: `/projects/${proj.id}`,
+      priority: PRIORITY.member_added,
     })
   }
 

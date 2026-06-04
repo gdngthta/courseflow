@@ -62,6 +62,9 @@ interface DataContextValue {
   updateProjectTaskNotes: (id: string, notes: string) => Promise<void>
   updateProjectTaskChecklist: (id: string, checklist: TaskChecklistItem[]) => Promise<void>
   inviteMember: (projectId: string, email: string, role: 'member' | 'admin') => Promise<InviteResult>
+  updateMemberRole: (projectId: string, targetUserId: string, newRole: 'admin' | 'member') => Promise<InviteResult>
+  removeMember: (projectId: string, targetUserId: string) => Promise<InviteResult>
+  leaveProject: (projectId: string) => Promise<InviteResult>
 }
 
 const DataContext = createContext<DataContextValue | null>(null)
@@ -312,6 +315,33 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     [refetchProjects]
   )
 
+  const updateMemberRole = useCallback(
+    async (projectId: string, targetUserId: string, newRole: 'admin' | 'member') => {
+      const result = await projectMembersApi.updateMemberRole(projectId, targetUserId, newRole)
+      if (result.ok) await refetchProjects()
+      return result
+    },
+    [refetchProjects]
+  )
+
+  const removeMember = useCallback(
+    async (projectId: string, targetUserId: string) => {
+      const result = await projectMembersApi.removeMember(projectId, targetUserId)
+      if (result.ok) await refetchProjects()
+      return result
+    },
+    [refetchProjects]
+  )
+
+  const leaveProject = useCallback(
+    async (projectId: string) => {
+      const result = await projectMembersApi.leaveProject(projectId)
+      if (result.ok) await refetchProjects()
+      return result
+    },
+    [refetchProjects]
+  )
+
   return (
     <DataContext.Provider
       value={{
@@ -343,6 +373,9 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
         updateProjectTaskNotes,
         updateProjectTaskChecklist,
         inviteMember,
+        updateMemberRole,
+        removeMember,
+        leaveProject,
       }}
     >
       {children}

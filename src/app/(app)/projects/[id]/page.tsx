@@ -3,14 +3,15 @@
 import { useState, useMemo } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
-import { ExternalLink, Plus, UserPlus, CheckCircle2, Lock, Info } from 'lucide-react'
+import { ExternalLink, Plus, CheckCircle2, Lock, Info } from 'lucide-react'
 import { Topbar } from '@/components/layout/Topbar'
 import { TaskCard } from '@/components/tasks/TaskCard'
 import { TaskDetailModal } from '@/components/tasks/TaskDetailModal'
 import { AddProjectTaskModal, type AddProjectTaskData } from '@/components/projects/AddProjectTaskModal'
 import { InviteMemberModal } from '@/components/projects/InviteMemberModal'
 import { CompleteProjectModal } from '@/components/projects/CompleteProjectModal'
-import { RiskBadge, RoleBadge } from '@/components/ui/Badge'
+import { MemberManagementPanel } from '@/components/projects/MemberManagementPanel'
+import { RiskBadge } from '@/components/ui/Badge'
 import { ProgressBar } from '@/components/ui/ProgressBar'
 import { useData } from '@/contexts/DataContext'
 import { toProjectDetail } from '@/lib/projectDerive'
@@ -32,7 +33,7 @@ export default function ProjectDetailPage() {
     userId, courses, projects, projectsLoading, error,
     addProjectTask, updateProjectTaskNotes, deleteProjectTask,
     markProjectTaskDone, completeProject, reopenProject, updateProjectTaskChecklist,
-    inviteMember,
+    inviteMember, updateMemberRole, removeMember, leaveProject,
   } = useData()
   const [reopening, setReopening] = useState(false)
 
@@ -322,35 +323,21 @@ export default function ProjectDetailPage() {
           {/* Right: members + links */}
           <div className="flex flex-col gap-5">
             {/* Members */}
-            <div className="bg-slate-900 border border-slate-800 rounded-xl p-5">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-sm font-semibold text-white">Members</h3>
-                {userRole === 'leader' && !isCompleted && (
-                  <button
-                    onClick={() => setShowInvite(true)}
-                    className="flex items-center gap-1 text-xs text-indigo-400 hover:text-indigo-300 transition-colors"
-                  >
-                    <UserPlus size={12} /> Add member
-                  </button>
-                )}
-              </div>
-              <div className="space-y-3">
-                {members.map((m) => (
-                  <div key={m.id} className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-indigo-700 flex items-center justify-center flex-shrink-0">
-                      <span className="text-white text-xs font-semibold">
-                        {m.name.charAt(0).toUpperCase()}
-                      </span>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm text-slate-200 truncate">{m.name}</p>
-                      <p className="text-xs text-slate-500 truncate">{m.email}</p>
-                    </div>
-                    <RoleBadge role={m.role} />
-                  </div>
-                ))}
-              </div>
-            </div>
+            <MemberManagementPanel
+              members={members}
+              tasks={tasks}
+              userId={userId}
+              userRole={userRole}
+              isCompleted={isCompleted}
+              onAddMember={() => setShowInvite(true)}
+              onChangeRole={(targetUserId, newRole) =>
+                updateMemberRole(project.id, targetUserId, newRole)
+              }
+              onRemoveMember={(targetUserId) =>
+                removeMember(project.id, targetUserId)
+              }
+              onLeaveProject={() => leaveProject(project.id)}
+            />
 
             {/* Important Links */}
             <div className="bg-slate-900 border border-slate-800 rounded-xl p-5">

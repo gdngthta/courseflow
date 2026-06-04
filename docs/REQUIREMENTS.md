@@ -26,8 +26,13 @@
 ### Group Projects ✅ (Phase 3C)
 - FR-PROJ-1: Users can create a project (becomes leader automatically via create_project RPC)
 - FR-PROJ-2: Project fields: name, course, deadline, optional description
-- FR-PROJ-3: Leaders can invite members by email (via invite_member RPC)
-- FR-PROJ-4: Roles: Leader, Admin, Member
+- FR-PROJ-3: Leaders can add members by email (via invite_member RPC). Member must have an existing CourseFlow account. No email is sent.
+- FR-PROJ-4: Roles: Leader (DB: leader) / Editor (DB: admin) / Viewer (DB: member)
+- FR-PROJ-5: Leader can change a member's role between Editor and Viewer (update_project_member_role RPC). Cannot change another leader's role.
+- FR-PROJ-6: Leader can remove an Editor or Viewer (remove_project_member RPC). Blocked if target has active assigned tasks. Cannot remove the only leader.
+- FR-PROJ-7: Editor and Viewer can leave a project (leave_project RPC). Blocked if user has active assigned tasks. Leader cannot leave if they are the only leader.
+- FR-PROJ-8: Removed/left members immediately lose access to the project and their assigned tasks are no longer shown in My Tasks.
+- FR-PROJ-9: In-app notification appears when a user is added to a project within the last 7 days (derived from project_members.joined_at, shown in notifications panel for 7 days).
 
 ### Project Tasks ✅ (Phase 3C)
 - FR-PTASK-1: Leaders/Admins can add project tasks with: title, assigned member, due date, difficulty, notes/instructions

@@ -280,3 +280,38 @@
 - [ ] My Tasks → Completed tab: only done tasks, no re-sort applied
 - [ ] Dashboard → Critical Risk section: no done tasks appear
 - [ ] Creating a task, marking it done, going back to All tab: done task is at the bottom
+
+### Phase 6C.2 — Project Member Management
+
+#### Role change
+- [ ] Leader opens Project Detail → Members panel shows each member's role badge
+- [ ] Leader sees shield/eye action icon beside each Editor/Viewer (not beside other leaders)
+- [ ] Clicking eye icon on an Editor → role changes to Viewer (badge updates)
+- [ ] Clicking shield icon on a Viewer → role changes to Editor (badge updates)
+- [ ] Leader cannot see role-change actions beside their own row
+- [ ] If role change fails (RPC error), inline error shown in panel
+
+#### Remove member
+- [ ] Leader clicks remove (UserMinus) icon → confirm modal appears
+- [ ] Confirm modal describes the member and warns about data loss
+- [ ] Member has active tasks: remove is blocked by RPC; error shown after dismiss
+- [ ] Member has no active tasks: removed successfully; member list updates
+- [ ] Cannot remove the only leader — RPC returns error, shown inline
+- [ ] Removed member no longer sees the project after refresh
+- [ ] Removed member's assigned tasks no longer appear in My Tasks
+
+#### Leave project
+- [ ] Viewer/Editor sees "Leave project" link at bottom of Members panel
+- [ ] Clicking → confirm modal appears
+- [ ] Confirm → if user has active tasks, RPC returns error, shown inline
+- [ ] Confirm → if no active tasks, user is removed; project disappears from their Projects list
+- [ ] Leader does not see "Leave project" link (they must transfer leadership first)
+- [ ] Only leader trying to leave → RPC returns "only leader" error
+
+#### In-app notification (member added)
+- [ ] User B is added to a project by User A
+- [ ] User B refreshes → notification bell shows "Added to project" notification
+- [ ] Notification reads: `Added to "[Project Name]"` with subtitle `You joined as Viewer`
+- [ ] Clicking notification → navigates to /projects/[id]
+- [ ] After 7 days the notification no longer appears (derived from joined_at)
+- [ ] Notification can be dismissed; dismissed state persists in localStorage

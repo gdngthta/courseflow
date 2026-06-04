@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { Bell, AlertTriangle, Clock, Calendar, X } from 'lucide-react'
+import { Bell, AlertTriangle, Clock, Calendar, UserPlus, X } from 'lucide-react'
 import { useData } from '@/contexts/DataContext'
 import {
   deriveNotifications,
@@ -23,6 +23,7 @@ const ICON: Record<NotificationType, React.ComponentType<{ size?: number; classN
   due_today: Clock,
   due_tomorrow: Clock,
   project_deadline: Calendar,
+  member_added: UserPlus,
 }
 
 const COLOR: Record<NotificationType, string> = {
@@ -31,6 +32,7 @@ const COLOR: Record<NotificationType, string> = {
   due_today: 'text-amber-400',
   due_tomorrow: 'text-amber-400',
   project_deadline: 'text-emerald-400',
+  member_added: 'text-indigo-400',
 }
 
 const LABEL: Record<NotificationType, string> = {
@@ -39,6 +41,7 @@ const LABEL: Record<NotificationType, string> = {
   due_today: 'Due today',
   due_tomorrow: 'Due tomorrow',
   project_deadline: 'Project deadline',
+  member_added: 'Added to project',
 }
 
 export function NotificationsPanel() {
