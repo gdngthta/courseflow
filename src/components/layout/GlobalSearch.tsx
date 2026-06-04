@@ -87,11 +87,11 @@ export function GlobalSearch() {
             setOpen(true)
           }}
           onFocus={() => setOpen(true)}
-          className="pl-9 pr-4 py-2 text-sm bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-700 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-500 w-64 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition"
+          className="pl-9 pr-4 py-2 text-sm bg-slate-800 border border-slate-700 rounded-lg text-slate-200 placeholder:text-slate-500 w-64 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition"
         />
 
         {open && isSearching && (
-          <div className="absolute top-full right-0 mt-2 w-[28rem] max-h-[28rem] overflow-y-auto bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl shadow-xl py-2 z-50">
+          <div className="absolute top-full right-0 mt-2 w-[28rem] max-h-[28rem] overflow-y-auto bg-slate-900 border border-slate-700 rounded-xl shadow-xl py-2 z-50">
             {total === 0 ? (
               <p className="px-4 py-6 text-xs text-slate-500 text-center">
                 No results for &ldquo;{query}&rdquo;
@@ -143,7 +143,7 @@ function ResultGroup({ label, icon, items, onClick }: ResultGroupProps) {
   if (items.length === 0) return null
   return (
     <div className="mb-1 last:mb-0">
-      <div className="flex items-center gap-1.5 px-4 py-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+      <div className="flex items-center gap-1.5 px-4 py-1.5 text-xs font-semibold text-slate-400 uppercase tracking-wide">
         {icon}
         {label}
       </div>
@@ -152,9 +152,9 @@ function ResultGroup({ label, icon, items, onClick }: ResultGroupProps) {
           <li key={`${r.kind}-${r.id}`}>
             <button
               onClick={() => onClick(r)}
-              className="w-full text-left px-4 py-2 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors flex flex-col"
+              className="w-full text-left px-4 py-2 hover:bg-slate-800 transition-colors flex flex-col"
             >
-              <span className="text-sm text-slate-700 dark:text-slate-200 truncate">{r.title}</span>
+              <span className="text-sm text-slate-200 truncate">{r.title}</span>
               <span className="text-xs text-slate-500 truncate">{r.subtitle}</span>
             </button>
           </li>

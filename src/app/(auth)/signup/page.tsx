@@ -1,9 +1,12 @@
-﻿'use client'
+'use client'
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { OwlMascot } from '@/components/brand/OwlMascot'
+
+const fieldCls =
+  'w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-sm text-slate-200 placeholder:text-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition'
 
 export default function SignupPage() {
   const router = useRouter()
@@ -28,25 +31,19 @@ export default function SignupPage() {
 
     setError('')
     setLoading(true)
-    // Import lazily so createClient() is never called during SSR/prerender
     const { createClient } = await import('@/lib/supabase')
     const supabase = createClient()
 
     const { error } = await supabase.auth.signUp({
       email: email.trim(),
       password,
-      options: {
-        data: { full_name: fullName.trim() },
-      },
+      options: { data: { full_name: fullName.trim() } },
     })
 
     if (error) {
       setError(error.message)
       setLoading(false)
     } else {
-      // Supabase sends a confirmation email by default.
-      // If email confirmation is disabled in your project settings, the user
-      // is logged in immediately and we redirect to the dashboard.
       setConfirmSent(true)
       setTimeout(() => router.push('/dashboard'), 1500)
     }
@@ -54,75 +51,69 @@ export default function SignupPage() {
 
   if (confirmSent) {
     return (
-      <div className="min-h-screen bg-white dark:bg-slate-950 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4">
         <div className="w-full max-w-sm text-center">
           <OwlMascot size={72} variant="reading" className="opacity-90 mx-auto mb-5" />
-          <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">Almost there!</h2>
-          <p className="text-sm text-slate-500 dark:text-slate-400">
+          <h2 className="text-lg font-semibold text-white mb-2">Almost there!</h2>
+          <p className="text-sm text-slate-400">
             Check your inbox to confirm your email, then you&apos;ll be signed in automatically.
           </p>
-          <p className="text-xs text-slate-600 mt-4">Redirecting you now…</p>
+          <p className="text-xs text-slate-500 mt-4">Redirecting you now…</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-white dark:bg-slate-950 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4">
       <div className="w-full max-w-sm">
         {/* Brand */}
         <div className="flex flex-col items-center mb-8 gap-3">
           <OwlMascot size={88} variant="reading" className="opacity-90" />
           <div className="text-center">
-            <h1 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">CourseFlow</h1>
+            <h1 className="text-xl font-bold text-white tracking-tight">CourseFlow</h1>
             <p className="text-xs text-slate-500 mt-0.5">Your academic productivity companion</p>
           </div>
         </div>
 
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-6">
-          <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-1">Create account</h2>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">Get started — it only takes a minute.</p>
+        <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
+          <h2 className="text-lg font-semibold text-white mb-1">Create account</h2>
+          <p className="text-sm text-slate-400 mb-6">Get started — it only takes a minute.</p>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1.5">
-                Full Name
-              </label>
+              <label className="block text-xs font-medium text-slate-300 mb-1.5">Full Name</label>
               <input
                 type="text"
                 placeholder="Alex Johnson"
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
                 autoComplete="name"
-                className="w-full px-3 py-2.5 bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-sm text-slate-700 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition"
+                className={fieldCls}
               />
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1.5">
-                Email
-              </label>
+              <label className="block text-xs font-medium text-slate-300 mb-1.5">Email</label>
               <input
                 type="email"
                 placeholder="you@university.edu"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 autoComplete="email"
-                className="w-full px-3 py-2.5 bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-sm text-slate-700 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition"
+                className={fieldCls}
               />
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1.5">
-                Password
-              </label>
+              <label className="block text-xs font-medium text-slate-300 mb-1.5">Password</label>
               <input
                 type="password"
                 placeholder="Min. 6 characters"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 autoComplete="new-password"
-                className="w-full px-3 py-2.5 bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-sm text-slate-700 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition"
+                className={fieldCls}
               />
             </div>
 
@@ -135,7 +126,7 @@ export default function SignupPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-60 disabled:cursor-not-allowed text-slate-900 dark:text-white text-sm font-medium rounded-lg transition-colors"
+              className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-60 disabled:cursor-not-allowed text-white text-sm font-medium rounded-lg transition-colors"
             >
               {loading ? 'Creating account…' : 'Create Account'}
             </button>

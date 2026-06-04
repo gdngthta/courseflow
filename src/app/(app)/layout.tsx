@@ -8,7 +8,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     <AuthProvider>
       <ProfileGate>
         <DataProvider>
-          <div className="min-h-screen bg-white dark:bg-slate-950">
+          <div className="min-h-screen bg-slate-950">
             <Sidebar />
             <div className="pl-60">
               <main className="pt-16 min-h-screen">

@@ -108,7 +108,7 @@ export function CourseFormModal({ open, onClose, onSubmit, editingCourse }: Cour
 
         {/* Color picker */}
         <div>
-          <label className="text-xs font-medium text-slate-600 dark:text-slate-300 block mb-2">Course Color (Optional)</label>
+          <label className="text-xs font-medium text-slate-300 block mb-2">Course Color (Optional)</label>
           <div className="flex gap-2 flex-wrap">
             {PRESET_COLORS.map((color) => (
               <button

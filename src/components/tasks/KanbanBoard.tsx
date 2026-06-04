@@ -25,7 +25,7 @@ interface Column {
 }
 
 const COLUMNS: Column[] = [
-  { id: 'not_started', label: 'Not Started', accent: 'bg-slate-400 dark:bg-slate-500' },
+  { id: 'not_started', label: 'Not Started', accent: 'bg-slate-500' },
   { id: 'in_progress', label: 'In Progress', accent: 'bg-indigo-500' },
   { id: 'review',      label: 'Review',      accent: 'bg-amber-500' },
   { id: 'done',        label: 'Done',        accent: 'bg-emerald-500' },
@@ -131,14 +131,14 @@ export function KanbanBoard({ tasks, readOnlyIds }: KanbanBoardProps) {
               }}
               className={`flex-shrink-0 w-72 snap-start flex flex-col rounded-xl border transition-colors ${
                 isOver
-                  ? 'bg-indigo-50 dark:bg-indigo-900/20 border-indigo-300 dark:border-indigo-700'
-                  : 'bg-slate-50 dark:bg-slate-900/60 border-slate-200 dark:border-slate-800'
+                  ? 'bg-indigo-900/20 border-indigo-700'
+                  : 'bg-slate-900/60 border-slate-800'
               }`}
             >
               {/* Column header */}
-              <div className="px-3 py-3 border-b border-slate-200 dark:border-slate-800 flex items-center gap-2">
+              <div className="px-3 py-3 border-b border-slate-800 flex items-center gap-2">
                 <span className={`w-2 h-2 rounded-full ${col.accent}`} />
-                <p className="text-xs font-semibold text-slate-700 dark:text-slate-200 uppercase tracking-wider">
+                <p className="text-xs font-semibold text-slate-200 uppercase tracking-wider">
                   {col.label}
                 </p>
                 <span className="ml-auto text-xs text-slate-500">{items.length}</span>

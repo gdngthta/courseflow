@@ -133,16 +133,16 @@ export function TaskDetailModal({
 
       {/* Drawer panel */}
       <div
-        className={`fixed inset-y-0 right-0 z-50 flex flex-col w-[600px] max-w-[92vw] bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 shadow-2xl transition-transform duration-300 ease-out ${isEntered ? 'translate-x-0' : 'translate-x-full'}`}
+        className={`fixed inset-y-0 right-0 z-50 flex flex-col w-[600px] max-w-[92vw] bg-slate-900 border-l border-slate-800 shadow-2xl transition-transform duration-300 ease-out ${isEntered ? 'translate-x-0' : 'translate-x-full'}`}
         role="dialog"
         aria-modal="true"
       >
         {/* ── Sticky header ── */}
-        <div className="flex-shrink-0 flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
-          <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Task Details</p>
+        <div className="flex-shrink-0 flex items-center justify-between px-6 py-4 border-b border-slate-800 bg-slate-900">
+          <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Task Details</p>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-md text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+            className="p-1.5 rounded-md text-slate-400 hover:text-white hover:bg-slate-700 transition-colors"
             aria-label="Close"
           >
             <X size={16} />
@@ -155,8 +155,8 @@ export function TaskDetailModal({
 
             {/* Title + source */}
             <div>
-              <h3 className="text-lg font-semibold text-slate-900 dark:text-white leading-snug">{task.title}</h3>
-              <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">{task.source_label}</p>
+              <h3 className="text-lg font-semibold text-white leading-snug">{task.title}</h3>
+              <p className="text-sm text-slate-400 mt-1">{task.source_label}</p>
             </div>
 
             {/* Badges */}
@@ -168,15 +168,15 @@ export function TaskDetailModal({
 
             {/* Meta grid */}
             <div className="grid grid-cols-2 gap-3">
-              <div className="bg-slate-100 dark:bg-slate-800 rounded-lg p-3">
-                <p className="text-xs text-slate-500 dark:text-slate-400 mb-1.5">Due Date</p>
-                <div className="flex items-center gap-1.5 text-sm text-slate-700 dark:text-slate-200">
-                  <Calendar size={13} className="text-slate-500 dark:text-slate-400 flex-shrink-0" />
+              <div className="bg-slate-800 rounded-lg p-3">
+                <p className="text-xs text-slate-400 mb-1.5">Due Date</p>
+                <div className="flex items-center gap-1.5 text-sm text-slate-200">
+                  <Calendar size={13} className="text-slate-400 flex-shrink-0" />
                   {formatFullDate(task.due_date)}
                 </div>
               </div>
-              <div className="bg-slate-100 dark:bg-slate-800 rounded-lg p-3">
-                <p className="text-xs text-slate-500 dark:text-slate-400 mb-1.5">Difficulty</p>
+              <div className="bg-slate-800 rounded-lg p-3">
+                <p className="text-xs text-slate-400 mb-1.5">Difficulty</p>
                 <DifficultyIndicator level={task.difficulty} showLabel />
               </div>
             </div>
@@ -184,8 +184,8 @@ export function TaskDetailModal({
             {/* Progress */}
             <div>
               <div className="flex items-center justify-between mb-2">
-                <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide font-medium">Progress</p>
-                <span className="text-sm font-semibold text-slate-900 dark:text-white">{task.progress}%</span>
+                <p className="text-xs text-slate-400 uppercase tracking-wide font-medium">Progress</p>
+                <span className="text-sm font-semibold text-white">{task.progress}%</span>
               </div>
               <ProgressBar value={task.progress} />
             </div>
@@ -193,7 +193,7 @@ export function TaskDetailModal({
             {/* Instructions / Notes */}
             <div>
               <div className="flex items-center justify-between mb-2">
-                <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">Instructions / Notes</p>
+                <p className="text-xs font-medium text-slate-400 uppercase tracking-wide">Instructions / Notes</p>
                 {canEditNotes && !editingNotes && (
                   <button
                     onClick={() => setEditingNotes(true)}
@@ -211,31 +211,31 @@ export function TaskDetailModal({
                     rows={5}
                     value={notesValue}
                     onChange={(e) => setNotesValue(e.target.value)}
-                    className="w-full px-3 py-2.5 bg-slate-100 dark:bg-slate-800 border border-indigo-500/50 rounded-lg text-sm text-slate-700 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:border-indigo-500 focus:ring-indigo-500 transition resize-none"
+                    className="w-full px-3 py-2.5 bg-slate-800 border border-indigo-500/50 rounded-lg text-sm text-slate-200 placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:border-indigo-500 focus:ring-indigo-500 transition resize-none"
                     placeholder="Add instructions or notes for the assigned member..."
                     autoFocus
                   />
                   <div className="flex items-center gap-2 justify-end">
                     <button
                       onClick={handleCancelNotesEdit}
-                      className="flex items-center gap-1 px-2.5 py-1.5 text-xs text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors rounded-md hover:bg-slate-200 dark:hover:bg-slate-700"
+                      className="flex items-center gap-1 px-2.5 py-1.5 text-xs text-slate-400 hover:text-slate-200 transition-colors rounded-md hover:bg-slate-700"
                     >
                       <XClose size={11} /> Cancel
                     </button>
                     <button
                       onClick={handleSaveNotes}
-                      className="flex items-center gap-1 px-2.5 py-1.5 text-xs text-emerald-400 hover:text-emerald-300 transition-colors rounded-md hover:bg-slate-200 dark:hover:bg-slate-700"
+                      className="flex items-center gap-1 px-2.5 py-1.5 text-xs text-emerald-400 hover:text-emerald-300 transition-colors rounded-md hover:bg-slate-700"
                     >
                       <Check size={11} /> Save
                     </button>
                   </div>
                 </div>
               ) : notesValue ? (
-                <p className="text-sm text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 rounded-lg p-4 leading-relaxed whitespace-pre-line">
+                <p className="text-sm text-slate-300 bg-slate-800 rounded-lg p-4 leading-relaxed whitespace-pre-line">
                   {notesValue}
                 </p>
               ) : (
-                <p className="text-sm text-slate-500 bg-slate-100 dark:bg-slate-800 rounded-lg p-4 italic">
+                <p className="text-sm text-slate-500 bg-slate-800 rounded-lg p-4 italic">
                   No instructions provided for this task.
                 </p>
               )}
@@ -244,8 +244,8 @@ export function TaskDetailModal({
             {/* Resources / Links */}
             {task.links && task.links.length > 0 && (
               <div>
-                <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-2">Resources</p>
-                <div className="bg-slate-100 dark:bg-slate-800 rounded-lg px-4 py-3 space-y-2">
+                <p className="text-xs font-medium text-slate-400 uppercase tracking-wide mb-2">Resources</p>
+                <div className="bg-slate-800 rounded-lg px-4 py-3 space-y-2">
                   {task.links.map((link, i) => (
                     <a
                       key={i}
@@ -266,11 +266,11 @@ export function TaskDetailModal({
             {checklist.length > 0 && (
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">Checklist</p>
+                  <p className="text-xs font-medium text-slate-400 uppercase tracking-wide">Checklist</p>
                   <span className="text-xs text-slate-500">{doneCount} / {checklist.length} done</span>
                 </div>
                 {/* Mini progress bar */}
-                <div className="h-1 bg-slate-200 dark:bg-slate-700 rounded-full mb-3 overflow-hidden">
+                <div className="h-1 bg-slate-700 rounded-full mb-3 overflow-hidden">
                   <div
                     className="h-full bg-indigo-500 rounded-full transition-all duration-300"
                     style={{ width: checklist.length > 0 ? `${Math.round((doneCount / checklist.length) * 100)}%` : '0%' }}
@@ -281,13 +281,13 @@ export function TaskDetailModal({
                     <button
                       key={item.id}
                       onClick={() => toggleChecklistItem(item.id)}
-                      className="flex items-start gap-3 w-full text-left group py-1.5 px-2 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                      className="flex items-start gap-3 w-full text-left group py-1.5 px-2 rounded-md hover:bg-slate-800 transition-colors"
                     >
                       {item.done
                         ? <CheckSquare size={15} className="text-indigo-400 flex-shrink-0 mt-0.5" />
-                        : <Square size={15} className="text-slate-500 flex-shrink-0 mt-0.5 group-hover:text-slate-500 dark:group-hover:text-slate-400 transition-colors" />
+                        : <Square size={15} className="text-slate-500 flex-shrink-0 mt-0.5 group-hover:text-slate-400 transition-colors" />
                       }
-                      <span className={`text-sm leading-snug transition-colors ${item.done ? 'text-slate-500 line-through' : 'text-slate-600 dark:text-slate-300 group-hover:text-slate-700 dark:group-hover:text-slate-200'}`}>
+                      <span className={`text-sm leading-snug transition-colors ${item.done ? 'text-slate-500 line-through' : 'text-slate-300 group-hover:text-slate-200'}`}>
                         {item.text}
                       </span>
                     </button>
@@ -299,12 +299,12 @@ export function TaskDetailModal({
             {/* Assigned to */}
             {isGroupTask && assigneeName && (
               <div>
-                <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-2">Assigned To</p>
-                <div className="flex items-center gap-3 bg-slate-100 dark:bg-slate-800 rounded-lg p-3">
+                <p className="text-xs font-medium text-slate-400 uppercase tracking-wide mb-2">Assigned To</p>
+                <div className="flex items-center gap-3 bg-slate-800 rounded-lg p-3">
                   <div className="w-8 h-8 rounded-full bg-indigo-700 flex items-center justify-center flex-shrink-0">
-                    <User size={14} className="text-slate-900 dark:text-white" />
+                    <User size={14} className="text-white" />
                   </div>
-                  <span className="text-sm text-slate-700 dark:text-slate-200">{assigneeName}</span>
+                  <span className="text-sm text-slate-200">{assigneeName}</span>
                 </div>
               </div>
             )}
@@ -316,7 +316,7 @@ export function TaskDetailModal({
 
         {/* ── Sticky footer (actions) ── */}
         {hasActions && (
-          <div className="flex-shrink-0 flex items-center justify-between px-6 py-4 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+          <div className="flex-shrink-0 flex items-center justify-between px-6 py-4 border-t border-slate-800 bg-slate-900">
             <div>
               {canDelete && onDelete && (
                 <Button variant="destructive" size="sm" onClick={() => setShowConfirm(true)}>

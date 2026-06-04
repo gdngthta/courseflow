@@ -63,11 +63,11 @@ export default function ProjectDetailPage() {
       <>
         <Topbar title="Project Detail" />
         <div className="p-6">
-          <Link href="/projects" className="text-sm text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors mb-4 inline-block">
+          <Link href="/projects" className="text-sm text-slate-400 hover:text-slate-200 transition-colors mb-4 inline-block">
             ← Back to Projects
           </Link>
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-10 text-center">
-            <p className="text-slate-500 dark:text-slate-400">Project not found.</p>
+          <div className="bg-slate-900 border border-slate-800 rounded-xl p-10 text-center">
+            <p className="text-slate-400">Project not found.</p>
           </div>
         </div>
       </>
@@ -144,7 +144,7 @@ export default function ProjectDetailPage() {
       <Topbar title="Projects" />
       <div className="p-6 max-w-[1200px]">
         {/* Back */}
-        <Link href="/projects" className="text-sm text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors mb-5 inline-flex items-center gap-1">
+        <Link href="/projects" className="text-sm text-slate-400 hover:text-slate-200 transition-colors mb-5 inline-flex items-center gap-1">
           ← Back to Projects
         </Link>
 
@@ -179,7 +179,7 @@ export default function ProjectDetailPage() {
             <div className="flex-1">
               <p className="text-sm font-medium text-emerald-400">Project Completed</p>
               {completedAt && (
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Completed on {formatFullDate(completedAt)}</p>
+                <p className="text-xs text-slate-400 mt-0.5">Completed on {formatFullDate(completedAt)}</p>
               )}
             </div>
             {userRole === 'leader' ? (
@@ -213,7 +213,7 @@ export default function ProjectDetailPage() {
         <div className="flex items-start justify-between gap-4 mb-6">
           <div>
             <div className="flex items-center gap-2 mb-1">
-              <h2 className="text-xl font-semibold text-slate-900 dark:text-white">{project.name}</h2>
+              <h2 className="text-xl font-semibold text-white">{project.name}</h2>
               {isCompleted ? (
                 <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-900/40 text-emerald-400 border border-emerald-800/50">
                   <CheckCircle2 size={10} />
@@ -235,7 +235,7 @@ export default function ProjectDetailPage() {
                 <p className="text-sm text-slate-400">{course?.code} — {course?.name}</p>
               )}
             </div>
-            <div className="flex items-center gap-4 mt-2 text-xs text-slate-500 dark:text-slate-400">
+            <div className="flex items-center gap-4 mt-2 text-xs text-slate-400">
               {isCompleted && completedAt ? (
                 <span>Completed: {formatFullDate(completedAt)}</span>
               ) : (
@@ -250,7 +250,7 @@ export default function ProjectDetailPage() {
           {!isCompleted && userRole === 'leader' && (
             <button
               onClick={() => setShowCompleteModal(true)}
-              className="flex-shrink-0 flex items-center gap-2 px-4 py-2 bg-emerald-700 hover:bg-emerald-600 text-slate-900 dark:text-white text-sm font-medium rounded-lg transition-colors"
+              className="flex-shrink-0 flex items-center gap-2 px-4 py-2 bg-emerald-700 hover:bg-emerald-600 text-white text-sm font-medium rounded-lg transition-colors"
             >
               <CheckCircle2 size={15} />
               Mark as Completed
@@ -259,13 +259,13 @@ export default function ProjectDetailPage() {
         </div>
 
         {/* Overall progress */}
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 mb-6">
+        <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 mb-6">
           <div className="flex items-center justify-between mb-3">
             <div>
-              <p className="text-sm font-semibold text-slate-900 dark:text-white">Overall Progress</p>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Based on completed tasks</p>
+              <p className="text-sm font-semibold text-white">Overall Progress</p>
+              <p className="text-xs text-slate-400 mt-0.5">Based on completed tasks</p>
             </div>
-            <span className="text-2xl font-bold text-slate-900 dark:text-white">{progress}%</span>
+            <span className="text-2xl font-bold text-white">{progress}%</span>
           </div>
           <ProgressBar value={progress} />
         </div>
@@ -275,14 +275,14 @@ export default function ProjectDetailPage() {
           {/* Left: tasks */}
           <div className="lg:col-span-2">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
+              <h3 className="text-sm font-semibold text-white">
                 Project Tasks
                 {isCompleted && <span className="ml-2 text-xs text-slate-500 font-normal">(read-only)</span>}
               </h3>
               {canManage && !isCompleted && (
                 <button
                   onClick={() => setShowAddTask(true)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-slate-900 dark:text-white text-xs font-medium rounded-lg transition-colors"
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-medium rounded-lg transition-colors"
                 >
                   <Plus size={13} /> Add Task
                 </button>
@@ -305,8 +305,8 @@ export default function ProjectDetailPage() {
                 ))}
               </div>
             ) : (
-              <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-10 text-center">
-                <p className="text-slate-500 dark:text-slate-400 text-sm">No tasks yet.</p>
+              <div className="bg-slate-900 border border-slate-800 rounded-xl p-10 text-center">
+                <p className="text-slate-400 text-sm">No tasks yet.</p>
                 {canManage && !isCompleted && (
                   <button
                     onClick={() => setShowAddTask(true)}
@@ -322,9 +322,9 @@ export default function ProjectDetailPage() {
           {/* Right: members + links */}
           <div className="flex flex-col gap-5">
             {/* Members */}
-            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5">
+            <div className="bg-slate-900 border border-slate-800 rounded-xl p-5">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-sm font-semibold text-slate-900 dark:text-white">Members</h3>
+                <h3 className="text-sm font-semibold text-white">Members</h3>
                 {userRole === 'leader' && !isCompleted && (
                   <button
                     onClick={() => setShowInvite(true)}
@@ -338,12 +338,12 @@ export default function ProjectDetailPage() {
                 {members.map((m) => (
                   <div key={m.id} className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-full bg-indigo-700 flex items-center justify-center flex-shrink-0">
-                      <span className="text-slate-900 dark:text-white text-xs font-semibold">
+                      <span className="text-white text-xs font-semibold">
                         {m.name.charAt(0).toUpperCase()}
                       </span>
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm text-slate-700 dark:text-slate-200 truncate">{m.name}</p>
+                      <p className="text-sm text-slate-200 truncate">{m.name}</p>
                       <p className="text-xs text-slate-500 truncate">{m.email}</p>
                     </div>
                     <RoleBadge role={m.role} />
@@ -353,9 +353,9 @@ export default function ProjectDetailPage() {
             </div>
 
             {/* Important Links */}
-            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5">
+            <div className="bg-slate-900 border border-slate-800 rounded-xl p-5">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-sm font-semibold text-slate-900 dark:text-white">Important Links</h3>
+                <h3 className="text-sm font-semibold text-white">Important Links</h3>
               </div>
               {links.length > 0 ? (
                 <div className="space-y-2">
@@ -365,7 +365,7 @@ export default function ProjectDetailPage() {
                       href={link.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300 hover:text-indigo-400 transition-colors"
+                      className="flex items-center gap-2 text-sm text-slate-300 hover:text-indigo-400 transition-colors"
                     >
                       <ExternalLink size={13} className="text-slate-500 flex-shrink-0" />
                       {link.label}

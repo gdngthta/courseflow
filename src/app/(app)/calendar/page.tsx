@@ -50,23 +50,13 @@ function itemDotColor(item: CalendarItem): string {
 }
 
 function itemPillClass(item: CalendarItem): string {
-  // Each pill has a LIGHT variant (light bg, dark text, soft border) plus the
-  // existing DARK variant. Previously dark-only — looked muddy on white in
-  // light mode. Keep contrast high in both themes.
-  if (item.kind === 'project') {
-    return 'bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 ' +
-      'dark:bg-emerald-900/40 dark:text-emerald-300 dark:border-emerald-800/40 dark:hover:bg-emerald-900/60'
-  }
-  if (item.data.risk === 'critical') {
-    return 'bg-red-50 text-red-700 border border-red-200 hover:bg-red-100 ' +
-      'dark:bg-red-900/40 dark:text-red-300 dark:border-red-800/40 dark:hover:bg-red-900/60'
-  }
-  if (item.data.type === 'group') {
-    return 'bg-violet-50 text-violet-700 border border-violet-200 hover:bg-violet-100 ' +
-      'dark:bg-violet-900/40 dark:text-violet-300 dark:border-violet-800/40 dark:hover:bg-violet-900/60'
-  }
-  return 'bg-indigo-50 text-indigo-700 border border-indigo-200 hover:bg-indigo-100 ' +
-    'dark:bg-indigo-900/40 dark:text-indigo-300 dark:border-indigo-800/40 dark:hover:bg-indigo-900/60'
+  if (item.kind === 'project')
+    return 'bg-emerald-900/40 text-emerald-300 border border-emerald-800/40 hover:bg-emerald-900/60'
+  if (item.data.risk === 'critical')
+    return 'bg-red-900/40 text-red-300 border border-red-800/40 hover:bg-red-900/60'
+  if (item.data.type === 'group')
+    return 'bg-violet-900/40 text-violet-300 border border-violet-800/40 hover:bg-violet-900/60'
+  return 'bg-indigo-900/40 text-indigo-300 border border-indigo-800/40 hover:bg-indigo-900/60'
 }
 
 export default function CalendarPage() {
@@ -198,8 +188,8 @@ export default function CalendarPage() {
       <div className="p-6">
         {/* Page header */}
         <div className="mb-6">
-          <h2 className="text-xl font-semibold text-slate-900 dark:text-white">Calendar</h2>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">View your tasks and deadlines by date.</p>
+          <h2 className="text-xl font-semibold text-white">Calendar</h2>
+          <p className="text-sm text-slate-400 mt-0.5">View your tasks and deadlines by date.</p>
         </div>
 
         {/* Two-column layout */}
@@ -214,7 +204,7 @@ export default function CalendarPage() {
               <div className="flex items-center gap-1.5">
                 <button
                   onClick={goToPrev}
-                  className="p-1.5 rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
                 >
                   <ChevronLeft size={16} />
                 </button>
@@ -223,25 +213,25 @@ export default function CalendarPage() {
                   value={month}
                   onChange={(e) => setMonth(Number(e.target.value))}
                   aria-label="Jump to month"
-                  className="text-sm font-semibold bg-transparent text-slate-900 dark:text-white border border-slate-300 dark:border-slate-700 rounded-md px-2 py-1 focus:outline-none focus:border-indigo-500"
+                  className="text-sm font-semibold bg-slate-900 text-white border border-slate-700 rounded-md px-2 py-1 focus:outline-none focus:border-indigo-500"
                 >
                   {MONTH_NAMES.map((name, i) => (
-                    <option key={name} value={i} className="bg-white dark:bg-slate-900">{name}</option>
+                    <option key={name} value={i} className="bg-slate-900">{name}</option>
                   ))}
                 </select>
                 <select
                   value={year}
                   onChange={(e) => setYear(Number(e.target.value))}
                   aria-label="Jump to year"
-                  className="text-sm font-semibold bg-transparent text-slate-900 dark:text-white border border-slate-300 dark:border-slate-700 rounded-md px-2 py-1 focus:outline-none focus:border-indigo-500"
+                  className="text-sm font-semibold bg-slate-900 text-white border border-slate-700 rounded-md px-2 py-1 focus:outline-none focus:border-indigo-500"
                 >
                   {Array.from({ length: 11 }, (_, i) => now.getFullYear() - 5 + i).map((y) => (
-                    <option key={y} value={y} className="bg-white dark:bg-slate-900">{y}</option>
+                    <option key={y} value={y} className="bg-slate-900">{y}</option>
                   ))}
                 </select>
                 <button
                   onClick={goToNext}
-                  className="p-1.5 rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
                 >
                   <ChevronRight size={16} />
                 </button>
@@ -254,15 +244,15 @@ export default function CalendarPage() {
               </div>
 
               {/* Filter pills */}
-              <div className="flex items-center gap-1 bg-slate-100/50 dark:bg-slate-800/50 rounded-lg p-1">
+              <div className="flex items-center gap-1 bg-slate-800/50 rounded-lg p-1">
                 {FILTER_TABS.map((tab) => (
                   <button
                     key={tab.id}
                     onClick={() => setFilter(tab.id)}
                     className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${
                       filter === tab.id
-                        ? 'bg-slate-200 dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm'
-                        : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
+                        ? 'bg-slate-700 text-white shadow-sm'
+                        : 'text-slate-400 hover:text-slate-200'
                     }`}
                   >
                     {tab.label}
@@ -272,9 +262,9 @@ export default function CalendarPage() {
             </div>
 
             {/* Calendar grid */}
-            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden">
+            <div className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden">
               {/* Day-name header */}
-              <div className="grid grid-cols-7 border-b border-slate-200 dark:border-slate-800">
+              <div className="grid grid-cols-7 border-b border-slate-800">
                 {DAY_NAMES.map((name) => (
                   <div key={name} className="py-2.5 text-center text-xs font-medium text-slate-500 uppercase tracking-wide">
                     {name}
@@ -299,9 +289,9 @@ export default function CalendarPage() {
                       onClick={() => setSelectedDate(key)}
                       className={[
                         'min-h-[84px] p-2 cursor-pointer transition-colors',
-                        idx % 7 !== 6 ? 'border-r border-slate-200 dark:border-slate-800' : '',
-                        idx < 35 ? 'border-b border-slate-200 dark:border-slate-800' : '',
-                        isSelected ? 'bg-slate-100/60 dark:bg-slate-800/60' : 'hover:bg-slate-100/30 dark:hover:bg-slate-800/30',
+                        idx % 7 !== 6 ? 'border-r border-slate-800' : '',
+                        idx < 35 ? 'border-b border-slate-800' : '',
+                        isSelected ? 'bg-slate-800/60' : 'hover:bg-slate-800/30',
                         !isThisMonth ? 'opacity-35' : '',
                       ].filter(Boolean).join(' ')}
                     >
@@ -311,9 +301,9 @@ export default function CalendarPage() {
                           className={[
                             'w-6 h-6 flex items-center justify-center text-xs font-medium rounded-full select-none',
                             isToday
-                              ? 'bg-indigo-600 text-slate-900 dark:text-white'
+                              ? 'bg-indigo-600 text-white'
                               : isThisMonth
-                              ? 'text-slate-600 dark:text-slate-300'
+                              ? 'text-slate-300'
                               : 'text-slate-600',
                           ].join(' ')}
                         >
@@ -369,8 +359,8 @@ export default function CalendarPage() {
           <div className="w-72 flex-shrink-0 flex flex-col gap-4">
 
             {/* Selected date details */}
-            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4">
-              <p className="text-sm font-semibold text-slate-900 dark:text-white mb-3">
+            <div className="bg-slate-900 border border-slate-800 rounded-xl p-4">
+              <p className="text-sm font-semibold text-white mb-3">
                 {formatFullDate(selectedDate)}
               </p>
 
@@ -391,7 +381,7 @@ export default function CalendarPage() {
                             className="flex items-start gap-2 text-left group w-full"
                           >
                             <span className={`w-1.5 h-1.5 rounded-full mt-[3px] flex-shrink-0 ${item.data.risk === 'critical' ? 'bg-red-400' : 'bg-indigo-400'}`} />
-                            <span className="text-xs text-slate-600 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white transition-colors leading-relaxed">
+                            <span className="text-xs text-slate-300 group-hover:text-white transition-colors leading-relaxed">
                               {item.data.title}
                             </span>
                           </button>
@@ -413,7 +403,7 @@ export default function CalendarPage() {
                             className="flex items-start gap-2 text-left group w-full"
                           >
                             <span className={`w-1.5 h-1.5 rounded-full mt-[3px] flex-shrink-0 ${item.data.risk === 'critical' ? 'bg-red-400' : 'bg-violet-400'}`} />
-                            <span className="text-xs text-slate-600 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white transition-colors leading-relaxed">
+                            <span className="text-xs text-slate-300 group-hover:text-white transition-colors leading-relaxed">
                               {item.data.title}
                             </span>
                           </button>
@@ -436,7 +426,7 @@ export default function CalendarPage() {
                           >
                             <span className="w-1.5 h-1.5 rounded-full mt-[3px] flex-shrink-0 bg-emerald-400" />
                             <div className="min-w-0">
-                              <p className="text-xs text-slate-600 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white transition-colors leading-relaxed">
+                              <p className="text-xs text-slate-300 group-hover:text-white transition-colors leading-relaxed">
                                 {item.name}
                               </p>
                               <p className="text-[10px] text-slate-500">{item.courseCode}</p>
@@ -451,8 +441,8 @@ export default function CalendarPage() {
             </div>
 
             {/* Upcoming deadlines */}
-            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4">
-              <p className="text-sm font-semibold text-slate-900 dark:text-white mb-3">Upcoming Deadlines</p>
+            <div className="bg-slate-900 border border-slate-800 rounded-xl p-4">
+              <p className="text-sm font-semibold text-white mb-3">Upcoming Deadlines</p>
 
               {upcomingGroups.length === 0 ? (
                 <p className="text-xs text-slate-500 italic">No upcoming deadlines.</p>
@@ -475,7 +465,7 @@ export default function CalendarPage() {
                           >
                             <span className={`w-1.5 h-1.5 rounded-full mt-[3px] flex-shrink-0 ${itemDotColor(item)}`} />
                             <div className="min-w-0">
-                              <p className="text-xs text-slate-600 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white transition-colors leading-relaxed truncate">
+                              <p className="text-xs text-slate-300 group-hover:text-white transition-colors leading-relaxed truncate">
                                 {item.kind === 'task' ? item.data.title : item.name}
                               </p>
                               <p className="text-[10px] text-slate-500 truncate">

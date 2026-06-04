@@ -24,7 +24,7 @@ export function ConfirmModal({
 }: ConfirmModalProps) {
   return (
     <Modal open={open} onClose={onClose} title={title} maxWidth="max-w-sm">
-      <p className="text-sm text-slate-600 dark:text-slate-300 mb-6">{description}</p>
+      <p className="text-sm text-slate-300 mb-6">{description}</p>
       <div className="flex justify-end gap-3">
         <Button variant="secondary" onClick={onClose} disabled={loading}>
           Cancel
