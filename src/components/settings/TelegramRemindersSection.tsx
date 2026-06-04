@@ -398,8 +398,9 @@ export function TelegramRemindersSection() {
           <p className="text-xs text-slate-500 mt-1.5">
             Daily reminders are sent around{' '}
             <span className="text-slate-300 font-medium">{sendTimeSummary}</span>.
-            Vercel Cron fires hourly and matches your saved send time — exact minute
-            delivery is not guaranteed.
+            The cron fires once per day at midnight UTC — for Malaysia/Singapore (UTC+8)
+            this is 08:00 local time. Users in other timezones should set their
+            send time to match the equivalent UTC offset.
           </p>
         </div>
 

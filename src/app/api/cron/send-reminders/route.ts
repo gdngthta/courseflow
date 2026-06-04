@@ -98,7 +98,8 @@ function isUserSendHour(prefs: ReminderPreferences, now: Date): boolean {
 //   Vercel Cron sets this automatically when CRON_SECRET is
 //   configured as an environment variable.
 //
-// Schedule: Runs hourly (0 * * * * in vercel.json).
+// Schedule: Runs once daily at 00:00 UTC (= 08:00 Asia/Kuala_Lumpur).
+// Hobby plan limitation: Vercel only allows once-per-day cron jobs.
 //
 // What it does (in order):
 //   1. Auth-check the request.
