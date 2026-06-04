@@ -52,44 +52,6 @@ interface ProjectTaskRow {
 }
 
 
-// ── Timezone helper ──────────────────────────────────────────
-//
-// Uses the built-in Intl API (Node.js 16+, no extra packages).
-// Returns the local hour (0–23) for a given IANA timezone at `now`.
-
-function getLocalHour(timezone: string, now: Date): number {
-  try {
-    const formatter = new Intl.DateTimeFormat('en-US', {
-      timeZone: timezone,
-      hour: 'numeric',
-      hour12: false,
-    })
-    const parts = formatter.formatToParts(now)
-    const hourStr = parts.find((p) => p.type === 'hour')?.value ?? '0'
-    // Intl may return '24' for midnight in some locales — normalise to 0.
-    return parseInt(hourStr, 10) % 24
-  } catch {
-    // Unknown timezone — fall through and treat as UTC.
-    return now.getUTCHours()
-  }
-}
-
-// ── Fixed send hour ──────────────────────────────────────────
-//
-// CourseFlow sends reminders around 6:00 AM in each user's selected timezone.
-// Users choose their timezone; the send time is fixed at 06:xx.
-//
-// The cron runs hourly (schedule: "0 * * * *"). Each run checks which users
-// are currently in their 6 AM window and processes only those users.
-// This gives timezone-aware delivery without requiring a per-user scheduler.
-//
-// "Around 6:00 AM" means "within the 06:xx window" — exact-minute delivery
-// is not guaranteed because Vercel Cron fires at an unspecified point inside
-// the scheduled minute. Typical delivery is within a few minutes of 6:00.
-
-const SEND_HOUR = 6
-
-
 // ────────────────────────────────────────────────────────────
 // GET /api/cron/send-reminders
 //
@@ -97,21 +59,21 @@ const SEND_HOUR = 6
 //   Vercel Cron sets this automatically when CRON_SECRET is
 //   configured as an environment variable.
 //
-// Schedule: "0 * * * *" — runs every hour at :00.
+// Schedule: "0 22 * * *" — runs once daily at 22:00 UTC.
+//   22:00 UTC = 06:00 AM Asia/Kuala_Lumpur (Malaysia time).
+//   Vercel Hobby plan only allows once-per-day cron jobs.
 //
 // What it does (in order):
 //   1. Validate CRON_SECRET.
 //   2. Load every profile with telegram_enabled = true AND
 //      a chat ID set, joined with their reminder_preferences row.
-//   3. For each user: skip if their local time is NOT hour 6.
-//      Default timezone = Asia/Kuala_Lumpur.
+//   3. For each user: skip if reminders are not enabled.
 //   4. Fetch incomplete personal tasks + assigned project tasks.
 //   5. Run findReminderCandidates() to filter to today's sends.
 //   6. For each candidate, try to insert a reminder_logs row with
 //      status='sent'. The unique constraint
 //      (user_id, task_type, task_id, reminder_type, sent_date)
-//      makes this a duplicate-prevention check: if insert succeeds,
-//      we send. If it raises a unique-violation, we skip silently.
+//      prevents duplicates: unique-violation = already sent today.
 //   7. After insert succeeds, send the Telegram message. If sending
 //      fails, update the log row to status='failed' + error_message.
 // ────────────────────────────────────────────────────────────
@@ -135,7 +97,6 @@ export async function GET(req: NextRequest) {
 
   const summary = {
     users_checked: 0,
-    users_skipped_time: 0,
     candidates_found: 0,
     sent: 0,
     skipped_duplicate: 0,
@@ -175,22 +136,11 @@ export async function GET(req: NextRequest) {
       ? profile.reminder_preferences[0] ?? null
       : profile.reminder_preferences
 
-    // If the user has never opened Settings, they have no prefs row.
-    // Defaulting to "enabled with defaults" would surprise them with
-    // unexpected DMs, so skip silently — they must opt in explicitly.
+    // Skip if the user has never set up preferences, or has reminders disabled.
+    // They must explicitly opt in via Settings → Reminders.
     if (!prefs || !prefs.enabled) continue
 
-    // ── 3. Timezone-aware 6 AM check ─────────────────────
-    // Reminders are sent around 6:00 AM in the user's selected timezone.
-    // Only process this user if their local hour is currently 6.
-    const timezone = prefs.timezone ?? 'Asia/Kuala_Lumpur'
-    const localHour = getLocalHour(timezone, now)
-    if (localHour !== SEND_HOUR) {
-      summary.users_skipped_time += 1
-      continue
-    }
-
-    // ── 4a. Fetch incomplete personal tasks ──────────────
+    // ── 3. Fetch incomplete personal tasks ────────────────
     const { data: personalRaw, error: pErr } = await supabase
       .from('personal_tasks')
       .select(`
@@ -205,7 +155,7 @@ export async function GET(req: NextRequest) {
       continue
     }
 
-    // ── 4b. Fetch incomplete project tasks assigned to user ──
+    // ── 4. Fetch incomplete project tasks assigned to user ──
     const { data: projectRaw, error: prjErr } = await supabase
       .from('project_tasks')
       .select(`
@@ -220,7 +170,7 @@ export async function GET(req: NextRequest) {
       continue
     }
 
-    // ── 5. Build flat candidate input ────────────────────
+    // ── 5. Build flat candidate input ─────────────────────
     const personalTasks = (personalRaw ?? []) as unknown as Array<
       Omit<PersonalTaskRow, 'course'> & {
         course: PersonalTaskRow['course'] | PersonalTaskRow['course'][]
@@ -267,8 +217,8 @@ export async function GET(req: NextRequest) {
     // ── 6+7. For each candidate: dedupe-insert, then send ──
     for (const c of candidates) {
       // Try to claim today's slot for this (user, task, reminder_type).
-      // status='sent' is optimistic — we patch to 'failed' below if
-      // the actual Telegram call fails.
+      // status='sent' is optimistic — we patch to 'failed' if the Telegram
+      // call fails. The unique constraint prevents double-sending.
       const { error: insertErr } = await supabase.from('reminder_logs').insert({
         user_id: profile.id,
         task_type: c.task_type,
@@ -290,7 +240,6 @@ export async function GET(req: NextRequest) {
         continue
       }
 
-      // ── Send the message ───────────────────────────────
       const message = generateReminderMessage(c, now)
       const result = await sendTelegramMessage(profile.telegram_chat_id, message)
 
@@ -298,9 +247,8 @@ export async function GET(req: NextRequest) {
         summary.sent += 1
       } else {
         summary.failed += 1
-        // Patch the optimistic log row to reflect the failure so
-        // the audit trail is accurate. The unique-key slot is still
-        // claimed, preventing a retry storm on broken chat IDs.
+        // Patch the optimistic log row — unique-key slot stays claimed
+        // to prevent a retry storm on broken chat IDs.
         await supabase
           .from('reminder_logs')
           .update({ status: 'failed', error_message: result.error ?? 'unknown' })

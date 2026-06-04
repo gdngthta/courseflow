@@ -193,10 +193,9 @@ CourseFlow can send a Telegram message when a deadline is around the corner or a
 
 **Scheduled sends (production):**
 - Deploy to Vercel. Set `TELEGRAM_BOT_TOKEN`, `CRON_SECRET`, `SUPABASE_SERVICE_ROLE_KEY`, and `TELEGRAM_WEBHOOK_SECRET` in the Vercel project's env vars.
-- `vercel.json` schedules `GET /api/cron/send-reminders` at `0 * * * *` (every hour). Vercel automatically attaches `Authorization: Bearer $CRON_SECRET`.
-- **Reminder time:** CourseFlow sends reminders around **6:00 AM in each user's selected timezone**. The cron runs hourly and checks whether the user's current local hour is 6 — if yes, it evaluates and sends. Users in different timezones get their reminder at 6 AM their time.
+- `vercel.json` schedules `GET /api/cron/send-reminders` at `0 22 * * *` (22:00 UTC daily). Vercel automatically attaches `Authorization: Bearer $CRON_SECRET`.
+- **Reminder time:** Reminders run once daily at **22:00 UTC = 06:00 AM Malaysia time (Asia/Kuala_Lumpur)**. This is fixed — the Vercel Hobby plan only allows one cron per day, so per-timezone customization is not supported on this deployment.
 - One reminder per (user × task × reminder_type × day) — duplicates prevented by a unique constraint on `reminder_logs`.
-- **Vercel Hobby plan note:** Hobby accounts are limited to once-per-day cron jobs. If you are on the Hobby plan, the hourly schedule will fail to deploy. You must upgrade to Vercel Pro, or the reminder system will only work for users whose local 6 AM coincides with midnight UTC (i.e. UTC+6 users).
 
 **Local manual test:**
 ```bash
@@ -206,7 +205,7 @@ curl -X GET http://localhost:3000/api/cron/send-reminders \
 Returns a JSON summary: `{ users_checked, users_skipped_time, candidates_found, sent, skipped_duplicate, failed }`.
 
 **Limitations (honest):**
-- Reminders are sent around 6:00 AM local time. "Around" means within the 06:xx window — exact-minute delivery is not guaranteed.
+- Reminders are sent around 06:00 AM Malaysia time (22:00 UTC). Exact-minute delivery is not guaranteed.
 - Failed sends are logged but **not retried** — the unique-key slot is claimed for the day to avoid retry storms. Fix the chat ID; tomorrow's run will send again.
 - WhatsApp delivery is not implemented (see `docs/FUTURE_IMPROVEMENTS.md`).
 - n8n / message queues are not used; the single Vercel Cron endpoint is the entire delivery pipeline.
