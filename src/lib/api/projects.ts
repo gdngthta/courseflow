@@ -11,12 +11,26 @@ export interface ProjectMemberWithProfile extends ProjectMember {
   email: string
 }
 
+/** Pending invitation row for the project leader/editor view. */
+export interface ProjectInvitationForProject {
+  id: string
+  project_id: string
+  invitee_user_id: string
+  invitee_email: string
+  invitee_name: string
+  role: 'admin' | 'member'
+  created_at: string
+}
+
 export interface ProjectWithRelations {
   project: Project
   course?: { id: string; code: string; name: string }
   members: ProjectMemberWithProfile[]
   tasks: ProjectTask[]
   links: ProjectLink[]
+  /** Pending invitations visible to the current user for this project.
+   *  Leaders/editors see all pending; others see none (RLS). */
+  invitations: ProjectInvitationForProject[]
 }
 
 // ── Raw row shapes returned by the nested select ──
@@ -35,6 +49,11 @@ interface RawTask {
   created_at: string
 }
 interface RawLink { id: string; project_id: string; label: string; url: string }
+interface RawInvitation {
+  id: string; project_id: string; invitee_user_id: string; invitee_email: string
+  role: string; created_at: string
+  invitee: RawProfile | null
+}
 interface RawProjectRow {
   id: string; course_id: string | null; name: string; description: string | null
   deadline: string; status: 'active' | 'completed'; completed_at: string | null
@@ -53,7 +72,15 @@ const SELECT = `
   project_links ( id, project_id, label, url )
 `
 
-function mapRow(row: RawProjectRow): ProjectWithRelations {
+const INVITATION_SELECT = `
+  id, project_id, invitee_user_id, invitee_email, role, created_at,
+  invitee:profiles!project_invitations_invitee_user_id_fkey ( full_name, email )
+`
+
+function mapRow(
+  row: RawProjectRow,
+  invitationsByProject: Map<string, ProjectInvitationForProject[]>
+): ProjectWithRelations {
   const project: Project = {
     id: row.id,
     name: row.name,
@@ -103,19 +130,48 @@ function mapRow(row: RawProjectRow): ProjectWithRelations {
     url: l.url,
   }))
 
-  return { project, course, members, tasks, links }
+  const invitations = invitationsByProject.get(row.id) ?? []
+
+  return { project, course, members, tasks, links, invitations }
 }
 
-/** All projects the signed-in user belongs to, with members/tasks/links. */
+/** All projects the signed-in user belongs to, with members/tasks/links/invitations. */
 export async function getProjectsWithRelations(): Promise<ProjectWithRelations[]> {
   const supabase = createClient()
-  const { data, error } = await supabase
-    .from('projects')
-    .select(SELECT)
-    .order('created_at', { ascending: false })
 
-  if (error) throw new Error(`Failed to load projects: ${error.message}`)
-  return ((data ?? []) as unknown as RawProjectRow[]).map(mapRow)
+  const [projectsResult, invitationsResult] = await Promise.all([
+    supabase.from('projects').select(SELECT).order('created_at', { ascending: false }),
+    supabase
+      .from('project_invitations')
+      .select(INVITATION_SELECT)
+      .eq('status', 'pending')
+      .order('created_at', { ascending: false }),
+  ])
+
+  if (projectsResult.error) {
+    throw new Error(`Failed to load projects: ${projectsResult.error.message}`)
+  }
+
+  // Build a project_id → invitations lookup (RLS limits what each user can see)
+  const invitationsByProject = new Map<string, ProjectInvitationForProject[]>()
+  for (const inv of (invitationsResult.data ?? []) as unknown as RawInvitation[]) {
+    const mapped: ProjectInvitationForProject = {
+      id: inv.id,
+      project_id: inv.project_id,
+      invitee_user_id: inv.invitee_user_id,
+      invitee_email: inv.invitee_email,
+      invitee_name: inv.invitee?.full_name || inv.invitee_email,
+      role: inv.role as 'admin' | 'member',
+      created_at: inv.created_at,
+    }
+    const list = invitationsByProject.get(inv.project_id) ?? []
+    list.push(mapped)
+    invitationsByProject.set(inv.project_id, list)
+  }
+
+  return ((projectsResult.data ?? []) as unknown as RawProjectRow[]).map((row) =>
+    mapRow(row, invitationsByProject)
+  )
 }
 
 export interface CreateProjectInput {

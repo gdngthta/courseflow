@@ -1,11 +1,11 @@
 'use client'
 
 import { useState } from 'react'
-import { UserPlus, LogOut, ShieldCheck, Eye, UserMinus, AlertTriangle } from 'lucide-react'
+import { UserPlus, LogOut, ShieldCheck, Eye, UserMinus, AlertTriangle, Clock, X } from 'lucide-react'
 import { RoleBadge } from '@/components/ui/Badge'
 import { ConfirmModal } from '@/components/ui/ConfirmModal'
 import type { ProjectRole } from '@/types'
-import type { ProjectMemberWithProfile } from '@/lib/api/projects'
+import type { ProjectMemberWithProfile, ProjectInvitationForProject } from '@/lib/api/projects'
 import type { MemberActionResult } from '@/lib/api/projectMembers'
 
 // Minimal task shape — satisfied by both ProjectTask and TaskCardData.
@@ -16,6 +16,7 @@ interface TaskForPanel {
 
 interface Props {
   members: ProjectMemberWithProfile[]
+  invitations: ProjectInvitationForProject[]
   tasks: TaskForPanel[]
   userId: string
   userRole: ProjectRole
@@ -24,6 +25,7 @@ interface Props {
   onChangeRole: (targetUserId: string, newRole: 'admin' | 'member') => Promise<MemberActionResult>
   onRemoveMember: (targetUserId: string) => Promise<MemberActionResult>
   onLeaveProject: () => Promise<MemberActionResult>
+  onCancelInvitation: (invitationId: string) => Promise<MemberActionResult>
 }
 
 const ROLE_DISPLAY: Record<ProjectRole, string> = {
@@ -32,8 +34,14 @@ const ROLE_DISPLAY: Record<ProjectRole, string> = {
   member: 'Viewer',
 }
 
+const INVITE_ROLE_DISPLAY: Record<string, string> = {
+  admin: 'Editor',
+  member: 'Viewer',
+}
+
 export function MemberManagementPanel({
   members,
+  invitations,
   tasks,
   userId,
   userRole,
@@ -42,22 +50,21 @@ export function MemberManagementPanel({
   onChangeRole,
   onRemoveMember,
   onLeaveProject,
+  onCancelInvitation,
 }: Props) {
-  // ── Action in-progress state ──
   const [actionError, setActionError] = useState('')
   const [processingUserId, setProcessingUserId] = useState<string | null>(null)
+  const [processingInvitationId, setProcessingInvitationId] = useState<string | null>(null)
 
-  // ── Remove member confirm ──
   const [confirmRemove, setConfirmRemove] = useState<ProjectMemberWithProfile | null>(null)
   const [removing, setRemoving] = useState(false)
 
-  // ── Leave project confirm ──
   const [confirmLeave, setConfirmLeave] = useState(false)
   const [leaving, setLeaving] = useState(false)
 
   const isLeader = userRole === 'leader'
+  const canManage = userRole === 'leader' || userRole === 'admin'
 
-  /** Active (non-done) tasks assigned to a given user in this project. */
   function activeTasks(memberId: string) {
     return tasks.filter((t) => t.assigned_to === memberId && t.status !== 'done')
   }
@@ -89,27 +96,32 @@ export function MemberManagementPanel({
     setActionError('')
     const result = await onLeaveProject()
     setLeaving(false)
-    if (result.ok) {
-      setConfirmLeave(false)
-      // DataContext refetches projects; the page will redirect automatically
-      // because `detail` will be null for this project after leaving.
-    } else {
-      setConfirmLeave(false)
-      setActionError(result.error ?? 'Failed to leave project.')
-    }
+    setConfirmLeave(false)
+    if (!result.ok) setActionError(result.error ?? 'Failed to leave project.')
+  }
+
+  const handleCancelInvitation = async (invitationId: string) => {
+    setActionError('')
+    setProcessingInvitationId(invitationId)
+    const result = await onCancelInvitation(invitationId)
+    setProcessingInvitationId(null)
+    if (!result.ok) setActionError(result.error ?? 'Failed to cancel invitation.')
   }
 
   return (
     <div className="bg-slate-900 border border-slate-800 rounded-xl p-5">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-sm font-semibold text-white">Members</h3>
-        {isLeader && !isCompleted && (
+        <h3 className="text-sm font-semibold text-white">
+          Members
+          <span className="ml-1.5 text-xs font-normal text-slate-500">({members.length})</span>
+        </h3>
+        {canManage && !isCompleted && (
           <button
             onClick={onAddMember}
             className="flex items-center gap-1 text-xs text-indigo-400 hover:text-indigo-300 transition-colors"
           >
-            <UserPlus size={12} /> Add member
+            <UserPlus size={12} /> Invite
           </button>
         )}
       </div>
@@ -150,7 +162,6 @@ export function MemberManagementPanel({
                   )}
                 </div>
                 <p className="text-xs text-slate-500 truncate">{m.email}</p>
-                {/* Active task count warning for leaders viewing others */}
                 {isLeader && !isSelf && hasActiveTasks && (
                   <p className="text-[11px] text-amber-400/80 mt-0.5">
                     {memberActiveTasks.length} active task{memberActiveTasks.length !== 1 ? 's' : ''} assigned
@@ -162,31 +173,18 @@ export function MemberManagementPanel({
               <div className="flex items-center gap-1.5 flex-shrink-0">
                 <RoleBadge role={m.role} />
 
-                {/* Leader actions for non-self, non-leader targets, on active projects */}
                 {isLeader && !isSelf && m.role !== 'leader' && !isCompleted && (
                   <div className="flex items-center gap-1 ml-1">
-                    {/* Toggle role button */}
                     <button
-                      onClick={() =>
-                        handleChangeRole(m, m.role === 'admin' ? 'member' : 'admin')
-                      }
+                      onClick={() => handleChangeRole(m, m.role === 'admin' ? 'member' : 'admin')}
                       disabled={isProcessing}
                       title={m.role === 'admin' ? 'Change to Viewer' : 'Change to Editor'}
                       className="p-1 rounded text-slate-500 hover:text-slate-200 hover:bg-slate-700 disabled:opacity-40 transition-colors"
                     >
-                      {m.role === 'admin' ? (
-                        <Eye size={13} />
-                      ) : (
-                        <ShieldCheck size={13} />
-                      )}
+                      {m.role === 'admin' ? <Eye size={13} /> : <ShieldCheck size={13} />}
                     </button>
-
-                    {/* Remove button */}
                     <button
-                      onClick={() => {
-                        setActionError('')
-                        setConfirmRemove(m)
-                      }}
+                      onClick={() => { setActionError(''); setConfirmRemove(m) }}
                       disabled={isProcessing}
                       title="Remove member"
                       className="p-1 rounded text-slate-500 hover:text-red-400 hover:bg-red-900/20 disabled:opacity-40 transition-colors"
@@ -201,14 +199,48 @@ export function MemberManagementPanel({
         })}
       </div>
 
+      {/* Pending invitations */}
+      {canManage && invitations.length > 0 && (
+        <div className="mt-4 pt-4 border-t border-slate-800">
+          <p className="text-xs font-medium text-slate-500 mb-2 flex items-center gap-1">
+            <Clock size={11} />
+            Pending invitations ({invitations.length})
+          </p>
+          <div className="space-y-2">
+            {invitations.map((inv) => (
+              <div key={inv.id} className="flex items-center gap-2">
+                <div className="w-6 h-6 rounded-full bg-slate-700 flex items-center justify-center flex-shrink-0">
+                  <span className="text-slate-400 text-[10px] font-semibold">
+                    {(inv.invitee_name || inv.invitee_email).charAt(0).toUpperCase()}
+                  </span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs text-slate-300 truncate">{inv.invitee_name}</p>
+                  <p className="text-[11px] text-slate-500 truncate">
+                    {INVITE_ROLE_DISPLAY[inv.role] ?? inv.role} · pending
+                  </p>
+                </div>
+                {!isCompleted && (
+                  <button
+                    onClick={() => handleCancelInvitation(inv.id)}
+                    disabled={processingInvitationId === inv.id}
+                    title="Cancel invitation"
+                    className="p-1 rounded text-slate-600 hover:text-red-400 hover:bg-red-900/20 disabled:opacity-40 transition-colors flex-shrink-0"
+                  >
+                    <X size={12} />
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Leave project — non-leaders on active projects */}
       {userRole !== 'leader' && !isCompleted && (
         <div className="mt-4 pt-4 border-t border-slate-800">
           <button
-            onClick={() => {
-              setActionError('')
-              setConfirmLeave(true)
-            }}
+            onClick={() => { setActionError(''); setConfirmLeave(true) }}
             className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-red-400 transition-colors"
           >
             <LogOut size={12} />
@@ -240,7 +272,7 @@ export function MemberManagementPanel({
         onClose={() => setConfirmLeave(false)}
         onConfirm={handleLeaveConfirm}
         title="Leave project"
-        description="You will lose access to this project and its tasks. This cannot be undone from your side — a Leader must re-add you."
+        description="You will lose access to this project and its tasks. This cannot be undone from your side — a Leader must re-invite you."
         confirmLabel="Leave"
         loading={leaving}
       />

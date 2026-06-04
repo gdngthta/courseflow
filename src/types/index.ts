@@ -111,6 +111,63 @@ export interface TaskCardData {
   assigned_to?: string
 }
 
+// ── Project collaboration ──
+
+export type ProjectInvitationStatus =
+  | 'pending'
+  | 'accepted'
+  | 'declined'
+  | 'cancelled'
+  | 'expired'
+
+export interface ProjectInvitation {
+  id: string
+  project_id: string
+  inviter_id: string
+  invitee_user_id: string
+  invitee_email: string
+  role: 'admin' | 'member'
+  status: ProjectInvitationStatus
+  created_at: string
+  expires_at?: string
+  responded_at?: string
+}
+
+export interface ProjectMemberPreferences {
+  id: string
+  project_id: string
+  user_id: string
+  display_name?: string
+  personal_course_id?: string
+  created_at: string
+  updated_at: string
+}
+
+// ── DB notifications ──
+
+export type DBNotificationType =
+  | 'project_invitation_received'
+  | 'project_invitation_accepted'
+  | 'project_invitation_declined'
+  | 'project_role_changed'
+  | 'project_member_removed'
+  | 'project_member_left'
+  | 'project_task_assigned'
+  | 'deadline_warning'
+  | 'high_risk_task'
+
+export interface DBNotification {
+  id: string
+  user_id: string
+  type: DBNotificationType
+  title: string
+  message: string
+  entity_type?: string
+  entity_id?: string
+  read_at?: string
+  created_at: string
+}
+
 // ── Telegram reminders ──
 
 export type ReminderType = 'around_deadline' | 'high_risk'

@@ -3,12 +3,13 @@
 import { useMemo } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Calendar, ArrowRight } from 'lucide-react'
+import { Calendar, ArrowRight, Mail } from 'lucide-react'
 import { Topbar } from '@/components/layout/Topbar'
 import { TaskCard } from '@/components/tasks/TaskCard'
 import { RiskBadge } from '@/components/ui/Badge'
 import { NoCriticalEmpty } from '@/components/ui/EmptyState'
 import { OwlMascot } from '@/components/brand/OwlMascot'
+import { InvitationCard } from '@/components/projects/InvitationCard'
 import { useData } from '@/contexts/DataContext'
 import { useAuthUser } from '@/contexts/AuthContext'
 import { toAllTaskCards } from '@/lib/taskDerive'
@@ -18,7 +19,10 @@ import type { TaskCardData } from '@/types'
 
 export default function DashboardPage() {
   const router = useRouter()
-  const { userId, courses, personalTasks, projects, loading } = useData()
+  const {
+    userId, courses, personalTasks, projects, loading,
+    receivedInvitations, acceptInvitation, declineInvitation,
+  } = useData()
   const { user } = useAuthUser()
 
   /**
@@ -37,6 +41,7 @@ export default function DashboardPage() {
   )
   const allProjects = useMemo(() => toProjectCards(projects, userId), [projects, userId])
   const activeCourses = useMemo(() => courses.filter((c) => !c.is_archived), [courses])
+  const activeCoursesForInvite = activeCourses  // alias — passed to InvitationCard
   const activeProjects = useMemo(() => allProjects.filter((p) => p.status === 'active'), [allProjects])
 
   const firstName = (user?.user_metadata?.full_name as string | undefined)?.split(' ')[0] || 'there'
@@ -135,6 +140,32 @@ export default function DashboardPage() {
             {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
           </p>
         </div>
+
+        {/* ── Pending Invitations ── */}
+        {receivedInvitations.length > 0 && (
+          <div className="mb-8 bg-indigo-950/30 border border-indigo-800/30 rounded-xl p-5">
+            <div className="flex items-center gap-2 mb-4">
+              <Mail size={15} className="text-indigo-400" />
+              <h3 className="text-sm font-semibold text-white">
+                Pending Project Invitations
+              </h3>
+              <span className="text-xs px-2 py-0.5 rounded-full bg-indigo-600 text-white font-medium">
+                {receivedInvitations.length}
+              </span>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+              {receivedInvitations.map((inv) => (
+                <InvitationCard
+                  key={inv.id}
+                  invitation={inv}
+                  userCourses={activeCoursesForInvite}
+                  onAccept={acceptInvitation}
+                  onDecline={declineInvitation}
+                />
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Summary cards */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">

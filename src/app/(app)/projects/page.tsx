@@ -1,10 +1,11 @@
-﻿'use client'
+'use client'
 
 import { useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
-import { Search } from 'lucide-react'
+import { Search, Mail } from 'lucide-react'
 import { Topbar } from '@/components/layout/Topbar'
 import { ProjectCard } from '@/components/projects/ProjectCard'
+import { InvitationCard } from '@/components/projects/InvitationCard'
 import { CreateProjectModal, type CreateProjectData } from '@/components/projects/CreateProjectModal'
 import { NoProjectsEmpty, NoCompletedProjectsEmpty } from '@/components/ui/EmptyState'
 import { useData } from '@/contexts/DataContext'
@@ -12,7 +13,11 @@ import { toProjectCards } from '@/lib/projectDerive'
 
 export default function ProjectsPage() {
   const router = useRouter()
-  const { userId, courses, projects, projectsLoading, error, createProject } = useData()
+  const {
+    userId, courses, projects, projectsLoading, error,
+    createProject,
+    receivedInvitations, acceptInvitation, declineInvitation,
+  } = useData()
 
   const [activeTab, setActiveTab] = useState<'active' | 'completed'>('active')
   const [showCreateModal, setShowCreateModal] = useState(false)
@@ -21,7 +26,6 @@ export default function ProjectsPage() {
 
   const projectCards = useMemo(() => toProjectCards(projects, userId), [projects, userId])
 
-  // Only non-archived courses in the create modal + filter dropdown
   const activeCourses = useMemo(() => courses.filter((c) => !c.is_archived), [courses])
 
   const courseFilterOptions = [
@@ -42,7 +46,7 @@ export default function ProjectsPage() {
     return result
   }, [projectCards, activeTab, searchQuery, selectedCourse, courses])
 
-  const activeCount = projectCards.filter((p) => p.status === 'active').length
+  const activeCount    = projectCards.filter((p) => p.status === 'active').length
   const completedCount = projectCards.filter((p) => p.status === 'completed').length
 
   const handleCreate = async (data: CreateProjectData) => {
@@ -71,6 +75,33 @@ export default function ProjectsPage() {
             </button>
           )}
         </div>
+
+        {/* ── Pending Invitations inbox ── */}
+        {receivedInvitations.length > 0 && (
+          <div className="mb-8">
+            <div className="flex items-center gap-2 mb-3">
+              <Mail size={14} className="text-indigo-400" />
+              <h3 className="text-sm font-semibold text-white">
+                Pending Invitations
+                <span className="ml-2 text-xs font-normal text-indigo-400">
+                  {receivedInvitations.length}
+                </span>
+              </h3>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+              {receivedInvitations.map((inv) => (
+                <InvitationCard
+                  key={inv.id}
+                  invitation={inv}
+                  userCourses={activeCourses}
+                  onAccept={acceptInvitation}
+                  onDecline={declineInvitation}
+                />
+              ))}
+            </div>
+            <div className="mt-6 border-t border-slate-800" />
+          </div>
+        )}
 
         {/* Tabs */}
         <div className="flex items-center justify-between gap-4 mb-6 flex-wrap">

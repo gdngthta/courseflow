@@ -5,7 +5,7 @@
  * uses the real auth user id.
  */
 
-import type { ProjectWithRelations, ProjectMemberWithProfile } from '@/lib/api/projects'
+import type { ProjectWithRelations, ProjectMemberWithProfile, ProjectInvitationForProject } from '@/lib/api/projects'
 import type { Project, ProjectCardData, TaskCardData, ProjectRole, ProjectLink } from '@/types'
 import { calculateRisk, calculateProjectRisk } from '@/lib/risk'
 
@@ -60,6 +60,7 @@ export interface ProjectDetailView {
   members: ProjectMemberWithProfile[]
   tasks: TaskCardData[]
   links: ProjectLink[]
+  invitations: ProjectInvitationForProject[]
   userRole: ProjectRole
   progress: number
   risk: ReturnType<typeof calculateProjectRisk>
@@ -73,7 +74,7 @@ export function toProjectDetail(
   const pd = data.find((d) => d.project.id === projectId)
   if (!pd) return null
 
-  const { project, course, members, tasks, links } = pd
+  const { project, course, members, tasks, links, invitations } = pd
   const userMember = members.find((m) => m.user_id === userId)
   const progress = calcProjectProgress(tasks)
 
@@ -109,6 +110,7 @@ export function toProjectDetail(
     members,
     tasks: taskCards,
     links,
+    invitations: invitations ?? [],
     userRole: (userMember?.role ?? 'member') as ProjectRole,
     progress,
     risk: calculateProjectRisk(tasks),

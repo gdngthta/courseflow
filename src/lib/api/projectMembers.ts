@@ -1,5 +1,4 @@
 import { createClient } from '@/lib/supabase'
-import type { ProjectRole } from '@/types'
 
 // Shared result shape used by all member-management calls.
 export interface MemberActionResult {
@@ -11,19 +10,21 @@ export interface MemberActionResult {
 export type InviteResult = MemberActionResult
 
 /**
- * Add a member to a project by email (via the invite_member RPC).
- * The invited user must already have a CourseFlow account.
- * Returns { ok, error } rather than throwing so the UI can show a message.
+ * Create a pending invitation for a project member by email.
+ * Replaces the old instant invite_member flow — the invitee now must
+ * explicitly accept before they become a project member.
+ * The invitee must already have a CourseFlow account.
+ * Returns { ok, error } so the UI can show a message.
  */
 export async function inviteMember(
   projectId: string,
   email: string,
-  role: ProjectRole
+  role: 'member' | 'admin'
 ): Promise<MemberActionResult> {
   const supabase = createClient()
-  const { data, error } = await supabase.rpc('invite_member', {
+  const { data, error } = await supabase.rpc('create_project_invitation', {
     p_project_id: projectId,
-    p_email: email,
+    p_invitee_email: email,
     p_role: role,
   })
   if (error) return { ok: false, error: error.message }

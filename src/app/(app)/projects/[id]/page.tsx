@@ -33,7 +33,7 @@ export default function ProjectDetailPage() {
     userId, courses, projects, projectsLoading, error,
     addProjectTask, updateProjectTaskNotes, deleteProjectTask,
     markProjectTaskDone, completeProject, reopenProject, updateProjectTaskChecklist,
-    inviteMember, updateMemberRole, removeMember, leaveProject,
+    inviteMember, updateMemberRole, removeMember, leaveProject, cancelInvitation,
   } = useData()
   const [reopening, setReopening] = useState(false)
 
@@ -75,7 +75,7 @@ export default function ProjectDetailPage() {
     )
   }
 
-  const { project, course, links, userRole, tasks, members } = detail
+  const { project, course, links, userRole, tasks, members, invitations } = detail
   const isCompleted = project.status === 'completed'
   const completedAt = project.completed_at
   const completedCount = tasks.filter((t) => t.status === 'done').length
@@ -325,6 +325,7 @@ export default function ProjectDetailPage() {
             {/* Members */}
             <MemberManagementPanel
               members={members}
+              invitations={invitations}
               tasks={tasks}
               userId={userId}
               userRole={userRole}
@@ -337,6 +338,9 @@ export default function ProjectDetailPage() {
                 removeMember(project.id, targetUserId)
               }
               onLeaveProject={() => leaveProject(project.id)}
+              onCancelInvitation={(invitationId) =>
+                cancelInvitation(invitationId)
+              }
             />
 
             {/* Important Links */}

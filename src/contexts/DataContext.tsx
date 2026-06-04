@@ -2,7 +2,8 @@
 
 /**
  * Central data store for the authenticated user's courses, personal tasks,
- * and projects (with members, tasks, and links).
+ * projects (with members, tasks, links, pending invitations), received
+ * project invitations (inbox), and DB notifications.
  *
  * All Supabase reads and writes go through this context. Pages never query
  * Supabase directly — they call the mutation helpers exposed here, which
@@ -17,26 +18,33 @@ import {
   useState,
   useCallback,
 } from 'react'
-import type { Course, PersonalTask, TaskChecklistItem } from '@/types'
+import type { Course, PersonalTask, TaskChecklistItem, DBNotification } from '@/types'
 import { useAuthUser } from '@/contexts/AuthContext'
 import * as coursesApi from '@/lib/api/courses'
 import * as tasksApi from '@/lib/api/personalTasks'
 import * as projectsApi from '@/lib/api/projects'
 import * as projectTasksApi from '@/lib/api/projectTasks'
 import * as projectMembersApi from '@/lib/api/projectMembers'
+import * as invitationsApi from '@/lib/api/invitations'
+import * as notificationsApi from '@/lib/api/notifications'
 import type { ProjectWithRelations } from '@/lib/api/projects'
 import type { InviteResult } from '@/lib/api/projectMembers'
+import type { ReceivedInvitation } from '@/lib/api/invitations'
 
 interface DataContextValue {
   userId: string
   courses: Course[]
   personalTasks: PersonalTask[]
   projects: ProjectWithRelations[]
+  receivedInvitations: ReceivedInvitation[]
+  dbNotifications: DBNotification[]
   loading: boolean
   projectsLoading: boolean
   error: string | null
   refetch: () => Promise<void>
   refetchProjects: () => Promise<void>
+  refetchInvitations: () => Promise<void>
+  refetchNotifications: () => Promise<void>
 
   // Course mutations
   addCourse: (input: coursesApi.CourseInput) => Promise<void>
@@ -61,10 +69,22 @@ interface DataContextValue {
   markProjectTaskDone: (id: string) => Promise<void>
   updateProjectTaskNotes: (id: string, notes: string) => Promise<void>
   updateProjectTaskChecklist: (id: string, checklist: TaskChecklistItem[]) => Promise<void>
+
+  // Member management
   inviteMember: (projectId: string, email: string, role: 'member' | 'admin') => Promise<InviteResult>
   updateMemberRole: (projectId: string, targetUserId: string, newRole: 'admin' | 'member') => Promise<InviteResult>
   removeMember: (projectId: string, targetUserId: string) => Promise<InviteResult>
   leaveProject: (projectId: string) => Promise<InviteResult>
+
+  // Invitation management (invitee side)
+  acceptInvitation: (id: string, displayName?: string, personalCourseId?: string) => Promise<InviteResult>
+  declineInvitation: (id: string) => Promise<InviteResult>
+  // Invitation management (inviter/leader side)
+  cancelInvitation: (id: string) => Promise<InviteResult>
+
+  // Notification management
+  markNotificationRead: (id: string) => Promise<void>
+  markAllNotificationsRead: () => Promise<void>
 }
 
 const DataContext = createContext<DataContextValue | null>(null)
@@ -76,6 +96,8 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   const [courses, setCourses] = useState<Course[]>([])
   const [personalTasks, setPersonalTasks] = useState<PersonalTask[]>([])
   const [projects, setProjects] = useState<ProjectWithRelations[]>([])
+  const [receivedInvitations, setReceivedInvitations] = useState<ReceivedInvitation[]>([])
+  const [dbNotifications, setDbNotifications] = useState<DBNotification[]>([])
   const [loading, setLoading] = useState(true)
   const [projectsLoading, setProjectsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -98,11 +120,25 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     }
   }, [user])
 
+  const refetchInvitations = useCallback(async () => {
+    if (!user) { setReceivedInvitations([]); return }
+    const inv = await invitationsApi.getReceivedInvitations()
+    setReceivedInvitations(inv)
+  }, [user])
+
+  const refetchNotifications = useCallback(async () => {
+    if (!user) { setDbNotifications([]); return }
+    const n = await notificationsApi.getDBNotifications()
+    setDbNotifications(n)
+  }, [user])
+
   const refetch = useCallback(async () => {
     if (!user) {
       setCourses([])
       setPersonalTasks([])
       setProjects([])
+      setReceivedInvitations([])
+      setDbNotifications([])
       setLoading(false)
       setProjectsLoading(false)
       return
@@ -111,14 +147,18 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     setProjectsLoading(true)
     setError(null)
     try {
-      const [c, t, p] = await Promise.all([
+      const [c, t, p, inv, notifs] = await Promise.all([
         coursesApi.getCourses(),
         tasksApi.getPersonalTasks(),
         projectsApi.getProjectsWithRelations(),
+        invitationsApi.getReceivedInvitations(),
+        notificationsApi.getDBNotifications(),
       ])
       setCourses(c)
       setPersonalTasks(t)
       setProjects(p)
+      setReceivedInvitations(inv)
+      setDbNotifications(notifs)
     } catch (e) {
       const message = e instanceof Error ? e.message : 'Failed to load data'
       setError(message)
@@ -171,17 +211,6 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     setPersonalTasks((prev) => prev.map((t) => (t.id === id ? updated : t)))
   }, [])
 
-  /**
-   * Partial-status update used by the Kanban board. Optimistic — flips
-   * local state immediately, writes to Supabase in the background,
-   * refetches if the write fails. Mirrors the project-task helper but
-   * exists here because tasksApi.updatePersonalTask demands a full input
-   * shape and we only want to change the status field.
-   *
-   * When moving to 'done' we also stamp progress=100; when moving OUT
-   * of 'done' we leave progress alone so the user's manual number
-   * isn't clobbered.
-   */
   const updatePersonalTaskStatus = useCallback(
     async (id: string, status: tasksApi.PersonalTaskInput['status']) => {
       const goingToDone = status === 'done'
@@ -202,10 +231,6 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
 
   const updatePersonalTaskChecklist = useCallback(
     async (id: string, checklist: TaskChecklistItem[]) => {
-      // Phase 5G #2: when a checklist exists, progress is derived from it
-      // (completed items / total × 100). The manual progress slider only
-      // applies when there's no checklist. We persist both fields so
-      // downstream risk calculations stay consistent with what the user sees.
       const derivedProgress = checklist.length > 0
         ? Math.round((checklist.filter((i) => i.done).length / checklist.length) * 100)
         : undefined
@@ -273,12 +298,8 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     await refetchProjects()
   }, [refetchProjects])
 
-  // Optimistic patch of a single task's checklist within the nested structure
   const updateProjectTaskChecklist = useCallback(
     async (id: string, checklist: TaskChecklistItem[]) => {
-      // Phase 5G #2: derive progress from checklist when one exists,
-      // so the project progress bar and task risk match what the user
-      // toggled. Mirrors the personal-task path.
       const derivedProgress = checklist.length > 0
         ? Math.round((checklist.filter((i) => i.done).length / checklist.length) * 100)
         : undefined
@@ -306,9 +327,11 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     [refetchProjects]
   )
 
+  // ── Member management ──
   const inviteMember = useCallback(
     async (projectId: string, email: string, role: 'member' | 'admin') => {
       const result = await projectMembersApi.inviteMember(projectId, email, role)
+      // Invitations are now pending — refetch so the leader sees the new pending row
       if (result.ok) await refetchProjects()
       return result
     },
@@ -342,6 +365,59 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     [refetchProjects]
   )
 
+  // ── Invitation management (invitee side) ──
+  const acceptInvitation = useCallback(
+    async (id: string, displayName?: string, personalCourseId?: string) => {
+      const result = await invitationsApi.acceptInvitation(id, displayName, personalCourseId)
+      if (result.ok) {
+        // Remove from inbox and reload projects (user is now a member)
+        setReceivedInvitations((prev) => prev.filter((inv) => inv.id !== id))
+        await Promise.all([refetchProjects(), refetchNotifications()])
+      }
+      return result
+    },
+    [refetchProjects, refetchNotifications]
+  )
+
+  const declineInvitation = useCallback(
+    async (id: string) => {
+      const result = await invitationsApi.declineInvitation(id)
+      if (result.ok) {
+        setReceivedInvitations((prev) => prev.filter((inv) => inv.id !== id))
+        refetchNotifications()
+      }
+      return result
+    },
+    [refetchNotifications]
+  )
+
+  // ── Invitation management (inviter/leader side) ──
+  const cancelInvitation = useCallback(
+    async (id: string) => {
+      const result = await invitationsApi.cancelInvitation(id)
+      if (result.ok) await refetchProjects()
+      return result
+    },
+    [refetchProjects]
+  )
+
+  // ── Notification management ──
+  const markNotificationRead = useCallback(
+    async (id: string) => {
+      setDbNotifications((prev) =>
+        prev.map((n) => (n.id === id ? { ...n, read_at: new Date().toISOString() } : n))
+      )
+      await notificationsApi.markNotificationRead(id)
+    },
+    []
+  )
+
+  const markAllNotificationsRead = useCallback(async () => {
+    const now = new Date().toISOString()
+    setDbNotifications((prev) => prev.map((n) => ({ ...n, read_at: n.read_at ?? now })))
+    await notificationsApi.markAllNotificationsRead()
+  }, [])
+
   return (
     <DataContext.Provider
       value={{
@@ -349,11 +425,15 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
         courses,
         personalTasks,
         projects,
+        receivedInvitations,
+        dbNotifications,
         loading,
         projectsLoading,
         error,
         refetch,
         refetchProjects,
+        refetchInvitations,
+        refetchNotifications,
         addCourse,
         updateCourse,
         setCourseArchived,
@@ -376,6 +456,11 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
         updateMemberRole,
         removeMember,
         leaveProject,
+        acceptInvitation,
+        declineInvitation,
+        cancelInvitation,
+        markNotificationRead,
+        markAllNotificationsRead,
       }}
     >
       {children}
