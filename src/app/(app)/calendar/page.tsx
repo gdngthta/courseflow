@@ -76,7 +76,7 @@ export default function CalendarPage() {
     () => toAllTaskCards(personalTasks, courses, projects, userId),
     [personalTasks, courses, projects, userId]
   )
-  const allProjects = useMemo(() => toProjectCards(projects, userId), [projects, userId])
+  const allProjects = useMemo(() => toProjectCards(projects, userId, courses), [projects, userId, courses])
   const memberNames = useMemo(() => buildMemberNameMap(projects), [projects])
 
   const activeTasks = useMemo(() => allTasks.filter((t) => t.status !== 'done'), [allTasks])

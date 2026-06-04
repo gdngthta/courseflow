@@ -39,7 +39,7 @@ export default function DashboardPage() {
     () => toAllTaskCards(personalTasks, courses, projects, userId),
     [personalTasks, courses, projects, userId]
   )
-  const allProjects = useMemo(() => toProjectCards(projects, userId), [projects, userId])
+  const allProjects = useMemo(() => toProjectCards(projects, userId, courses), [projects, userId, courses])
   const activeCourses = useMemo(() => courses.filter((c) => !c.is_archived), [courses])
   const activeCoursesForInvite = activeCourses  // alias — passed to InvitationCard
   const activeProjects = useMemo(() => allProjects.filter((p) => p.status === 'active'), [allProjects])

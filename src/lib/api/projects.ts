@@ -31,6 +31,8 @@ export interface ProjectWithRelations {
   /** Pending invitations visible to the current user for this project.
    *  Leaders/editors see all pending; others see none (RLS). */
   invitations: ProjectInvitationForProject[]
+  /** Current user's personal preferences for this project (display name, personal course). */
+  myPreferences?: { display_name?: string | null; personal_course_id?: string | null }
 }
 
 // ── Raw row shapes returned by the nested select ──
@@ -77,9 +79,16 @@ const INVITATION_SELECT = `
   invitee:profiles!project_invitations_invitee_user_id_fkey ( full_name, email )
 `
 
+interface RawPreference {
+  project_id: string
+  display_name: string | null
+  personal_course_id: string | null
+}
+
 function mapRow(
   row: RawProjectRow,
-  invitationsByProject: Map<string, ProjectInvitationForProject[]>
+  invitationsByProject: Map<string, ProjectInvitationForProject[]>,
+  preferencesByProject: Map<string, RawPreference>
 ): ProjectWithRelations {
   const project: Project = {
     id: row.id,
@@ -131,21 +140,26 @@ function mapRow(
   }))
 
   const invitations = invitationsByProject.get(row.id) ?? []
+  const myPreferences = preferencesByProject.get(row.id)
 
-  return { project, course, members, tasks, links, invitations }
+  return { project, course, members, tasks, links, invitations, myPreferences }
 }
 
 /** All projects the signed-in user belongs to, with members/tasks/links/invitations. */
 export async function getProjectsWithRelations(): Promise<ProjectWithRelations[]> {
   const supabase = createClient()
 
-  const [projectsResult, invitationsResult] = await Promise.all([
+  const [projectsResult, invitationsResult, preferencesResult] = await Promise.all([
     supabase.from('projects').select(SELECT).order('created_at', { ascending: false }),
     supabase
       .from('project_invitations')
       .select(INVITATION_SELECT)
       .eq('status', 'pending')
       .order('created_at', { ascending: false }),
+    // RLS on project_member_preferences restricts to current user's rows only.
+    supabase
+      .from('project_member_preferences')
+      .select('project_id, display_name, personal_course_id'),
   ])
 
   if (projectsResult.error) {
@@ -169,8 +183,14 @@ export async function getProjectsWithRelations(): Promise<ProjectWithRelations[]
     invitationsByProject.set(inv.project_id, list)
   }
 
+  // Build a project_id → preferences lookup (current user's personalization)
+  const preferencesByProject = new Map<string, RawPreference>()
+  for (const p of (preferencesResult.data ?? []) as RawPreference[]) {
+    preferencesByProject.set(p.project_id, p)
+  }
+
   return ((projectsResult.data ?? []) as unknown as RawProjectRow[]).map((row) =>
-    mapRow(row, invitationsByProject)
+    mapRow(row, invitationsByProject, preferencesByProject)
   )
 }
 

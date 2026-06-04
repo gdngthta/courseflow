@@ -24,7 +24,7 @@ export default function ProjectsPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCourse, setSelectedCourse] = useState('all')
 
-  const projectCards = useMemo(() => toProjectCards(projects, userId), [projects, userId])
+  const projectCards = useMemo(() => toProjectCards(projects, userId, courses), [projects, userId, courses])
 
   const activeCourses = useMemo(() => courses.filter((c) => !c.is_archived), [courses])
 

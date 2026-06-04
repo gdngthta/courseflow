@@ -44,8 +44,8 @@ export default function ProjectDetailPage() {
   const [mutationError, setMutationError] = useState('')
 
   const detail = useMemo(
-    () => toProjectDetail(projects, projectId, userId),
-    [projects, projectId, userId]
+    () => toProjectDetail(projects, projectId, userId, courses),
+    [projects, projectId, userId, courses]
   )
 
   if (projectsLoading && !detail) {
@@ -75,7 +75,7 @@ export default function ProjectDetailPage() {
     )
   }
 
-  const { project, course, links, userRole, tasks, members, invitations } = detail
+  const { project, course, links, userRole, tasks, members, invitations, effectiveName } = detail
   const isCompleted = project.status === 'completed'
   const completedAt = project.completed_at
   const completedCount = tasks.filter((t) => t.status === 'done').length
@@ -214,7 +214,7 @@ export default function ProjectDetailPage() {
         <div className="flex items-start justify-between gap-4 mb-6">
           <div>
             <div className="flex items-center gap-2 mb-1">
-              <h2 className="text-xl font-semibold text-white">{project.name}</h2>
+              <h2 className="text-xl font-semibold text-white">{effectiveName}</h2>
               {isCompleted ? (
                 <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-900/40 text-emerald-400 border border-emerald-800/50">
                   <CheckCircle2 size={10} />

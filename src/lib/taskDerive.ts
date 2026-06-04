@@ -45,7 +45,8 @@ export function toAllTaskCards(
   userId: string
 ): TaskCardData[] {
   const personal = personalTasks.map((t) => personalTaskToCard(t, courses))
-  const assigned = toAssignedTaskCards(projects, userId)
+  // Pass courses so toAssignedTaskCards can resolve personal_course_id preferences.
+  const assigned = toAssignedTaskCards(projects, userId, courses)
   return [...personal, ...assigned]
 }
 
