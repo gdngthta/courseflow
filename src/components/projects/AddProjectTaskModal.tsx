@@ -1,11 +1,10 @@
-﻿'use client'
+'use client'
 
 import { useState } from 'react'
-import { X, Square } from 'lucide-react'
+import { X, Square, Users } from 'lucide-react'
 import { Modal } from '@/components/ui/Modal'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
-import { SelectInput } from '@/components/ui/SelectInput'
 import type { Difficulty, TaskLink, TaskChecklistItem } from '@/types'
 
 interface Member { id: string; name: string }
@@ -15,10 +14,7 @@ interface AddProjectTaskModalProps {
   onClose: () => void
   onSubmit: (data: AddProjectTaskData) => Promise<void>
   members: Member[]
-  /** ISO date (YYYY-MM-DD) of the parent project's deadline.
-   *  Used both as an HTML `max` constraint on the date input and as
-   *  a server-side-style guard in validate() so a task can never be
-   *  scheduled after the project itself is due. */
+  /** ISO date (YYYY-MM-DD) of the parent project's deadline. */
   projectDeadline: string
 }
 
@@ -40,6 +36,8 @@ const DIFFICULTY_OPTIONS = [
   { value: '5', label: '5 — Very Hard' },
 ]
 
+const SENTINEL_EVERYONE = '__everyone__'
+
 const EMPTY_FORM: AddProjectTaskData = {
   title: '', assigned_to: '', due_date: '', difficulty: 3, notes: '', links: [], checklist: [],
 }
@@ -50,7 +48,7 @@ export function AddProjectTaskModal({ open, onClose, onSubmit, members, projectD
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState('')
 
-  const memberOptions = members.map((m) => ({ value: m.id, label: m.name }))
+  const isEveryone = form.assigned_to === SENTINEL_EVERYONE
 
   // ── Link helpers ──
   const addLink = () => setForm((f) => ({ ...f, links: [...f.links, { label: '', url: '' }] }))
@@ -73,13 +71,8 @@ export function AddProjectTaskModal({ open, onClose, onSubmit, members, projectD
     if (!form.due_date) {
       e.due_date = 'Due date is required'
     } else if (projectDeadline && form.due_date > projectDeadline) {
-      // Phase 6A #7: a task's due_date may not fall after the parent
-      // project's deadline — otherwise the project could "finish" with
-      // unfinishable tasks still scheduled in the future.
       e.due_date = 'Task due date cannot be later than the project deadline.'
     }
-    // Phase 5G #9: every project task must have an assignee — keeps
-    // accountability clear and prevents 'orphan' tasks no one owns.
     if (!form.assigned_to) e.assigned_to = 'Please assign this task to a member.'
     const badLink = form.links.find(
       (l) => l.url.trim() && !l.url.trim().match(/^https?:\/\/.+/)
@@ -94,7 +87,14 @@ export function AddProjectTaskModal({ open, onClose, onSubmit, members, projectD
     setSubmitting(true)
     setSubmitError('')
     try {
-      await onSubmit(form)
+      if (isEveryone) {
+        // Create one task per member sequentially.
+        for (const member of members) {
+          await onSubmit({ ...form, assigned_to: member.id })
+        }
+      } else {
+        await onSubmit(form)
+      }
       setForm(EMPTY_FORM)
       onClose()
     } catch (e) {
@@ -103,6 +103,15 @@ export function AddProjectTaskModal({ open, onClose, onSubmit, members, projectD
       setSubmitting(false)
     }
   }
+
+  const handleAssignChange = (val: string) => {
+    setForm((f) => ({ ...f, assigned_to: val }))
+    setErrors((prev) => ({ ...prev, assigned_to: undefined }))
+  }
+
+  const submitLabel = submitting
+    ? isEveryone ? `Adding ${members.length} tasks…` : 'Adding…'
+    : isEveryone ? `Add ${members.length} Tasks` : 'Add Task'
 
   return (
     <Modal open={open} onClose={onClose} title="Add Project Task" maxWidth="max-w-lg">
@@ -114,17 +123,38 @@ export function AddProjectTaskModal({ open, onClose, onSubmit, members, projectD
           onChange={(e) => setForm({ ...form, title: e.target.value })}
           error={errors.title}
         />
-        <SelectInput
-          label="Assign To"
-          placeholder="Select a member..."
-          options={memberOptions}
-          value={form.assigned_to}
-          onChange={(e) => {
-            setForm({ ...form, assigned_to: e.target.value })
-            setErrors((prev) => ({ ...prev, assigned_to: undefined }))
-          }}
-          error={errors.assigned_to}
-        />
+
+        {/* Assign To — native select with "Everyone" option */}
+        <div className="flex flex-col gap-1.5">
+          <label className="text-xs font-medium text-slate-300">Assign To</label>
+          <select
+            value={form.assigned_to}
+            onChange={(e) => handleAssignChange(e.target.value)}
+            className="w-full pl-3 pr-8 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-sm text-slate-200 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition appearance-none"
+          >
+            <option value="" className="bg-slate-800">Select a member...</option>
+            <option value={SENTINEL_EVERYONE} className="bg-slate-800">
+              👥 Everyone (all {members.length} members)
+            </option>
+            {members.map((m) => (
+              <option key={m.id} value={m.id} className="bg-slate-800">
+                {m.name}
+              </option>
+            ))}
+          </select>
+          {errors.assigned_to && (
+            <p className="text-xs text-red-400">{errors.assigned_to}</p>
+          )}
+          {isEveryone && (
+            <div className="flex items-start gap-1.5 px-3 py-2 bg-indigo-950/40 border border-indigo-800/40 rounded-lg">
+              <Users size={12} className="text-indigo-400 flex-shrink-0 mt-0.5" />
+              <p className="text-xs text-slate-400">
+                Creates <span className="text-slate-200 font-medium">{members.length} separate tasks</span> — one for each member with identical details.
+              </p>
+            </div>
+          )}
+        </div>
+
         <div className="grid grid-cols-2 gap-3">
           <Input
             label="Due Date"
@@ -137,38 +167,44 @@ export function AddProjectTaskModal({ open, onClose, onSubmit, members, projectD
             }}
             error={errors.due_date}
           />
-          <SelectInput
-            label="Difficulty"
-            options={DIFFICULTY_OPTIONS}
-            value={String(form.difficulty)}
-            onChange={(e) => setForm({ ...form, difficulty: Number(e.target.value) as Difficulty })}
-          />
+          <div className="flex flex-col gap-1.5">
+            <label className="text-xs font-medium text-slate-300">Difficulty</label>
+            <select
+              value={String(form.difficulty)}
+              onChange={(e) => setForm({ ...form, difficulty: Number(e.target.value) as Difficulty })}
+              className="w-full pl-3 pr-8 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-sm text-slate-200 focus:outline-none focus:border-indigo-500 transition appearance-none"
+            >
+              {DIFFICULTY_OPTIONS.map((o) => (
+                <option key={o.value} value={o.value} className="bg-slate-800">{o.label}</option>
+              ))}
+            </select>
+          </div>
         </div>
-        <p className="text-xs text-slate-500 dark:text-slate-400 -mt-2">
+        <p className="text-xs text-slate-500 -mt-2">
           Difficulty increases risk when progress is low and the deadline is close.
         </p>
 
         {/* Notes */}
         <div className="flex flex-col gap-1.5">
-          <label className="text-xs font-medium text-slate-600 dark:text-slate-300">Instructions / Notes <span className="text-slate-500">(Optional)</span></label>
+          <label className="text-xs font-medium text-slate-300">
+            Instructions / Notes <span className="text-slate-500">(Optional)</span>
+          </label>
           <textarea
             rows={3}
             placeholder="Add instructions or context for the assigned member..."
             value={form.notes}
             onChange={(e) => setForm({ ...form, notes: e.target.value })}
-            className="w-full px-3 py-2.5 bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-sm text-slate-700 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:border-indigo-500 focus:ring-indigo-500 transition resize-none"
+            className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-sm text-slate-200 placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:border-indigo-500 focus:ring-indigo-500 transition resize-none"
           />
         </div>
 
         {/* Resources */}
         <div className="flex flex-col gap-2">
           <div className="flex items-center justify-between">
-            <label className="text-xs font-medium text-slate-600 dark:text-slate-300">Resources <span className="text-slate-500">(Optional)</span></label>
-            <button
-              type="button"
-              onClick={addLink}
-              className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors"
-            >
+            <label className="text-xs font-medium text-slate-300">
+              Resources <span className="text-slate-500">(Optional)</span>
+            </label>
+            <button type="button" onClick={addLink} className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors">
               + Add
             </button>
           </div>
@@ -181,42 +217,34 @@ export function AddProjectTaskModal({ open, onClose, onSubmit, members, projectD
                     placeholder="Label"
                     value={link.label}
                     onChange={(e) => { updateLink(i, 'label', e.target.value); setErrors((prev) => ({ ...prev, links: undefined })) }}
-                    className="w-2/5 px-2.5 py-1.5 bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-xs text-slate-700 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-indigo-500 transition"
+                    className="w-2/5 px-2.5 py-1.5 bg-slate-800 border border-slate-700 rounded-lg text-xs text-slate-200 placeholder:text-slate-500 focus:outline-none focus:border-indigo-500 transition"
                   />
                   <input
                     type="url"
                     placeholder="https://..."
                     value={link.url}
                     onChange={(e) => { updateLink(i, 'url', e.target.value); setErrors((prev) => ({ ...prev, links: undefined })) }}
-                    className="flex-1 px-2.5 py-1.5 bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-xs text-slate-700 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-indigo-500 transition"
+                    className="flex-1 px-2.5 py-1.5 bg-slate-800 border border-slate-700 rounded-lg text-xs text-slate-200 placeholder:text-slate-500 focus:outline-none focus:border-indigo-500 transition"
                   />
-                  <button
-                    type="button"
-                    onClick={() => removeLink(i)}
-                    className="p-1 rounded text-slate-500 hover:text-red-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors flex-shrink-0"
-                  >
+                  <button type="button" onClick={() => removeLink(i)} className="p-1 rounded text-slate-500 hover:text-red-400 hover:bg-slate-700 transition-colors flex-shrink-0">
                     <X size={13} />
                   </button>
                 </div>
               ))}
-              {errors.links && (
-                <p className="text-xs text-red-400">{errors.links}</p>
-              )}
+              {errors.links && <p className="text-xs text-red-400">{errors.links}</p>}
             </div>
           ) : (
-            <p className="text-xs text-slate-600 italic">No resources added.</p>
+            <p className="text-xs text-slate-500 italic">No resources added.</p>
           )}
         </div>
 
         {/* Checklist */}
         <div className="flex flex-col gap-2">
           <div className="flex items-center justify-between">
-            <label className="text-xs font-medium text-slate-600 dark:text-slate-300">Checklist <span className="text-slate-500">(Optional)</span></label>
-            <button
-              type="button"
-              onClick={addChecklistItem}
-              className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors"
-            >
+            <label className="text-xs font-medium text-slate-300">
+              Checklist <span className="text-slate-500">(Optional)</span>
+            </label>
+            <button type="button" onClick={addChecklistItem} className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors">
               + Add item
             </button>
           </div>
@@ -230,20 +258,16 @@ export function AddProjectTaskModal({ open, onClose, onSubmit, members, projectD
                     placeholder="Checklist item..."
                     value={item.text}
                     onChange={(e) => updateChecklistItem(i, e.target.value)}
-                    className="flex-1 px-2.5 py-1.5 bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-xs text-slate-700 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-indigo-500 transition"
+                    className="flex-1 px-2.5 py-1.5 bg-slate-800 border border-slate-700 rounded-lg text-xs text-slate-200 placeholder:text-slate-500 focus:outline-none focus:border-indigo-500 transition"
                   />
-                  <button
-                    type="button"
-                    onClick={() => removeChecklistItem(i)}
-                    className="p-1 rounded text-slate-500 hover:text-red-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors flex-shrink-0"
-                  >
+                  <button type="button" onClick={() => removeChecklistItem(i)} className="p-1 rounded text-slate-500 hover:text-red-400 hover:bg-slate-700 transition-colors flex-shrink-0">
                     <X size={13} />
                   </button>
                 </div>
               ))}
             </div>
           ) : (
-            <p className="text-xs text-slate-600 italic">No items added.</p>
+            <p className="text-xs text-slate-500 italic">No items added.</p>
           )}
         </div>
 
@@ -253,7 +277,7 @@ export function AddProjectTaskModal({ open, onClose, onSubmit, members, projectD
         <div className="flex justify-end gap-3 pt-2">
           <Button variant="secondary" onClick={onClose} disabled={submitting}>Cancel</Button>
           <Button variant="primary" onClick={handleSubmit} disabled={submitting}>
-            {submitting ? 'Adding…' : 'Add Task'}
+            {submitLabel}
           </Button>
         </div>
       </div>
