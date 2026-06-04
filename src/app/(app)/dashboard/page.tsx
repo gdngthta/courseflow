@@ -41,7 +41,6 @@ export default function DashboardPage() {
   )
   const allProjects = useMemo(() => toProjectCards(projects, userId, courses), [projects, userId, courses])
   const activeCourses = useMemo(() => courses.filter((c) => !c.is_archived), [courses])
-  const activeCoursesForInvite = activeCourses  // alias — passed to InvitationCard
   const activeProjects = useMemo(() => allProjects.filter((p) => p.status === 'active'), [allProjects])
 
   const firstName = (user?.user_metadata?.full_name as string | undefined)?.split(' ')[0] || 'there'
@@ -158,7 +157,7 @@ export default function DashboardPage() {
                 <InvitationCard
                   key={inv.id}
                   invitation={inv}
-                  userCourses={activeCoursesForInvite}
+                  userCourses={activeCourses}
                   onAccept={acceptInvitation}
                   onDecline={declineInvitation}
                 />

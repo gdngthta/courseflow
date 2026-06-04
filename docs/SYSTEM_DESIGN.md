@@ -45,13 +45,13 @@ than `chat.id`, and it serves only data scoped to that profile's user_id.
 ### Telegram Reminder Pipeline (outbound, scheduled)
 
 ```
-Vercel Cron (hourly: 0 * * * *)
+Vercel Cron (hourly: 0 * * * *)   ← requires Vercel Pro; Hobby = once-per-day only
   → GET /api/cron/send-reminders   (Bearer CRON_SECRET)
        ├─ Load profiles WHERE telegram_enabled AND chat_id IS NOT NULL
        ├─ For each user with reminder_preferences.enabled:
-       │     ├─ Read user's send_time (e.g. "08:00") + timezone (e.g. "Asia/Kuala_Lumpur")
+       │     ├─ Read user's timezone (e.g. "Asia/Kuala_Lumpur", default if missing)
        │     ├─ Convert current UTC time to user's local time via Intl.DateTimeFormat
-       │     ├─ If local hour ≠ preferred send hour → SKIP (no reminder this hour)
+       │     ├─ If local hour ≠ 6 → SKIP (reminders are sent at 6:00 AM local, not configurable)
        │     ├─ Load incomplete personal_tasks
        │     ├─ Load incomplete assigned project_tasks
        │     ├─ findReminderCandidates(tasks, prefs)  ← pure function
@@ -63,6 +63,10 @@ Vercel Cron (hourly: 0 * * * *)
        │     │     4. If send failed → UPDATE log to status='failed'
        └─ Return summary JSON { users_checked, users_skipped_time, sent, ... }
 ```
+
+**Reminder time:** Fixed at **6:00 AM in each user's selected timezone**. Users choose their
+timezone in Settings; the send time is always 6:00 AM local. The cron runs hourly and each
+run only processes users currently in their 6 AM window.
 
 Timezone matching is hour-exact (not minute-exact) because Vercel Cron fires
 sometime during the scheduled hour — exact minute delivery is not guaranteed.

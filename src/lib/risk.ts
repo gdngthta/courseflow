@@ -1,4 +1,5 @@
 import type { RiskStatus, TaskStatus } from '@/types'
+import { parseDueDate } from '@/lib/utils'
 
 interface RiskInput {
   status: TaskStatus
@@ -10,8 +11,10 @@ interface RiskInput {
 export function calculateRisk({ status, due_date, progress, difficulty }: RiskInput): RiskStatus {
   if (status === 'done') return 'completed'
 
+  // Use parseDueDate (local midnight) so "today" is correct in UTC+8 and
+  // other non-UTC timezones — fixes off-by-one risk calculations.
   const now = new Date()
-  const due = new Date(due_date)
+  const due = parseDueDate(due_date)
   const daysUntilDue = (due.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
 
   if (daysUntilDue < 0) return 'critical'

@@ -79,8 +79,6 @@ export function deriveNotifications(
   today: Date = new Date()
 ): AppNotification[] {
   const tasks = toAllTaskCards(data.personalTasks, data.courses, data.projects, data.userId)
-  const today_ = todayISO(today)
-  void today_
 
   const out: AppNotification[] = []
 

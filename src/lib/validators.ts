@@ -5,11 +5,13 @@
  * Returns the error message on failure or null on success.
  */
 
-const NAME_RE = /^[A-Za-z][A-Za-z\s'\-]*$/
+// Unicode-aware: allows letters from any script (A-Z, é, ü, ñ, Nguyễn, 马, etc.)
+// so Southeast Asian and international names are accepted.
+const NAME_RE = /^[\p{L}][\p{L}\s'\-]*$/u
 
 /**
  * Allowed in names:
- *   - letters (must start with one)
+ *   - Unicode letters from any script (must start with one)
  *   - spaces
  *   - apostrophes (e.g. O'Brien)
  *   - hyphens (e.g. Anne-Marie)

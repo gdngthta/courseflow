@@ -55,7 +55,7 @@ interface ProjectTaskRow {
 // ── Timezone helper ──────────────────────────────────────────
 //
 // Uses the built-in Intl API (Node.js 16+, no extra packages).
-// Returns the local hour (0–23) for a given IANA timezone.
+// Returns the local hour (0–23) for a given IANA timezone at `now`.
 
 function getLocalHour(timezone: string, now: Date): number {
   try {
@@ -74,21 +74,20 @@ function getLocalHour(timezone: string, now: Date): number {
   }
 }
 
-// ── Send-time match ──────────────────────────────────────────
+// ── Fixed send hour ──────────────────────────────────────────
 //
-// We match on the HOUR only (not minute-exact) because Vercel Cron
-// fires at some point during the scheduled hour — exact minute
-// delivery is not guaranteed on any plan. "08:00" means "send
-// within the 08:xx window".
+// CourseFlow sends reminders around 6:00 AM in each user's selected timezone.
+// Users choose their timezone; the send time is fixed at 06:xx.
+//
+// The cron runs hourly (schedule: "0 * * * *"). Each run checks which users
+// are currently in their 6 AM window and processes only those users.
+// This gives timezone-aware delivery without requiring a per-user scheduler.
+//
+// "Around 6:00 AM" means "within the 06:xx window" — exact-minute delivery
+// is not guaranteed because Vercel Cron fires at an unspecified point inside
+// the scheduled minute. Typical delivery is within a few minutes of 6:00.
 
-function isUserSendHour(prefs: ReminderPreferences, now: Date): boolean {
-  const sendTime = prefs.send_time ?? '08:00'
-  const timezone = prefs.timezone ?? 'Asia/Kuala_Lumpur'
-  const [prefHourStr] = sendTime.split(':')
-  const prefHour = parseInt(prefHourStr, 10)
-  const localHour = getLocalHour(timezone, now)
-  return localHour === prefHour
-}
+const SEND_HOUR = 6
 
 
 // ────────────────────────────────────────────────────────────
@@ -98,15 +97,14 @@ function isUserSendHour(prefs: ReminderPreferences, now: Date): boolean {
 //   Vercel Cron sets this automatically when CRON_SECRET is
 //   configured as an environment variable.
 //
-// Schedule: Runs once daily at 00:00 UTC (= 08:00 Asia/Kuala_Lumpur).
-// Hobby plan limitation: Vercel only allows once-per-day cron jobs.
+// Schedule: "0 * * * *" — runs every hour at :00.
 //
 // What it does (in order):
-//   1. Auth-check the request.
+//   1. Validate CRON_SECRET.
 //   2. Load every profile with telegram_enabled = true AND
 //      a chat ID set, joined with their reminder_preferences row.
-//   3. For each user: skip if their local time does NOT match
-//      their preferred send_time hour (timezone-aware).
+//   3. For each user: skip if their local time is NOT hour 6.
+//      Default timezone = Asia/Kuala_Lumpur.
 //   4. Fetch incomplete personal tasks + assigned project tasks.
 //   5. Run findReminderCandidates() to filter to today's sends.
 //   6. For each candidate, try to insert a reminder_logs row with
@@ -182,10 +180,12 @@ export async function GET(req: NextRequest) {
     // unexpected DMs, so skip silently — they must opt in explicitly.
     if (!prefs || !prefs.enabled) continue
 
-    // ── 3. Timezone-aware send-time check ────────────────
-    // Only process this user if their local time matches their
-    // preferred send_time hour. This prevents sending every hour.
-    if (!isUserSendHour(prefs, now)) {
+    // ── 3. Timezone-aware 6 AM check ─────────────────────
+    // Reminders are sent around 6:00 AM in the user's selected timezone.
+    // Only process this user if their local hour is currently 6.
+    const timezone = prefs.timezone ?? 'Asia/Kuala_Lumpur'
+    const localHour = getLocalHour(timezone, now)
+    if (localHour !== SEND_HOUR) {
       summary.users_skipped_time += 1
       continue
     }
@@ -221,8 +221,6 @@ export async function GET(req: NextRequest) {
     }
 
     // ── 5. Build flat candidate input ────────────────────
-    // Supabase nests joined 1:1 rows as objects in some setups and
-    // single-element arrays in others; handle both.
     const personalTasks = (personalRaw ?? []) as unknown as Array<
       Omit<PersonalTaskRow, 'course'> & {
         course: PersonalTaskRow['course'] | PersonalTaskRow['course'][]
@@ -301,10 +299,8 @@ export async function GET(req: NextRequest) {
       } else {
         summary.failed += 1
         // Patch the optimistic log row to reflect the failure so
-        // the audit trail is accurate. We don't delete it — the
-        // unique-key slot is still claimed, which means we won't
-        // retry today. That's intentional: a broken chat ID
-        // shouldn't cause a retry storm.
+        // the audit trail is accurate. The unique-key slot is still
+        // claimed, preventing a retry storm on broken chat IDs.
         await supabase
           .from('reminder_logs')
           .update({ status: 'failed', error_message: result.error ?? 'unknown' })

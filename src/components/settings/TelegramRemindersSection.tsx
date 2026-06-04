@@ -83,7 +83,6 @@ export function TelegramRemindersSection() {
   const [aroundDeadline, setAroundDeadline] = useState(true)
   const [highRisk, setHighRisk] = useState(true)
   const [daysBefore, setDaysBefore] = useState<ReminderDaysBefore>(1)
-  const [sendTime, setSendTime] = useState('08:00')
   const [timezone, setTimezone] = useState('Asia/Kuala_Lumpur')
 
   // Save state
@@ -117,7 +116,6 @@ export function TelegramRemindersSection() {
           setAroundDeadline(prefs.around_deadline_enabled)
           setHighRisk(prefs.high_risk_enabled)
           setDaysBefore(prefs.days_before)
-          setSendTime(prefs.send_time ?? '08:00')
           setTimezone(prefs.timezone ?? 'Asia/Kuala_Lumpur')
         }
         setLogs(recentLogs)
@@ -151,7 +149,9 @@ export function TelegramRemindersSection() {
         around_deadline_enabled: aroundDeadline,
         high_risk_enabled: highRisk,
         days_before: daysBefore,
-        send_time: sendTime,
+        // Reminder time is fixed at 06:00 local — not user-configurable.
+        // Store '06:00' so the DB column stays consistent.
+        send_time: '06:00',
         timezone,
       })
       setSaveMsg('Settings saved.')
@@ -196,9 +196,7 @@ export function TelegramRemindersSection() {
   // Most-recent successfully sent log entry.
   const lastSent = logs.find((l) => l.status === 'sent')
 
-  // Human-readable send time summary for the info callout.
   const tzLabel = TIMEZONE_OPTIONS.find((t) => t.value === timezone)?.label ?? timezone
-  const sendTimeSummary = `${sendTime} (${tzLabel})`
 
   return (
     <div className="flex flex-col gap-5">
@@ -326,15 +324,15 @@ export function TelegramRemindersSection() {
       <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
         <h3 className="text-sm font-semibold text-white mb-3">Reminder Preferences</h3>
 
-        {/* Reminder logic helper */}
+        {/* Timing info */}
         <div className="flex items-start gap-2 bg-indigo-950/40 border border-indigo-800/40 rounded-lg px-3 py-2.5 mb-5">
           <Info size={13} className="text-indigo-400 flex-shrink-0 mt-0.5" />
           <p className="text-xs text-slate-400">
-            Scheduled reminders are sent for{' '}
-            <span className="text-slate-200 font-medium">high-risk tasks</span> and{' '}
-            <span className="text-slate-200 font-medium">deadlines around the corner</span>.
-            CourseFlow checks reminders regularly and sends them around your selected local time.
-            At most one reminder per task per day is sent.
+            CourseFlow sends one daily Telegram reminder around{' '}
+            <span className="text-slate-200 font-medium">6:00 AM in your selected timezone</span>.
+            Select your timezone below — the send time is always 6:00 AM local.
+            CourseFlow checks reminders every hour and only sends when your local time
+            is around 6:00 AM. At most one reminder per task per day is sent.
           </p>
         </div>
 
@@ -352,7 +350,7 @@ export function TelegramRemindersSection() {
         <div className="flex flex-col gap-3 mb-5">
           <ToggleRow
             label="Enable scheduled reminders"
-            description="Run the hourly check and send messages for matching tasks."
+            description="Send a daily message around 6:00 AM for high-risk tasks and upcoming deadlines."
             checked={enabled}
             onChange={setEnabled}
           />
@@ -370,38 +368,25 @@ export function TelegramRemindersSection() {
           />
         </div>
 
-        <div className="grid grid-cols-2 gap-3 mb-2">
+        <div className="flex flex-col gap-3 mb-5">
           <SelectInput
             label="Days before deadline"
             options={DAYS_BEFORE_OPTIONS}
             value={String(daysBefore)}
             onChange={(e) => setDaysBefore(Number(e.target.value) as ReminderDaysBefore)}
           />
-          <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-medium text-slate-300">Send time (local)</label>
-            <input
-              type="time"
-              value={sendTime}
-              onChange={(e) => setSendTime(e.target.value)}
-              className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-sm text-slate-200 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition"
+          <div>
+            <SelectInput
+              label="Your timezone"
+              options={TIMEZONE_OPTIONS}
+              value={timezone}
+              onChange={(e) => setTimezone(e.target.value)}
             />
+            <p className="text-xs text-slate-500 mt-1.5">
+              Reminders will be sent around{' '}
+              <span className="text-slate-300 font-medium">6:00 AM ({tzLabel})</span>.
+            </p>
           </div>
-        </div>
-
-        <div className="mb-5">
-          <SelectInput
-            label="Timezone"
-            options={TIMEZONE_OPTIONS}
-            value={timezone}
-            onChange={(e) => setTimezone(e.target.value)}
-          />
-          <p className="text-xs text-slate-500 mt-1.5">
-            Daily reminders are sent around{' '}
-            <span className="text-slate-300 font-medium">{sendTimeSummary}</span>.
-            The cron fires once per day at midnight UTC — for Malaysia/Singapore (UTC+8)
-            this is 08:00 local time. Users in other timezones should set their
-            send time to match the equivalent UTC offset.
-          </p>
         </div>
 
         {saveError && (
@@ -442,8 +427,7 @@ export function TelegramRemindersSection() {
       <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
         <h3 className="text-sm font-semibold text-white mb-1">Recent Reminders Sent</h3>
         <p className="text-xs text-slate-400 mb-4">
-          Up to 5 most recent reminders. Updated after each hourly check when your local
-          send time matches.
+          Up to 5 most recent reminders. Updated each day around 6:00 AM local time.
         </p>
         {logs.length === 0 ? (
           <p className="text-xs text-slate-500">No reminders sent yet.</p>

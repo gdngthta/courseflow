@@ -55,13 +55,21 @@ interface TelegramUpdate {
  *     update forever. The user-facing reply is sent via sendMessage.
  */
 export async function POST(req: NextRequest) {
-  // ── 1. Secret-header auth (if configured) ──────────────────
+  // ── 1. Secret-header auth (required) ──────────────────────
+  // TELEGRAM_WEBHOOK_SECRET must be set in production. If it is missing,
+  // the server returns 500 to avoid silently accepting unauthenticated
+  // requests. Configure it in Vercel environment variables and register
+  // the same secret when setting up the Telegram webhook URL.
   const expectedSecret = process.env.TELEGRAM_WEBHOOK_SECRET
-  if (expectedSecret) {
-    const got = req.headers.get('x-telegram-bot-api-secret-token')
-    if (got !== expectedSecret) {
-      return NextResponse.json({ ok: false, error: 'Unauthorized' }, { status: 401 })
-    }
+  if (!expectedSecret) {
+    return NextResponse.json(
+      { ok: false, error: 'TELEGRAM_WEBHOOK_SECRET is not configured on the server.' },
+      { status: 500 }
+    )
+  }
+  const got = req.headers.get('x-telegram-bot-api-secret-token')
+  if (got !== expectedSecret) {
+    return NextResponse.json({ ok: false, error: 'Unauthorized' }, { status: 401 })
   }
 
   // ── 2. Parse update ────────────────────────────────────────

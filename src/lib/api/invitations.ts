@@ -48,45 +48,6 @@ export async function getReceivedInvitations(): Promise<ReceivedInvitation[]> {
   return (data ?? []) as ReceivedInvitation[]
 }
 
-/**
- * Fetch pending invitations for all projects the current user manages.
- * RLS restricts results to projects where the user is a leader or editor.
- */
-export async function getPendingInvitationsForManagedProjects(): Promise<ProjectInvitationForProject[]> {
-  const supabase = createClient()
-  const { data, error } = await supabase
-    .from('project_invitations')
-    .select(`
-      id, project_id, invitee_user_id, invitee_email, role, created_at,
-      invitee:profiles!project_invitations_invitee_user_id_fkey ( full_name, email )
-    `)
-    .eq('status', 'pending')
-    .order('created_at', { ascending: false })
-
-  if (error) {
-    console.error('[invitations] fetch managed error:', error.message)
-    return []
-  }
-
-  return ((data ?? []) as unknown as Array<{
-    id: string
-    project_id: string
-    invitee_user_id: string
-    invitee_email: string
-    role: 'admin' | 'member'
-    created_at: string
-    invitee: { full_name: string | null; email: string | null } | null
-  }>).map((inv) => ({
-    id: inv.id,
-    project_id: inv.project_id,
-    invitee_user_id: inv.invitee_user_id,
-    invitee_email: inv.invitee_email,
-    invitee_name: inv.invitee?.full_name || inv.invitee_email,
-    role: inv.role,
-    created_at: inv.created_at,
-  }))
-}
-
 // ── Mutations ────────────────────────────────────────────────
 
 /** Create a pending invitation (replaces the old instant invite_member flow). */

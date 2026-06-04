@@ -36,12 +36,12 @@ CourseFlow combines both into one place. When a group project task is assigned t
 | Profile name save to Supabase | ✅ |
 | Telegram scheduled reminders (around-deadline + high-risk) | ✅ |
 | Telegram command bot (/start /critical /today /upcoming /closest /projects /help) | ✅ |
-| Timezone-aware reminder send time (user-selectable, default Asia/Kuala_Lumpur) | ✅ |
+| Timezone-aware daily reminder at 6:00 AM local time (user selects timezone) | ✅ |
 | My Tasks sorted: active/critical first, completed tasks at bottom | ✅ |
 | Course selector strip with consistent fixed-size cards | ✅ |
 | Global topbar search (tasks / projects / courses) | ✅ |
 | In-app notifications panel (derived, with localStorage dismiss) | ✅ |
-| Dark + light theme toggle (persists per browser) | ✅ |
+| Dark-only UI | ✅ |
 | Public landing page at `/` (hero, features, workflow, CTA) | ✅ |
 | My Tasks Kanban board view (drag-drop + status select fallback) | ✅ |
 | Dark-only UI (Phase 5G — light mode removed) | ✅ |
@@ -98,13 +98,17 @@ TELEGRAM_WEBHOOK_SECRET=your-webhook-secret
 
 ### 3. Run the database migrations
 
-Open the Supabase SQL Editor and run, in order:
+Open the Supabase SQL Editor and run **in this exact order**:
 
 1. `supabase/schema.sql` — creates all tables, triggers, indexes, and initial RLS policies
 2. `supabase/phase3c.sql` — applies SECURITY DEFINER helpers and RPCs to fix recursive RLS policies
 3. `supabase/phase4.sql` — adds Telegram fields on `profiles` plus `reminder_preferences` and `reminder_logs` tables
-4. `supabase/phase5.sql` — adds `profiles_insert` RLS policy + backfills profile rows for any auth users whose profile is missing (fixes FK-violation errors when creating tasks/courses/projects)
-5. `supabase/phase5c.sql` — adds `'review'` to the allowed task status values on both `personal_tasks` and `project_tasks` (powers the new Kanban Review column)
+4. `supabase/phase5.sql` — adds `profiles_insert` RLS policy + backfills profile rows for any auth users whose profile is missing
+5. `supabase/phase5c.sql` — adds `'review'` to the allowed task status values on both `personal_tasks` and `project_tasks`
+6. `supabase/phase6c1.sql` — adds `project_invitations`, `project_member_preferences`, `notifications` tables; adds all collaboration RPCs (invitation flow, member management, DB notifications, task-assignment trigger)
+7. `supabase/phase6c2.sql` — **skip if you ran phase6c1.sql** (phase6c1 supersedes this file; running both is safe but redundant)
+8. `supabase/phase6g.sql` — adds `timezone` column to `reminder_preferences`
+9. `supabase/phase6_cleanup.sql` — drops the old `invite_member` RPC; normalizes `send_time` to `'06:00'`; fixes invitation email case-sensitivity; fixes cancel-invitation notification cleanup
 
 ### 4. Run dev server
 
@@ -154,6 +158,9 @@ supabase/
   phase4.sql               Telegram fields + reminder_preferences + reminder_logs
   phase5.sql               profiles_insert RLS + orphan backfill
   phase5c.sql              Adds 'review' to task status check constraints
+  phase6c1.sql             Collaboration system: project_invitations, project_member_preferences, notifications tables + RPCs
+  phase6g.sql              Adds timezone column to reminder_preferences
+  phase6_cleanup.sql       Security fixes: drops old invite_member RPC, normalizes send_time
 docs/                      Project documentation
 scripts/                   One-off scripts (e.g. apply-theme.ps1 bulk converter)
 ```
@@ -185,19 +192,21 @@ CourseFlow can send a Telegram message when a deadline is around the corner or a
 > Running your own deployment? Create your own bot with [@BotFather](https://t.me/BotFather) → `/newbot`, save the token in `TELEGRAM_BOT_TOKEN`, and point users at your bot's username instead of `@CourseFlow_Schedule_Bot`.
 
 **Scheduled sends (production):**
-- Deploy to Vercel. Set `TELEGRAM_BOT_TOKEN`, `CRON_SECRET`, and `SUPABASE_SERVICE_ROLE_KEY` in the Vercel project's env vars.
-- `vercel.json` schedules `GET /api/cron/send-reminders` at `0 8 * * *` (08:00 UTC daily). Vercel automatically attaches `Authorization: Bearer $CRON_SECRET`.
-- The cron job checks each opted-in user's tasks, finds reminder candidates (around-deadline + high-risk), and sends one Telegram message per (user × task × reminder_type × day). Duplicates are prevented by a unique constraint on `reminder_logs`.
+- Deploy to Vercel. Set `TELEGRAM_BOT_TOKEN`, `CRON_SECRET`, `SUPABASE_SERVICE_ROLE_KEY`, and `TELEGRAM_WEBHOOK_SECRET` in the Vercel project's env vars.
+- `vercel.json` schedules `GET /api/cron/send-reminders` at `0 * * * *` (every hour). Vercel automatically attaches `Authorization: Bearer $CRON_SECRET`.
+- **Reminder time:** CourseFlow sends reminders around **6:00 AM in each user's selected timezone**. The cron runs hourly and checks whether the user's current local hour is 6 — if yes, it evaluates and sends. Users in different timezones get their reminder at 6 AM their time.
+- One reminder per (user × task × reminder_type × day) — duplicates prevented by a unique constraint on `reminder_logs`.
+- **Vercel Hobby plan note:** Hobby accounts are limited to once-per-day cron jobs. If you are on the Hobby plan, the hourly schedule will fail to deploy. You must upgrade to Vercel Pro, or the reminder system will only work for users whose local 6 AM coincides with midnight UTC (i.e. UTC+6 users).
 
 **Local manual test:**
 ```bash
 curl -X GET http://localhost:3000/api/cron/send-reminders \
   -H "Authorization: Bearer $CRON_SECRET"
 ```
-Returns a JSON summary: `{ users_checked, candidates_found, sent, skipped_duplicate, failed }`.
+Returns a JSON summary: `{ users_checked, users_skipped_time, candidates_found, sent, skipped_duplicate, failed }`.
 
 **Limitations (honest):**
-- The cron runs once daily. The "Preferred send time" field in Settings is display-only.
+- Reminders are sent around 6:00 AM local time. "Around" means within the 06:xx window — exact-minute delivery is not guaranteed.
 - Failed sends are logged but **not retried** — the unique-key slot is claimed for the day to avoid retry storms. Fix the chat ID; tomorrow's run will send again.
 - WhatsApp delivery is not implemented (see `docs/FUTURE_IMPROVEMENTS.md`).
 - n8n / message queues are not used; the single Vercel Cron endpoint is the entire delivery pipeline.

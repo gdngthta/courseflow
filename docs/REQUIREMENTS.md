@@ -53,15 +53,16 @@
 - FR-REM-1: Users can save a Telegram chat ID and toggle Telegram reminders on/off
 - FR-REM-2: Users can configure around-deadline and high-risk reminder toggles independently
 - FR-REM-3: Users can choose a days-before window: same day, 1, 3, or 7 days before deadline
-- FR-REM-4: A scheduled Vercel Cron job runs **hourly** and sends Telegram messages for qualifying tasks
+- FR-REM-4: A scheduled Vercel Cron job runs **hourly** (`0 * * * *`) and sends Telegram messages for qualifying tasks. Requires Vercel Pro — Hobby plan only allows once-per-day crons.
 - FR-REM-5: The cron uses the Supabase service role key (server-side only) to bypass RLS for cross-user reads
 - FR-REM-6: Each (user × task × reminder_type × date) is sent at most once — enforced by a unique constraint on `reminder_logs`
 - FR-REM-7: A "Send Test Reminder" button lets users verify delivery from Settings
 - FR-REM-8: Failed sends are logged with `status='failed'` and an error message; not retried within the same day
 - FR-REM-9: Telegram bot token and CRON secret are server-side only (no `NEXT_PUBLIC_` prefix)
-- FR-REM-10: Users can set a preferred **send time** (e.g. 08:00) and **timezone** (IANA name, e.g. Asia/Kuala_Lumpur). Default is 08:00 Asia/Kuala_Lumpur.
-- FR-REM-11: The cron converts current UTC time to each user's local timezone (via `Intl.DateTimeFormat`) and only processes users whose local hour matches their preferred send hour. Users in other hours are skipped silently.
-- FR-REM-12: Timezone matching is hour-exact only — exact minute delivery depends on Vercel Cron scheduling accuracy.
+- FR-REM-10: Users select a **timezone** (IANA name, default `Asia/Kuala_Lumpur`). Reminder send time is fixed at **6:00 AM local time** — not user-configurable.
+- FR-REM-11: The cron converts current UTC time to each user's local timezone (via `Intl.DateTimeFormat`) and only processes users whose local hour is 6. All other users are skipped that hour.
+- FR-REM-12: Timezone matching is hour-exact only — exact minute delivery depends on Vercel Cron scheduling accuracy. Delivery is "around 6:00 AM", not guaranteed to the minute.
+- FR-REM-13: `TELEGRAM_WEBHOOK_SECRET` is required in production. The webhook returns 401 if the secret header is missing or incorrect.
 
 ### My Tasks Layout + Sorting ✅ (Phase 6G)
 - FR-TASKS-1: My Tasks course selector shows fixed-size cards (240×128px) so all cards are uniform regardless of course name length.
