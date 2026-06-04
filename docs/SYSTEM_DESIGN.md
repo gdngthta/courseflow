@@ -15,7 +15,7 @@ Browser
        ├─ Supabase Browser Client (@supabase/ssr)
        │    └─ Supabase (PostgreSQL + Auth + RLS + SECURITY DEFINER RPCs)
        └─ Server-only API routes (Node runtime)
-            ├─ /api/cron/send-reminders ← Vercel Cron (daily 08:00 UTC)
+            ├─ /api/cron/send-reminders ← Vercel Cron (hourly), timezone-aware send time
             └─ /api/telegram/test       ← user-initiated test send
                   ├─ Supabase Admin Client (service role key — bypasses RLS)
                   └─ Telegram Bot API (https://api.telegram.org)
@@ -45,21 +45,30 @@ than `chat.id`, and it serves only data scoped to that profile's user_id.
 ### Telegram Reminder Pipeline (outbound, scheduled)
 
 ```
-Vercel Cron (08:00 UTC)
+Vercel Cron (hourly: 0 * * * *)
   → GET /api/cron/send-reminders   (Bearer CRON_SECRET)
        ├─ Load profiles WHERE telegram_enabled AND chat_id IS NOT NULL
        ├─ For each user with reminder_preferences.enabled:
+       │     ├─ Read user's send_time (e.g. "08:00") + timezone (e.g. "Asia/Kuala_Lumpur")
+       │     ├─ Convert current UTC time to user's local time via Intl.DateTimeFormat
+       │     ├─ If local hour ≠ preferred send hour → SKIP (no reminder this hour)
        │     ├─ Load incomplete personal_tasks
        │     ├─ Load incomplete assigned project_tasks
        │     ├─ findReminderCandidates(tasks, prefs)  ← pure function
        │     ├─ For each candidate:
        │     │     1. INSERT reminder_logs (status='sent')
-       │     │        └─ unique-violation? → skip (dedupe)
+       │     │        └─ unique-violation? → skip (dedupe — one per task per day)
        │     │     2. generateReminderMessage(candidate) ← pure function
        │     │     3. sendTelegramMessage(chat_id, text)
        │     │     4. If send failed → UPDATE log to status='failed'
-       └─ Return summary JSON
+       └─ Return summary JSON { users_checked, users_skipped_time, sent, ... }
 ```
+
+Timezone matching is hour-exact (not minute-exact) because Vercel Cron fires
+sometime during the scheduled hour — exact minute delivery is not guaranteed.
+Duplicate prevention (`reminder_logs` unique constraint) ensures each task
+receives at most one reminder per day even if the cron fires multiple times
+within the same hour.
 
 ## Route Structure
 

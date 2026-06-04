@@ -52,6 +52,45 @@ interface ProjectTaskRow {
 }
 
 
+// ── Timezone helper ──────────────────────────────────────────
+//
+// Uses the built-in Intl API (Node.js 16+, no extra packages).
+// Returns the local hour (0–23) for a given IANA timezone.
+
+function getLocalHour(timezone: string, now: Date): number {
+  try {
+    const formatter = new Intl.DateTimeFormat('en-US', {
+      timeZone: timezone,
+      hour: 'numeric',
+      hour12: false,
+    })
+    const parts = formatter.formatToParts(now)
+    const hourStr = parts.find((p) => p.type === 'hour')?.value ?? '0'
+    // Intl may return '24' for midnight in some locales — normalise to 0.
+    return parseInt(hourStr, 10) % 24
+  } catch {
+    // Unknown timezone — fall through and treat as UTC.
+    return now.getUTCHours()
+  }
+}
+
+// ── Send-time match ──────────────────────────────────────────
+//
+// We match on the HOUR only (not minute-exact) because Vercel Cron
+// fires at some point during the scheduled hour — exact minute
+// delivery is not guaranteed on any plan. "08:00" means "send
+// within the 08:xx window".
+
+function isUserSendHour(prefs: ReminderPreferences, now: Date): boolean {
+  const sendTime = prefs.send_time ?? '08:00'
+  const timezone = prefs.timezone ?? 'Asia/Kuala_Lumpur'
+  const [prefHourStr] = sendTime.split(':')
+  const prefHour = parseInt(prefHourStr, 10)
+  const localHour = getLocalHour(timezone, now)
+  return localHour === prefHour
+}
+
+
 // ────────────────────────────────────────────────────────────
 // GET /api/cron/send-reminders
 //
@@ -59,19 +98,22 @@ interface ProjectTaskRow {
 //   Vercel Cron sets this automatically when CRON_SECRET is
 //   configured as an environment variable.
 //
+// Schedule: Runs hourly (0 * * * * in vercel.json).
+//
 // What it does (in order):
 //   1. Auth-check the request.
 //   2. Load every profile with telegram_enabled = true AND
 //      a chat ID set, joined with their reminder_preferences row.
-//   3. For each user: fetch incomplete personal tasks + incomplete
-//      assigned project tasks.
-//   4. Run findReminderCandidates() to filter to today's sends.
-//   5. For each candidate, try to insert a reminder_logs row with
+//   3. For each user: skip if their local time does NOT match
+//      their preferred send_time hour (timezone-aware).
+//   4. Fetch incomplete personal tasks + assigned project tasks.
+//   5. Run findReminderCandidates() to filter to today's sends.
+//   6. For each candidate, try to insert a reminder_logs row with
 //      status='sent'. The unique constraint
 //      (user_id, task_type, task_id, reminder_type, sent_date)
 //      makes this a duplicate-prevention check: if insert succeeds,
 //      we send. If it raises a unique-violation, we skip silently.
-//   6. After insert succeeds, send the Telegram message. If sending
+//   7. After insert succeeds, send the Telegram message. If sending
 //      fails, update the log row to status='failed' + error_message.
 // ────────────────────────────────────────────────────────────
 
@@ -90,10 +132,11 @@ export async function GET(req: NextRequest) {
   }
 
   const supabase = createAdminClient()
-  const today = new Date()
+  const now = new Date()
 
   const summary = {
     users_checked: 0,
+    users_skipped_time: 0,
     candidates_found: 0,
     sent: 0,
     skipped_duplicate: 0,
@@ -138,7 +181,15 @@ export async function GET(req: NextRequest) {
     // unexpected DMs, so skip silently — they must opt in explicitly.
     if (!prefs || !prefs.enabled) continue
 
-    // ── 3a. Fetch incomplete personal tasks ──────────────
+    // ── 3. Timezone-aware send-time check ────────────────
+    // Only process this user if their local time matches their
+    // preferred send_time hour. This prevents sending every hour.
+    if (!isUserSendHour(prefs, now)) {
+      summary.users_skipped_time += 1
+      continue
+    }
+
+    // ── 4a. Fetch incomplete personal tasks ──────────────
     const { data: personalRaw, error: pErr } = await supabase
       .from('personal_tasks')
       .select(`
@@ -153,7 +204,7 @@ export async function GET(req: NextRequest) {
       continue
     }
 
-    // ── 3b. Fetch incomplete project tasks assigned to user ──
+    // ── 4b. Fetch incomplete project tasks assigned to user ──
     const { data: projectRaw, error: prjErr } = await supabase
       .from('project_tasks')
       .select(`
@@ -168,7 +219,7 @@ export async function GET(req: NextRequest) {
       continue
     }
 
-    // ── 4. Build flat candidate input ────────────────────
+    // ── 5. Build flat candidate input ────────────────────
     // Supabase nests joined 1:1 rows as objects in some setups and
     // single-element arrays in others; handle both.
     const personalTasks = (personalRaw ?? []) as unknown as Array<
@@ -211,10 +262,10 @@ export async function GET(req: NextRequest) {
       }),
     ]
 
-    const candidates = findReminderCandidates(inputs, prefs, today)
+    const candidates = findReminderCandidates(inputs, prefs, now)
     summary.candidates_found += candidates.length
 
-    // ── 5+6. For each candidate: dedupe-insert, then send ──
+    // ── 6+7. For each candidate: dedupe-insert, then send ──
     for (const c of candidates) {
       // Try to claim today's slot for this (user, task, reminder_type).
       // status='sent' is optimistic — we patch to 'failed' below if
@@ -241,7 +292,7 @@ export async function GET(req: NextRequest) {
       }
 
       // ── Send the message ───────────────────────────────
-      const message = generateReminderMessage(c, today)
+      const message = generateReminderMessage(c, now)
       const result = await sendTelegramMessage(profile.telegram_chat_id, message)
 
       if (result.ok) {

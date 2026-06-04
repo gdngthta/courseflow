@@ -250,3 +250,33 @@
 - [ ] Archiving a course → disappears from task/project course dropdowns immediately
 - [ ] Marking a task done → task disappears from calendar and critical risk section
 - [ ] All changes above survive a full page refresh
+
+### Phase 6G — Timezone-aware Reminders + My Tasks Polish
+
+#### Reminder timezone and send time
+- [ ] Settings → Reminders → Reminder Preferences: "Send time (local)" field is editable (type="time")
+- [ ] Settings → Reminders → Reminder Preferences: "Timezone" select shows common IANA zones, defaults to Asia/Kuala_Lumpur
+- [ ] Helper text below the timezone selector shows "Daily reminders are sent around [selected time] ([timezone label])."
+- [ ] Save settings → reload page → send time and timezone persist (fetched from reminder_preferences)
+- [ ] Info callout no longer says "Fixed at 08:00 UTC"; says "CourseFlow checks reminders regularly and sends them around your selected local time."
+- [ ] Manual cron trigger during user's local send hour → reminder arrives
+- [ ] Manual cron trigger outside user's local send hour → summary shows `users_skipped_time > 0`, no message sent
+- [ ] Calling cron a second time within the same send hour → `skipped_duplicate` prevents second message
+- [ ] Set timezone to Asia/Kuala_Lumpur + send_time 08:00 → cron at UTC 00:00 sends (KL is UTC+8)
+
+#### Course cards layout (My Tasks)
+- [ ] All course cards are the same width (240px) regardless of course name length
+- [ ] All course cards are the same height (128px) regardless of number of stat lines shown
+- [ ] Long course names are truncated with ellipsis — do not expand card height
+- [ ] "All Courses" card matches the visual style of course cards
+- [ ] Archive toggle button sits inline with the card row, vertically centred
+- [ ] At 1366×768, the card row scrolls horizontally without wrapping
+
+#### Task sorting
+- [ ] My Tasks → All tab: critical/overdue tasks appear at top, done tasks at bottom
+- [ ] My Tasks → Personal tab: same sort order
+- [ ] My Tasks → Assigned tab: same sort order
+- [ ] My Tasks → Critical tab: no done tasks are shown
+- [ ] My Tasks → Completed tab: only done tasks, no re-sort applied
+- [ ] Dashboard → Critical Risk section: no done tasks appear
+- [ ] Creating a task, marking it done, going back to All tab: done task is at the bottom

@@ -88,7 +88,7 @@ export default function DashboardPage() {
     return a.due_date.localeCompare(b.due_date)
   })
 
-  const criticalTasks = allTasks.filter((t) => t.risk === 'critical')
+  const criticalTasks = allTasks.filter((t) => t.risk === 'critical' && t.status !== 'done')
   const upcomingTasks = allTasks
     .filter((t) => t.status !== 'done' && t.due_date > today)
     .sort((a, b) => a.due_date.localeCompare(b.due_date))

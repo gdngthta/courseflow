@@ -35,7 +35,10 @@ CourseFlow combines both into one place. When a group project task is assigned t
 | All data persisted to Supabase (real data, no mock) | ✅ |
 | Profile name save to Supabase | ✅ |
 | Telegram scheduled reminders (around-deadline + high-risk) | ✅ |
-| Telegram command bot (/critical /today /upcoming /closest /projects) | ✅ |
+| Telegram command bot (/start /critical /today /upcoming /closest /projects /help) | ✅ |
+| Timezone-aware reminder send time (user-selectable, default Asia/Kuala_Lumpur) | ✅ |
+| My Tasks sorted: active/critical first, completed tasks at bottom | ✅ |
+| Course selector strip with consistent fixed-size cards | ✅ |
 | Global topbar search (tasks / projects / courses) | ✅ |
 | In-app notifications panel (derived, with localStorage dismiss) | ✅ |
 | Dark + light theme toggle (persists per browser) | ✅ |

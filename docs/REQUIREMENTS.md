@@ -44,16 +44,26 @@
 - FR-MYTASK-4: My Tasks supports filtering by: All / Personal / Assigned to Me / Critical / Completed
 - FR-MYTASK-5: My Tasks supports course filter dropdown
 
-### Telegram Reminders ✅ (Phase 4.5)
+### Telegram Reminders ✅ (Phase 4.5 + Phase 6G)
 - FR-REM-1: Users can save a Telegram chat ID and toggle Telegram reminders on/off
 - FR-REM-2: Users can configure around-deadline and high-risk reminder toggles independently
 - FR-REM-3: Users can choose a days-before window: same day, 1, 3, or 7 days before deadline
-- FR-REM-4: A scheduled Vercel Cron job runs daily and sends Telegram messages for qualifying tasks
+- FR-REM-4: A scheduled Vercel Cron job runs **hourly** and sends Telegram messages for qualifying tasks
 - FR-REM-5: The cron uses the Supabase service role key (server-side only) to bypass RLS for cross-user reads
 - FR-REM-6: Each (user × task × reminder_type × date) is sent at most once — enforced by a unique constraint on `reminder_logs`
 - FR-REM-7: A "Send Test Reminder" button lets users verify delivery from Settings
 - FR-REM-8: Failed sends are logged with `status='failed'` and an error message; not retried within the same day
 - FR-REM-9: Telegram bot token and CRON secret are server-side only (no `NEXT_PUBLIC_` prefix)
+- FR-REM-10: Users can set a preferred **send time** (e.g. 08:00) and **timezone** (IANA name, e.g. Asia/Kuala_Lumpur). Default is 08:00 Asia/Kuala_Lumpur.
+- FR-REM-11: The cron converts current UTC time to each user's local timezone (via `Intl.DateTimeFormat`) and only processes users whose local hour matches their preferred send hour. Users in other hours are skipped silently.
+- FR-REM-12: Timezone matching is hour-exact only — exact minute delivery depends on Vercel Cron scheduling accuracy.
+
+### My Tasks Layout + Sorting ✅ (Phase 6G)
+- FR-TASKS-1: My Tasks course selector shows fixed-size cards (240×128px) so all cards are uniform regardless of course name length.
+- FR-TASKS-2: Course card strip is horizontally scrollable. Long course names truncate with ellipsis.
+- FR-TASKS-3: On the All, Personal, and Assigned tabs, tasks are sorted: critical first → overdue → nearest due date → difficulty; completed tasks always appear at the bottom.
+- FR-TASKS-4: On the Critical tab, completed tasks are excluded (a done task cannot be critical, but the guard is explicit).
+- FR-TASKS-5: Dashboard Critical Risk section excludes completed tasks defensively.
 
 ### Phase 5G — Product Logic + UX Correction
 - FR-5G-1: Today's Priority on Dashboard includes overdue tasks, Critical-risk tasks (any due date), due-today, due-tomorrow, ≤3 days with progress<50%, and difficulty 4–5 ≤7 days. Heading has a tooltip explaining the rules.

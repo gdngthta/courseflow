@@ -124,6 +124,7 @@ export interface ReminderPreferences {
   high_risk_enabled: boolean
   days_before: ReminderDaysBefore
   send_time: string
+  timezone: string
   created_at: string
   updated_at: string
 }

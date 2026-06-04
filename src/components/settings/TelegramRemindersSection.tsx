@@ -27,6 +27,39 @@ const DAYS_BEFORE_OPTIONS = [
   { value: '7', label: '7 days before' },
 ]
 
+// Common IANA timezone list (condensed to most-used regions).
+const TIMEZONE_OPTIONS = [
+  // Southeast Asia
+  { value: 'Asia/Kuala_Lumpur', label: 'Malaysia (KL) — UTC+8' },
+  { value: 'Asia/Singapore', label: 'Singapore — UTC+8' },
+  { value: 'Asia/Jakarta', label: 'Indonesia (WIB) — UTC+7' },
+  { value: 'Asia/Makassar', label: 'Indonesia (WITA) — UTC+8' },
+  { value: 'Asia/Jayapura', label: 'Indonesia (WIT) — UTC+9' },
+  { value: 'Asia/Bangkok', label: 'Thailand / Indochina — UTC+7' },
+  { value: 'Asia/Manila', label: 'Philippines — UTC+8' },
+  { value: 'Asia/Ho_Chi_Minh', label: 'Vietnam — UTC+7' },
+  // East Asia
+  { value: 'Asia/Tokyo', label: 'Japan — UTC+9' },
+  { value: 'Asia/Seoul', label: 'Korea — UTC+9' },
+  { value: 'Asia/Shanghai', label: 'China — UTC+8' },
+  // South Asia
+  { value: 'Asia/Kolkata', label: 'India — UTC+5:30' },
+  { value: 'Asia/Dhaka', label: 'Bangladesh — UTC+6' },
+  // Middle East
+  { value: 'Asia/Dubai', label: 'UAE / Gulf — UTC+4' },
+  // Europe
+  { value: 'Europe/London', label: 'UK (London) — UTC+0/+1' },
+  { value: 'Europe/Berlin', label: 'Germany / Central EU — UTC+1/+2' },
+  { value: 'Europe/Istanbul', label: 'Turkey — UTC+3' },
+  // Americas
+  { value: 'America/New_York', label: 'US Eastern — UTC-5/-4' },
+  { value: 'America/Chicago', label: 'US Central — UTC-6/-5' },
+  { value: 'America/Los_Angeles', label: 'US Pacific — UTC-8/-7' },
+  { value: 'America/Sao_Paulo', label: 'Brazil (São Paulo) — UTC-3' },
+  // UTC
+  { value: 'UTC', label: 'UTC (no offset)' },
+]
+
 const BOT_COMMANDS = [
   { cmd: '/start', desc: 'greet the bot and see all commands' },
   { cmd: '/critical', desc: 'tasks that need immediate attention' },
@@ -50,7 +83,8 @@ export function TelegramRemindersSection() {
   const [aroundDeadline, setAroundDeadline] = useState(true)
   const [highRisk, setHighRisk] = useState(true)
   const [daysBefore, setDaysBefore] = useState<ReminderDaysBefore>(1)
-  const [sendTime] = useState('08:00')
+  const [sendTime, setSendTime] = useState('08:00')
+  const [timezone, setTimezone] = useState('Asia/Kuala_Lumpur')
 
   // Save state
   const [saving, setSaving] = useState(false)
@@ -83,6 +117,8 @@ export function TelegramRemindersSection() {
           setAroundDeadline(prefs.around_deadline_enabled)
           setHighRisk(prefs.high_risk_enabled)
           setDaysBefore(prefs.days_before)
+          setSendTime(prefs.send_time ?? '08:00')
+          setTimezone(prefs.timezone ?? 'Asia/Kuala_Lumpur')
         }
         setLogs(recentLogs)
       } catch (e) {
@@ -116,6 +152,7 @@ export function TelegramRemindersSection() {
         high_risk_enabled: highRisk,
         days_before: daysBefore,
         send_time: sendTime,
+        timezone,
       })
       setSaveMsg('Settings saved.')
       setTimeout(() => setSaveMsg(''), 2500)
@@ -158,6 +195,10 @@ export function TelegramRemindersSection() {
 
   // Most-recent successfully sent log entry.
   const lastSent = logs.find((l) => l.status === 'sent')
+
+  // Human-readable send time summary for the info callout.
+  const tzLabel = TIMEZONE_OPTIONS.find((t) => t.value === timezone)?.label ?? timezone
+  const sendTimeSummary = `${sendTime} (${tzLabel})`
 
   return (
     <div className="flex flex-col gap-5">
@@ -292,8 +333,8 @@ export function TelegramRemindersSection() {
             Scheduled reminders are sent for{' '}
             <span className="text-slate-200 font-medium">high-risk tasks</span> and{' '}
             <span className="text-slate-200 font-medium">deadlines around the corner</span>.
-            The daily cron runs at <strong className="text-slate-200">08:00 UTC</strong> and
-            sends at most one message per task per day.
+            CourseFlow checks reminders regularly and sends them around your selected local time.
+            At most one reminder per task per day is sent.
           </p>
         </div>
 
@@ -311,7 +352,7 @@ export function TelegramRemindersSection() {
         <div className="flex flex-col gap-3 mb-5">
           <ToggleRow
             label="Enable scheduled reminders"
-            description="Run the daily check and send messages for matching tasks."
+            description="Run the hourly check and send messages for matching tasks."
             checked={enabled}
             onChange={setEnabled}
           />
@@ -329,7 +370,7 @@ export function TelegramRemindersSection() {
           />
         </div>
 
-        <div className="grid grid-cols-2 gap-3 mb-5">
+        <div className="grid grid-cols-2 gap-3 mb-2">
           <SelectInput
             label="Days before deadline"
             options={DAYS_BEFORE_OPTIONS}
@@ -337,17 +378,29 @@ export function TelegramRemindersSection() {
             onChange={(e) => setDaysBefore(Number(e.target.value) as ReminderDaysBefore)}
           />
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-medium text-slate-300">Send time</label>
+            <label className="text-xs font-medium text-slate-300">Send time (local)</label>
             <input
               type="time"
               value={sendTime}
-              disabled
-              className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-sm text-slate-500 cursor-not-allowed"
+              onChange={(e) => setSendTime(e.target.value)}
+              className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-sm text-slate-200 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition"
             />
-            <p className="text-xs text-slate-500">
-              Fixed at 08:00 UTC in the MVP. Custom send times are a planned future feature.
-            </p>
           </div>
+        </div>
+
+        <div className="mb-5">
+          <SelectInput
+            label="Timezone"
+            options={TIMEZONE_OPTIONS}
+            value={timezone}
+            onChange={(e) => setTimezone(e.target.value)}
+          />
+          <p className="text-xs text-slate-500 mt-1.5">
+            Daily reminders are sent around{' '}
+            <span className="text-slate-300 font-medium">{sendTimeSummary}</span>.
+            Vercel Cron fires hourly and matches your saved send time — exact minute
+            delivery is not guaranteed.
+          </p>
         </div>
 
         {saveError && (
@@ -388,7 +441,8 @@ export function TelegramRemindersSection() {
       <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
         <h3 className="text-sm font-semibold text-white mb-1">Recent Reminders Sent</h3>
         <p className="text-xs text-slate-400 mb-4">
-          Up to 5 most recent reminders. Updated after each cron run (daily at 08:00 UTC).
+          Up to 5 most recent reminders. Updated after each hourly check when your local
+          send time matches.
         </p>
         {logs.length === 0 ? (
           <p className="text-xs text-slate-500">No reminders sent yet.</p>

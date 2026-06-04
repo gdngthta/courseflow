@@ -29,10 +29,11 @@
 
 ### Notifications & Reminders
 
-**Shipped in Phase 4.5:**
-- Telegram scheduled reminders (around-deadline + high-risk), daily via Vercel Cron
-- Per-user preferences, test send, audit log, duplicate prevention
-- Telegram command bot (`/critical`, `/today`, `/upcoming`, `/closest`, `/projects`, `/help`) with plain-English aliases
+**Shipped in Phase 4.5 + Phase 6G:**
+- Telegram scheduled reminders (around-deadline + high-risk), hourly Vercel Cron with timezone-aware send time
+- Per-user preferences: send time, timezone (IANA), days-before window, test send, audit log, duplicate prevention
+- Telegram command bot (`/start`, `/critical`, `/today`, `/upcoming`, `/closest`, `/projects`, `/help`) with plain-English aliases
+- My Tasks tasks sorted: active/critical first, completed tasks pushed to bottom
 
 ### Per-Member Project Personalisation
 The current model treats a project's `course_id` as the leader's

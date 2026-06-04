@@ -107,7 +107,9 @@ export default function TasksPage() {
     // Tab filter.
     if (activeTab === 'personal') result = result.filter((t) => t.type === 'personal')
     else if (activeTab === 'assigned') result = result.filter((t) => t.type === 'group')
-    else if (activeTab === 'critical') result = result.filter((t) => t.risk === 'critical')
+    // Critical tab: never show completed tasks (done tasks can't be critical anyway,
+    // but this guard makes the contract explicit and future-proof).
+    else if (activeTab === 'critical') result = result.filter((t) => t.risk === 'critical' && t.status !== 'done')
     else if (activeTab === 'completed') result = result.filter((t) => t.status === 'done')
 
     // Search.
@@ -123,8 +125,51 @@ export default function TasksPage() {
     return result
   }, [allTasks, activeTab, selectedCourseId, showArchived, archivedCourseIds, searchQuery])
 
-  // Today ISO — stable reference for deadline summary.
+  // Today ISO — stable reference for sorting, deadline summary, and overdue checks.
   const todayISO = useMemo(() => new Date().toISOString().split('T')[0], [])
+
+  /**
+   * Sort filtered tasks so active work appears first and completed
+   * tasks are pushed to the bottom.
+   *
+   * Within active tasks: critical → overdue → nearest due date → harder difficulty.
+   * Within done tasks: most recently due first (already completed, keep brief).
+   *
+   * The "completed" and "critical" tabs have their own filter logic so
+   * we skip re-sorting there — the list is already homogeneous.
+   */
+  const sortedTasks = useMemo(() => {
+    if (activeTab === 'completed' || activeTab === 'critical') return filteredTasks
+
+    return [...filteredTasks].sort((a, b) => {
+      const aDone = a.status === 'done' ? 1 : 0
+      const bDone = b.status === 'done' ? 1 : 0
+      if (aDone !== bDone) return aDone - bDone
+
+      // Both done → most-recently-due first (so recent completions show up top of the done group).
+      if (aDone === 1) {
+        return (b.due_date ?? '').localeCompare(a.due_date ?? '')
+      }
+
+      // Both active → critical first.
+      const aCrit = a.risk === 'critical' ? 0 : 1
+      const bCrit = b.risk === 'critical' ? 0 : 1
+      if (aCrit !== bCrit) return aCrit - bCrit
+
+      // Then overdue (due_date < today) before upcoming.
+      const aOverdue = a.due_date && a.due_date < todayISO ? 0 : 1
+      const bOverdue = b.due_date && b.due_date < todayISO ? 0 : 1
+      if (aOverdue !== bOverdue) return aOverdue - bOverdue
+
+      // Nearest due date first.
+      if (a.due_date && b.due_date) return a.due_date.localeCompare(b.due_date)
+      if (a.due_date) return -1
+      if (b.due_date) return 1
+
+      // Harder tasks first when due date ties.
+      return (b.difficulty ?? 0) - (a.difficulty ?? 0)
+    })
+  }, [filteredTasks, activeTab, todayISO])
 
   // Upcoming deadline summary for the filtered task set.
   const deadlineSummary = useMemo(
@@ -310,14 +355,14 @@ export default function TasksPage() {
             Loading tasks…
           </div>
         ) : view === 'board' ? (
-          filteredTasks.length > 0 ? (
-            <KanbanBoard tasks={filteredTasks} readOnlyIds={readOnlyIds} />
+          sortedTasks.length > 0 ? (
+            <KanbanBoard tasks={sortedTasks} readOnlyIds={readOnlyIds} />
           ) : (
             <NoTasksEmpty onAdd={() => setShowCreateModal(true)} />
           )
-        ) : filteredTasks.length > 0 ? (
+        ) : sortedTasks.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-            {filteredTasks.map((task) => (
+            {sortedTasks.map((task) => (
               <TaskCard key={task.id} task={task} onClick={setSelectedTask} />
             ))}
           </div>

@@ -9,6 +9,7 @@ const DEFAULT_PREFS: Omit<ReminderPreferences, 'id' | 'user_id' | 'created_at' |
   high_risk_enabled: true,
   days_before: 1,
   send_time: '08:00',
+  timezone: 'Asia/Kuala_Lumpur',
 }
 
 /** Fetch the signed-in user's reminder preferences (RLS restricts to own row). */
@@ -29,6 +30,7 @@ export interface UpsertPreferencesInput {
   high_risk_enabled: boolean
   days_before: ReminderDaysBefore
   send_time?: string
+  timezone?: string
 }
 
 /** Insert or update the signed-in user's reminder preferences row. */
@@ -48,6 +50,7 @@ export async function upsertMyReminderPreferences(
     high_risk_enabled: input.high_risk_enabled,
     days_before: input.days_before,
     send_time: input.send_time ?? DEFAULT_PREFS.send_time,
+    timezone: input.timezone ?? DEFAULT_PREFS.timezone,
   }
 
   const { data, error } = await supabase
